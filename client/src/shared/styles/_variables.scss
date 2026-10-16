@@ -72,3 +72,12 @@ $shadow-glow: $shadow-glow-primary;
 
 // 7. Transitions
 $transition-smooth: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+// 8. Surface & Header Colors
+$header-bg-dark: rgba(15, 23, 42, 0.85);
+$header-bg-light: rgba(255, 255, 255, 0.9);
+$border-dark: rgba(255, 255, 255, 0.1);
+$border-light: rgba(0, 0, 0, 0.08);
+$bg-dark-radial: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+$bg-light-radial: radial-gradient(circle at 50% 0%, #f8fafc 0%, #e2e8f0 100%);
+

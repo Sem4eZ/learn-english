@@ -340,7 +340,10 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
               <div className={styles.backBtnRow}>
                 <Button
                   icon={<ArrowLeftOutlined />}
-                  onClick={() => setSelectedMode('idle')}
+                  onClick={() => {
+                    setSelectedMode('idle');
+                    onRefreshStats?.();
+                  }}
                   size="large"
                 >
                   Назад ко всем тренажерам

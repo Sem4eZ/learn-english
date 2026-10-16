@@ -202,7 +202,8 @@ async function generateDictionaryWords(req, res) {
 
 function recordSrsReview(req, res) {
   try {
-    const { wordId, grade, userId = 'guest_user' } = req.body;
+    const userId = req.headers['x-user-id'] || req.body.userId || 'user_default';
+    const { wordId, grade } = req.body;
     const gradeNum = Math.max(1, Math.min(4, parseInt(grade, 10) || 1));
 
     if (!wordId) {
@@ -268,9 +269,10 @@ function recordSrsReview(req, res) {
         reviewed_at = excluded.reviewed_at
     `).run(userId, wordId, gradeNum, reps, nextIntervalDays, ef, formattedDueDate);
 
-    // Award XP
+    // Award XP immediately
     const xpReward = gradeNum === 4 ? 25 : gradeNum === 3 ? 15 : gradeNum === 2 ? 10 : 5;
     db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`).run(xpReward, userId);
+    const updatedUser = db.prepare('SELECT xp, streak FROM users WHERE id = ?').get(userId);
 
     res.json({
       success: true,
@@ -279,7 +281,9 @@ function recordSrsReview(req, res) {
         interval: nextIntervalDays,
         ef,
         dueDate: dueDate.toISOString(),
-        xpEarned: xpReward
+        xpEarned: xpReward,
+        totalXp: updatedUser ? updatedUser.xp : xpReward,
+        streak: updatedUser ? updatedUser.streak : 1
       }
     });
   } catch (err) {

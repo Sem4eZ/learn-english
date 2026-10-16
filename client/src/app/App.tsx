@@ -13,6 +13,7 @@ import { UserStats } from '@/entities/user/model/types';
 import { sectionApi } from '@/entities/section/api/sectionApi';
 import { userApi } from '@/entities/user/api/userApi';
 import { apiClient } from '@/shared/api/client';
+import { xpEventBus } from '@/shared/lib/xpEvents';
 import '@/shared/styles/global.scss';
 import styles from './App.module.scss';
 
@@ -91,6 +92,50 @@ export const App: React.FC = () => {
     loadSections();
     loadUser();
     loadStats();
+
+    // Real-time XP & Stats listener: updates header immediately upon every single answer/card
+    const unsubscribe = xpEventBus.subscribe((detail) => {
+      setStats(prev => {
+        const currentXp = prev?.xp ?? 0;
+        const newXp = detail.totalXp ?? (currentXp + detail.xpReward);
+        const streak = detail.streak ?? (prev?.streak ?? 1);
+
+        const level = Math.floor(Math.sqrt(newXp / 50)) + 1;
+        const currentBase = Math.pow(level - 1, 2) * 50;
+        const nextBase = Math.pow(level, 2) * 50;
+        const progressXP = newXp - currentBase;
+        const neededXP = nextBase - currentBase;
+        const levelPercent = Math.min(100, Math.round((progressXP / neededXP) * 100));
+
+        setCurrentUser(prevUser => {
+          if (!prevUser) return prevUser;
+          return {
+            ...prevUser,
+            xp: newXp,
+            streak,
+            level
+          };
+        });
+
+        return {
+          ...prev,
+          xp: newXp,
+          streak,
+          level,
+          levelPercent,
+          progressXP,
+          neededXP,
+          correctAnswered: (prev?.correctAnswered ?? 0) + 1,
+          totalAnswered: (prev?.totalAnswered ?? 0) + 1,
+          accuracy: prev?.totalAnswered
+            ? Math.round(((prev.correctAnswered + 1) / (prev.totalAnswered + 1)) * 100)
+            : 100,
+          sectionBreakdown: prev?.sectionBreakdown || []
+        } as UserStats;
+      });
+    });
+
+    return unsubscribe;
   }, []);
 
   const handleAuthSuccess = (user: AuthUser) => {

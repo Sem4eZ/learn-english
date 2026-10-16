@@ -44,13 +44,9 @@ function getUserFromReq(req) {
     }
   }
 
-  // Fallback to x-user-id header
-  const customId = req.headers['x-user-id'];
-  if (customId) {
-    return db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(customId);
-  }
-
-  return null;
+  // Fallback to x-user-id header or user_default
+  const customId = req.headers['x-user-id'] || 'user_default';
+  return db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(customId);
 }
 
 function register(req, res) {

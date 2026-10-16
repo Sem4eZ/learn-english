@@ -2,7 +2,8 @@ const db = require('../db/schema');
 
 function recordAnswer(req, res) {
   try {
-    const { userId = 'user_default', questionId, selectedIndex } = req.body;
+    const userId = req.headers['x-user-id'] || req.body.userId || 'user_default';
+    const { questionId, selectedIndex } = req.body;
 
     if (!questionId || selectedIndex === undefined) {
       return res.status(400).json({ success: false, error: 'questionId and selectedIndex are required' });

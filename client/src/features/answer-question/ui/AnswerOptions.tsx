@@ -11,6 +11,7 @@ import { Question, AnswerResult } from '@/entities/question/model/types';
 import { questionApi } from '@/entities/question/api/questionApi';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { xpEventBus } from '@/shared/lib/xpEvents';
 import styles from './AnswerOptions.module.scss';
 
 const { Text, Paragraph } = Typography;
@@ -50,6 +51,14 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
       } else {
         soundEffects.playWrong();
       }
+
+      // Real-time XP & stats emission for immediate header update
+      xpEventBus.emit({
+        xpReward: res.xpEarned || 5,
+        totalXp: res.totalXp,
+        streak: res.streak,
+        source: 'quiz_question'
+      });
 
       onAnswerSubmitted?.(res);
     } catch (err) {

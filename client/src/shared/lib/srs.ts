@@ -4,6 +4,7 @@
  */
 
 import { apiClient } from '../api/client';
+import { xpEventBus } from './xpEvents';
 
 export type SrsGrade = 1 | 2 | 3 | 4;
 
@@ -123,7 +124,16 @@ export class SRSEngine {
 
   static async syncReviewWithServer(wordId: number | string, grade: SrsGrade): Promise<any> {
     try {
-      return await apiClient.post('/dictionary/review', { wordId, grade });
+      const res: any = await apiClient.post('/dictionary/review', { wordId, grade });
+      if (res?.success && res?.data) {
+        xpEventBus.emit({
+          xpReward: res.data.xpEarned || 10,
+          totalXp: res.data.totalXp,
+          streak: res.data.streak,
+          source: 'srs_review'
+        });
+      }
+      return res;
     } catch (err) {
       // Offline / network fallback is fine
       return null;

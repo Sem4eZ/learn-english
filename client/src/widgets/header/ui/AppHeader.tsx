@@ -38,9 +38,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onOpenAuth,
   onLogout
 }) => {
-  const xp = stats?.xp || currentUser?.xp || 0;
-  const streak = stats?.streak || currentUser?.streak || 1;
-  const level = stats?.level || currentUser?.level || 1;
+  const xp = stats?.xp ?? currentUser?.xp ?? 0;
+  const streak = stats?.streak ?? currentUser?.streak ?? 1;
+  const level = stats?.level ?? currentUser?.level ?? 1;
 
   const isGuest = !currentUser || currentUser.isGuest;
 
