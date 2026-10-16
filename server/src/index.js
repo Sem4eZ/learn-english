@@ -37,8 +37,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
+// Health check (supports Render /healthz and /api/health)
+app.get(['/api/health', '/healthz'], (req, res) => {
   res.json({ status: 'ok', service: 'Fluentiq API', timestamp: new Date().toISOString() });
 });
 
