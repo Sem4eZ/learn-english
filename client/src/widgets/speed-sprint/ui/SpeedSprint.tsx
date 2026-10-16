@@ -12,6 +12,7 @@ import {
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './SpeedSprint.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -137,6 +138,11 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
       soundEffects.playWrong();
       setCombo(0);
       setFeedback('wrong');
+    }
+
+    // Sync SRS review in background
+    if (currentPair?.item) {
+      SRSEngine.syncReviewWithServer(currentPair.item.id, isCorrect ? 3 : 1);
     }
 
     // Quick reset feedback and next card

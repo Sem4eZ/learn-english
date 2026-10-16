@@ -7,6 +7,7 @@ export const dictionaryApi = {
     if (params.sectionId && params.sectionId !== 'all') query.append('sectionId', params.sectionId);
     if (params.level && params.level !== 'all') query.append('level', params.level);
     if (params.favoritesOnly) query.append('favoritesOnly', 'true');
+    if (params.mode) query.append('mode', params.mode);
     if (params.page) query.append('page', params.page.toString());
     if (params.limit) query.append('limit', params.limit.toString());
 

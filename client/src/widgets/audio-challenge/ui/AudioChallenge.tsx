@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './AudioChallenge.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -112,6 +113,10 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
       setScore(prev => prev + 20);
     } else {
       soundEffects.playWrong();
+    }
+
+    if (currentItem?.id) {
+      SRSEngine.syncReviewWithServer(currentItem.id, isMatch ? 3 : 1);
     }
   };
 

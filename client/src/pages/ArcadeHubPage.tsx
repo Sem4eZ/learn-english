@@ -84,6 +84,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
       const res = await dictionaryApi.getDictionary({
         level: selectedLevel,
         sectionId: selectedSection,
+        mode: 'practice',
         limit: 150
       });
       setWords(res.data);

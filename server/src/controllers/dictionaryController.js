@@ -8,7 +8,9 @@ async function getDictionary(req, res) {
       sectionId = '', 
       level = '', 
       favoritesOnly = 'false',
-      page = 1,
+      mode = 'all',
+      userId = 'guest_user',
+      page = 1, 
       limit = 30 
     } = req.query;
 
@@ -20,59 +22,82 @@ async function getDictionary(req, res) {
     let params = [];
 
     if (search.trim()) {
-      whereClauses.push('(word LIKE ? OR translation LIKE ? OR definition LIKE ? OR example_sentence LIKE ?)');
+      whereClauses.push('(d.word LIKE ? OR d.translation LIKE ? OR d.definition LIKE ? OR d.example_sentence LIKE ?)');
       const pattern = `%${search.trim()}%`;
       params.push(pattern, pattern, pattern, pattern);
     }
 
     if (sectionId && sectionId !== 'all') {
-      whereClauses.push('section_id = ?');
+      whereClauses.push('d.section_id = ?');
       params.push(sectionId);
     }
 
     if (level && level !== 'all') {
-      whereClauses.push('level = ?');
+      whereClauses.push('d.level = ?');
       params.push(level);
     }
 
     if (favoritesOnly === 'true' || favoritesOnly === '1') {
-      whereClauses.push('is_favorite = 1');
+      whereClauses.push('d.is_favorite = 1');
+    }
+
+    let joinSql = '';
+    let orderBySql = 'ORDER BY d.id DESC';
+
+    if (mode === 'practice') {
+      joinSql = 'LEFT JOIN srs_reviews s ON s.word_id = d.id AND s.user_id = ?';
+      // A word is eligible for practice if:
+      // 1. It is brand new (never reviewed, s.id IS NULL)
+      // 2. OR its repetition interval has elapsed (due_date <= now)
+      whereClauses.push(`(s.id IS NULL OR datetime('now') >= datetime(s.due_date))`);
+      orderBySql = `
+        ORDER BY 
+          CASE WHEN s.id IS NULL THEN 0 ELSE 1 END ASC,
+          s.due_date ASC,
+          d.id DESC
+      `;
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-    const countStmt = db.prepare(`SELECT COUNT(*) as total FROM dictionary ${whereSql}`);
-    let countRow = countStmt.get(...params);
+    const countParams = mode === 'practice' ? [userId, ...params] : [...params];
+    const countStmt = db.prepare(`SELECT COUNT(*) as total FROM dictionary d ${joinSql} ${whereSql}`);
+    let countRow = countStmt.get(...countParams);
     let total = countRow ? countRow.total : 0;
 
     // Smart Auto-Enrichment:
-    // If user is not performing a text search and not filtering favorites,
-    // and the available words in DB for this level/category are fewer than 40:
+    // If available practice words in DB are fewer than 30:
     // automatically generate and persist a fresh batch of 35 words!
     const isFilteredSearch = Boolean(search.trim()) || favoritesOnly === 'true' || favoritesOnly === '1';
-    if (!isFilteredSearch && total < 40) {
+    if (!isFilteredSearch && total < 30) {
       const targetLevel = (level && level !== 'all') ? level : 'A1';
       const targetSection = (sectionId && sectionId !== 'all') ? sectionId : 'general';
       const countToGenerate = 35;
 
-      console.log(`[Auto-Enrichment] Found only ${total} words for level "${targetLevel}" (category: "${targetSection}"). Requesting generation to replenish DB (+${countToGenerate})...`);
+      console.log(`[Auto-Enrichment] Found only ${total} words eligible for practice in level "${targetLevel}". Requesting generation (+${countToGenerate})...`);
       try {
         await geminiService.generateVocabulary(targetLevel, targetSection, countToGenerate);
-        countRow = countStmt.get(...params);
+        countRow = countStmt.get(...countParams);
         total = countRow ? countRow.total : 0;
-        console.log(`[Auto-Enrichment] Database replenished! New total words for criteria: ${total}`);
+        console.log(`[Auto-Enrichment] Database replenished! New total eligible words: ${total}`);
       } catch (genErr) {
         console.warn('[Auto-Enrichment] Warning during background word generation:', genErr.message);
       }
     }
 
+    const listParams = mode === 'practice' 
+      ? [userId, ...params, limitNum, offset] 
+      : [...params, limitNum, offset];
+
     const listStmt = db.prepare(`
-      SELECT * FROM dictionary
+      SELECT d.*, s.grade as srs_grade, s.reps as srs_reps, s.due_date as srs_due_date, s.interval as srs_interval
+      FROM dictionary d
+      ${joinSql}
       ${whereSql}
-      ORDER BY id DESC
+      ${orderBySql}
       LIMIT ? OFFSET ?
     `);
-    const data = listStmt.all(...params, limitNum, offset);
+    const data = listStmt.all(...listParams);
 
     res.json({
       success: true,
@@ -164,12 +189,14 @@ function recordSrsReview(req, res) {
       nextIntervalDays = 0;
     } else {
       if (reps === 0) {
-        nextIntervalDays = gradeNum === 4 ? 3 : 1;
+        // First correct answer: 1-3 days break before next repetition
+        nextIntervalDays = gradeNum === 4 ? 3 : (gradeNum === 3 ? 2 : 1);
       } else if (reps === 1) {
-        nextIntervalDays = gradeNum === 4 ? 6 : gradeNum === 3 ? 4 : 2;
+        // Second correct answer: 3-6 days break
+        nextIntervalDays = gradeNum === 4 ? 6 : (gradeNum === 3 ? 4 : 3);
       } else {
         const factor = gradeNum === 4 ? ef * 1.25 : gradeNum === 2 ? 1.15 : ef;
-        nextIntervalDays = Math.max(1, Math.round(interval * factor));
+        nextIntervalDays = Math.max(2, Math.round(interval * factor));
       }
       reps += 1;
     }
@@ -181,6 +208,7 @@ function recordSrsReview(req, res) {
     } else {
       dueDate.setDate(dueDate.getDate() + nextIntervalDays);
     }
+    const formattedDueDate = dueDate.toISOString().replace('T', ' ').substring(0, 19);
 
     db.prepare(`
       INSERT INTO srs_reviews (user_id, word_id, grade, reps, interval, ef, due_date, reviewed_at)
@@ -192,7 +220,7 @@ function recordSrsReview(req, res) {
         ef = excluded.ef,
         due_date = excluded.due_date,
         reviewed_at = excluded.reviewed_at
-    `).run(userId, wordId, gradeNum, reps, nextIntervalDays, ef, dueDate.toISOString());
+    `).run(userId, wordId, gradeNum, reps, nextIntervalDays, ef, formattedDueDate);
 
     // Award XP
     const xpReward = gradeNum === 4 ? 25 : gradeNum === 3 ? 15 : gradeNum === 2 ? 10 : 5;

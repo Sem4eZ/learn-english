@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Progress, Tag, Space, Typography } from 'antd';
+import { Card, Button, Progress, Tag, Space, Typography, Segmented } from 'antd';
 import { 
   SoundOutlined, 
   CheckOutlined, 
@@ -14,6 +14,7 @@ import {
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './VocabQuiz.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -43,6 +44,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   onNeedMore
 }) => {
   const [direction, setDirection] = useState<'en-ru' | 'ru-en'>(initialDirection);
+  const [roundMode, setRoundMode] = useState<'15' | 'all'>('15');
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
@@ -55,7 +57,12 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   const usedWordIdsRef = React.useRef<Set<number>>(new Set());
 
   // Build questions
-  const generateQuestions = (wordList: DictionaryItem[], dir: 'en-ru' | 'ru-en', preferUnused = true) => {
+  const generateQuestions = (
+    wordList: DictionaryItem[], 
+    dir: 'en-ru' | 'ru-en', 
+    preferUnused = true,
+    mode: '15' | 'all' = roundMode
+  ) => {
     if (wordList.length === 0) return [];
 
     let availableWords = preferUnused
@@ -71,7 +78,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     }
 
     const shuffledWords = [...availableWords].sort(() => 0.5 - Math.random());
-    const count = Math.min(shuffledWords.length, 15);
+    const count = mode === 'all' ? shuffledWords.length : Math.min(shuffledWords.length, 15);
     const selectedTargets = shuffledWords.slice(0, count);
 
     selectedTargets.forEach(t => usedWordIdsRef.current.add(t.id));
@@ -100,7 +107,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
 
   useEffect(() => {
     if (questions.length === 0 && words.length > 0) {
-      const qs = generateQuestions(words, direction);
+      const qs = generateQuestions(words, direction, true, roundMode);
       setQuestions(qs);
       setCurrentIndex(0);
       setSelectedOptionId(null);
@@ -111,6 +118,20 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
       setIsFinished(false);
     }
   }, [words, direction]);
+
+  const handleRoundModeChange = (modeVal: string | number) => {
+    const newMode = modeVal === 'all' ? 'all' : '15';
+    setRoundMode(newMode);
+    const qs = generateQuestions(words, direction, true, newMode);
+    setQuestions(qs);
+    setCurrentIndex(0);
+    setSelectedOptionId(null);
+    setIsAnswered(false);
+    setScore(0);
+    setCombo(0);
+    setMaxCombo(0);
+    setIsFinished(false);
+  };
 
   const currentQ = questions[currentIndex];
 
@@ -131,11 +152,14 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
       setCombo(0);
     }
 
-    // Pronounce English word automatically
+    // Pronounce English word automatically and sync SRS review
     if (currentQ) {
       soundEffects.speak(currentQ.targetWord.word);
+      // Grade 3 (Хорошо) postpones word for 1-3 days; Grade 1 (Снова) schedules for repeat in session
+      SRSEngine.syncReviewWithServer(currentQ.targetWord.id, isCorrect ? 3 : 1);
     }
 
+    // Proactively request next batch of words when remaining questions < 5
     const remaining = questions.length - (currentIndex + 1);
     if (remaining < 5) {
       onNeedMore?.();
@@ -214,6 +238,20 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
         <Paragraph type="secondary">
           Точность ответов: <Text strong>{accuracy}%</Text> • Макс. комбо: <Tag color="warning"><FireFilled /> {maxCombo}</Tag>
         </Paragraph>
+        <div style={{
+          margin: '16px auto',
+          maxWidth: 520,
+          padding: '12px 18px',
+          background: 'rgba(99, 102, 241, 0.08)',
+          borderRadius: 12,
+          border: '1px solid rgba(99, 102, 241, 0.25)',
+          color: '#e2e8f0',
+          fontSize: '0.92rem',
+          lineHeight: 1.5,
+          textAlign: 'left'
+        }}>
+          💡 <Text strong style={{ color: '#818cf8' }}>Интервальное повторение:</Text> слова, на которые вы ответили верно, запланированы на повторение через 1–3 дня для надежного закрепления. Сейчас вам будут предложены новые свежие слова!
+        </div>
         <Paragraph>
           <Tag color="cyan" style={{ fontSize: '1.05rem', padding: '4px 12px' }}>
             <ThunderboltFilled /> +{xpEarned} XP получено
@@ -234,14 +272,14 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
               boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
             }}
           >
-            Изучить новые слова
+            Изучить следующие слова (+15)
           </Button>
 
           <Button
             size="large"
             icon={<RedoOutlined />}
             onClick={() => {
-              const qs = generateQuestions(words, direction, false);
+              const qs = generateQuestions(words, direction, false, roundMode);
               setQuestions(qs);
               setCurrentIndex(0);
               setSelectedOptionId(null);
@@ -271,10 +309,10 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
 
   return (
     <div className={styles.quizContainer}>
-      {/* Top Bar with direction, score and streak */}
+      {/* Top Bar with direction, round mode, score and streak */}
       <div>
         <div className={styles.topBar}>
-          <Space>
+          <Space wrap size="middle">
             <Text type="secondary" strong>
               Вопрос {currentIndex + 1} из {questions.length}
             </Text>
@@ -286,6 +324,16 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
             >
               {direction === 'en-ru' ? 'EN ➔ RU' : 'RU ➔ EN'}
             </Button>
+            <Segmented
+              size="small"
+              value={roundMode}
+              onChange={handleRoundModeChange}
+              disabled={isAnswered}
+              options={[
+                { label: 'По 15 слов', value: '15' },
+                { label: `Все (${words.length})`, value: 'all' }
+              ]}
+            />
           </Space>
 
           <Space>

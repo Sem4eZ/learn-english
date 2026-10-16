@@ -13,6 +13,7 @@ import {
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './WordBuilder.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -158,9 +159,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         soundEffects.playCorrect();
         setIsCorrect(true);
         setScore(prev => prev + 1);
+        SRSEngine.syncReviewWithServer(currentWord.id, 3);
       } else {
         soundEffects.playWrong();
         setIsCorrect(false);
+        SRSEngine.syncReviewWithServer(currentWord.id, 1);
       }
     }
   };

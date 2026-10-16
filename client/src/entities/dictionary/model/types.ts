@@ -11,6 +11,10 @@ export interface DictionaryItem {
   section_id?: string;
   is_favorite: number;
   created_at: string;
+  srs_grade?: number;
+  srs_reps?: number;
+  srs_due_date?: string;
+  srs_interval?: number;
 }
 
 export interface DictionaryFilterParams {
@@ -18,6 +22,7 @@ export interface DictionaryFilterParams {
   sectionId?: string;
   level?: string;
   favoritesOnly?: boolean;
+  mode?: 'practice' | 'all';
   page?: number;
   limit?: number;
 }
