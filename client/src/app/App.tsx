@@ -59,17 +59,17 @@ export const App: React.FC = () => {
   }, [isDark]);
 
   // Fetch sections
-  const loadSections = async () => {
+  const loadSections = React.useCallback(async () => {
     try {
       const data = await sectionApi.getSections();
       setSections(data);
     } catch (err: any) {
       console.error('Failed to load sections:', err);
     }
-  };
+  }, []);
 
   // Fetch current user auth info
-  const loadUser = async () => {
+  const loadUser = React.useCallback(async () => {
     if (apiClient.isOfflineMode()) return;
     try {
       const res: any = await apiClient.get('/auth/me');
@@ -79,17 +79,17 @@ export const App: React.FC = () => {
     } catch (err) {
       console.error('Failed to load user info:', err);
     }
-  };
+  }, []);
 
   // Fetch user stats
-  const loadStats = async () => {
+  const loadStats = React.useCallback(async () => {
     try {
       const data = await userApi.getStats();
       setStats(data);
     } catch (err) {
       console.error('Failed to load user stats:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadSections();
