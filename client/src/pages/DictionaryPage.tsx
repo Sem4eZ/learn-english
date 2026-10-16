@@ -28,7 +28,6 @@ import {
 } from '@ant-design/icons';
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
-import { apiClient } from '@/shared/api/client';
 import { soundEffects } from '@/shared/lib/audio';
 import { FlashcardDeck, FlashcardItem } from '@/widgets/flashcard-deck/ui/FlashcardDeck';
 import { VocabQuiz } from '@/widgets/vocab-quiz/ui/VocabQuiz';
@@ -117,17 +116,17 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
     }
     setGenerating(true);
     try {
-      const res: any = await apiClient.post('/dictionary/generate', {
-        level: selectedLevel !== 'all' ? selectedLevel : 'B1',
-        sectionId: selectedSection !== 'all' ? selectedSection : 'general',
-        count: 25
-      });
+      const res = await dictionaryApi.generateWords(
+        selectedLevel !== 'all' ? selectedLevel : 'B1',
+        selectedSection !== 'all' ? selectedSection : 'general',
+        25
+      );
       if (res.success) {
         message.success(res.message || 'Словарь пополнен новыми словами!');
         setPage(1);
         fetchWords(search, 1, pageSize);
       } else {
-        message.error(res.error || 'Не удалось пополнить словарь');
+        message.error('Не удалось пополнить словарь');
       }
     } catch (err: any) {
       message.error(err.message || 'Ошибка пополнения словаря');

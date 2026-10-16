@@ -3,7 +3,7 @@
  * Calculates optimal intervals for long-term memory retention.
  */
 
-import { apiClient } from '../api/client';
+import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
 import { xpEventBus } from './xpEvents';
 
 export type SrsGrade = 1 | 2 | 3 | 4;
@@ -123,15 +123,8 @@ export class SRSEngine {
   }
 
   static async syncReviewWithServer(wordId: number | string, grade: SrsGrade): Promise<any> {
-    if (apiClient.isOfflineMode()) {
-      xpEventBus.emit({
-        xpReward: 10,
-        source: 'srs_review'
-      });
-      return null;
-    }
     try {
-      const res: any = await apiClient.post('/dictionary/review', { wordId, grade });
+      const res: any = await dictionaryApi.reviewWord(Number(wordId), grade);
       if (res?.success && res?.data) {
         xpEventBus.emit({
           xpReward: res.data.xpEarned || 10,
@@ -142,7 +135,11 @@ export class SRSEngine {
       }
       return res;
     } catch (err) {
-      // Offline / network fallback is fine
+      // Offline fallback event
+      xpEventBus.emit({
+        xpReward: 10,
+        source: 'srs_review'
+      });
       return null;
     }
   }

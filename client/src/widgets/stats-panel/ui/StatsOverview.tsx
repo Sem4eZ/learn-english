@@ -33,16 +33,16 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
   if (!stats) return null;
 
   const level = stats.level || 1;
-  const rankTitle = stats.rankTitle || 'Практик (Practitioner)';
+  const rankTitle = stats.rankTitle || 'Новичок (Novice)';
   const progressPercent = stats.levelPercent || 0;
-  const accuracy = stats.accuracy || 0;
+  const accuracy = stats.accuracy ?? 100;
 
   // Words dynamics
   const wordsToday = stats.wordsToday || 0;
   const wordsThisWeek = stats.wordsThisWeek || 0;
   const wordsThisMonth = stats.wordsThisMonth || 0;
   const totalWordsLearned = stats.totalWordsLearned || 0;
-  const totalDictWords = stats.totalDictWords || 709;
+  const totalDictWords = stats.totalDictWords || 0;
   const totalDictPercent = totalDictWords > 0 ? Math.round((totalWordsLearned / totalDictWords) * 100) : 0;
 
   // SRS Stages

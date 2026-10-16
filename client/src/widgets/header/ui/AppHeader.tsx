@@ -10,14 +10,11 @@ import {
   UserOutlined,
   LogoutOutlined,
   SwapOutlined,
-  ApiOutlined,
   MenuOutlined,
-  SettingOutlined,
   RightOutlined
 } from '@ant-design/icons';
 import { UserStats } from '@/entities/user/model/types';
 import { AuthUser } from '@/features/auth/ui/AuthModal';
-import { apiClient } from '@/shared/api/client';
 import styles from './AppHeader.module.scss';
 
 const { Header } = Layout;
@@ -31,7 +28,6 @@ interface AppHeaderProps {
   currentUser?: AuthUser | null;
   onOpenAuth?: () => void;
   onLogout?: () => void;
-  onOpenBackendConfig?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -43,11 +39,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   currentUser,
   onOpenAuth,
   onLogout,
-  onOpenBackendConfig
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isOffline = apiClient.isOfflineMode();
   const xp = stats?.xp ?? currentUser?.xp ?? 0;
   const streak = stats?.streak ?? currentUser?.streak ?? 1;
   const level = stats?.level ?? currentUser?.level ?? 1;
@@ -112,7 +106,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </div>
           </div>
 
-          {/* Desktop Navigation Links (Hidden on tablet/mobile < 992px) */}
+          {/* Desktop Navigation Links (Hidden on tablet/mobile < 960px) */}
           <div className={styles.desktopNav}>
             <Space size="middle">
               <Button
@@ -146,7 +140,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </Space>
           </div>
 
-          {/* Desktop Stats & User Widgets (Hidden on mobile < 768px) */}
+          {/* Desktop Stats & User Profile (Hidden on mobile < 768px) */}
           <div className={styles.desktopControls}>
             <Space size="small">
               <Tag color="warning" className={styles.statTag}>
@@ -186,20 +180,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </Dropdown>
               )}
 
-              {/* Backend API Configuration Button */}
-              <Button
-                type={isOffline ? 'default' : 'text'}
-                icon={<ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a' }} />}
-                onClick={onOpenBackendConfig}
-                title={isOffline ? 'Бэкенд: Офлайн / Демо (Нажмите для настройки)' : `Бэкенд: Подключен (${apiClient.getApiUrl()})`}
-                size="middle"
-                className={isOffline ? styles.apiBtnWarning : styles.apiBtnSuccess}
-              >
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: isOffline ? '#faad14' : '#52c41a' }}>
-                  {isOffline ? 'Демо' : 'API'}
-                </span>
-              </Button>
-
               <Button
                 type="text"
                 shape="circle"
@@ -212,23 +192,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           {/* Mobile Quick Controls (< 768px) */}
           <div className={styles.mobileControls}>
-            {/* Directly clickable API button on mobile - NEVER hidden */}
-            <Button
-              type={isOffline ? 'dashed' : 'text'}
-              size="small"
-              icon={<ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a' }} />}
-              onClick={onOpenBackendConfig}
-              className={styles.mobileApiBtn}
-              title={isOffline ? 'Настроить API сервер' : 'API подключен'}
-            >
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isOffline ? '#faad14' : '#52c41a' }}>
-                {isOffline ? '⚠️ Демо' : '🟢 API'}
-              </span>
-            </Button>
-
             {/* Quick XP Tag on mobile */}
             <Tag color="cyan" className={styles.mobileStatPill}>
               ⚡ {xp}
+            </Tag>
+
+            {/* Quick Streak Tag on mobile */}
+            <Tag color="warning" className={styles.mobileStatPill}>
+              🔥 {streak}
             </Tag>
 
             {/* Theme Toggle */}
@@ -325,41 +296,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               </div>
             )}
           </div>
-        </div>
-
-        <Divider style={{ margin: '14px 0' }} />
-
-        {/* Backend API Configuration Card */}
-        <div className={styles.drawerApiCard}>
-          <div className={styles.drawerApiHeader}>
-            <div className={styles.drawerApiTitle}>
-              <ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a', marginRight: 6 }} />
-              Подключение к бэкенду
-            </div>
-            <Tag color={isOffline ? 'orange' : 'green'}>
-              {isOffline ? 'Офлайн' : 'Онлайн'}
-            </Tag>
-          </div>
-          <div className={styles.drawerApiDesc}>
-            {isOffline 
-              ? 'Используется демо-база. Подключите Render для облачной БД Turso и AI!'
-              : `Сервер: ${apiClient.getApiUrl()}`
-            }
-          </div>
-          <Button
-            type="primary"
-            ghost
-            block
-            size="middle"
-            icon={<SettingOutlined />}
-            onClick={() => {
-              setDrawerOpen(false);
-              onOpenBackendConfig?.();
-            }}
-            style={{ marginTop: 8 }}
-          >
-            Настроить адрес API
-          </Button>
         </div>
 
         <Divider style={{ margin: '14px 0' }} />

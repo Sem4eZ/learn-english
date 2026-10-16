@@ -345,56 +345,63 @@ export const FALLBACK_WORDS: DictionaryItem[] = [
   }
 ];
 
-export const FALLBACK_USER_STATS: UserStats = {
+export const INITIAL_USER_STATS: UserStats = {
   user: {
-    id: 'user_default',
-    username: 'Learner',
-    email: 'learner@example.com',
-    xp: 120,
-    streak: 2
+    id: 'guest',
+    username: 'Гость',
+    xp: 0,
+    streak: 0,
   },
-  xp: 120,
-  level: 2,
-  levelPercent: 40,
-  progressXP: 20,
+  xp: 0,
+  level: 1,
+  levelPercent: 0,
+  progressXP: 0,
   neededXP: 50,
-  streak: 2,
-  totalAnswered: 24,
-  correctAnswered: 21,
-  accuracy: 88,
-  rankTitle: 'Elementary (A2)',
-  wordsToday: 8,
-  wordsThisWeek: 20,
-  totalWordsLearned: 15,
-  totalDictWords: 20,
-  masteredWords: 8,
-  reviewWords: 5,
-  learningWords: 7,
-  newWords: 5,
-  sectionBreakdown: [
-    { id: 'grammar', title: 'Грамматика', attempted: 10, correct: 9 },
-    { id: 'tech_it', title: 'IT & Software', attempted: 8, correct: 7 },
-    { id: 'travel', title: 'Путешествия', attempted: 6, correct: 5 }
+  streak: 0,
+  totalAnswered: 0,
+  correctAnswered: 0,
+  accuracy: 100,
+  rankTitle: 'Новичок (Novice)',
+  wordsToday: 0,
+  wordsThisWeek: 0,
+  wordsThisMonth: 0,
+  totalWordsLearned: 0,
+  totalDictWords: 0,
+  masteredWords: 0,
+  reviewWords: 0,
+  learningWords: 0,
+  newWords: 0,
+  grammarTotal: 0,
+  grammarCorrect: 0,
+  grammarAccuracy: 100,
+  vocabTotal: 0,
+  vocabCorrect: 0,
+  vocabAccuracy: 100,
+  sectionBreakdown: [],
+  cefrBreakdown: [],
+  weeklyActivity: [],
+  trainerBreakdown: [
+    {
+      id: 'vocab',
+      name: 'Словарные карточки & Квизы',
+      icon: 'ReadOutlined',
+      attempted: 0,
+      correct: 0,
+      accuracy: 100,
+    },
+    {
+      id: 'grammar',
+      name: 'Грамматические тесты',
+      icon: 'FormOutlined',
+      attempted: 0,
+      correct: 0,
+      accuracy: 100,
+    },
   ],
-  cefrBreakdown: [
-    { level: 'A1', count: 8, total: 8, percent: 100 },
-    { level: 'A2', count: 6, total: 8, percent: 75 },
-    { level: 'B1', count: 4, total: 8, percent: 50 },
-    { level: 'B2', count: 2, total: 5, percent: 40 }
-  ],
-  weeklyActivity: [
-    { day: 'Пн', date: '2026-10-12', xp: 30, count: 6, words: 4 },
-    { day: 'Вт', date: '2026-10-13', xp: 20, count: 4, words: 3 },
-    { day: 'Ср', date: '2026-10-14', xp: 40, count: 8, words: 5 },
-    { day: 'Чт', date: '2026-10-15', xp: 15, count: 3, words: 2 },
-    { day: 'Пт', date: '2026-10-16', xp: 15, count: 3, words: 1, isToday: true }
-  ],
-  badges: [
-    { id: 'first_step', title: 'Первый шаг', desc: 'Завершите первое упражнение', unlocked: true, icon: '🎯' },
-    { id: 'vocabulary_builder', title: 'Эрудит', desc: 'Изучите 10 слов', unlocked: true, icon: '📚' },
-    { id: 'streak_master', title: 'Огонь', desc: 'Серия 3 дня подряд', unlocked: false, icon: '🔥' }
-  ]
+  badges: [],
 };
+
+export const FALLBACK_USER_STATS: UserStats = INITIAL_USER_STATS;
 
 export const FALLBACK_QUESTIONS: Question[] = [
   {
