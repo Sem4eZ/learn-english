@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Tabs, Form, Input, Button, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { apiClient } from '@/shared/api/client';
+import { useLoginMutation, useRegisterMutation, authSession } from '../api/authApi';
 import styles from './AuthModal.module.scss';
 
 const { Title, Text } = Typography;
@@ -27,16 +27,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }
   const [loginForm] = Form.useForm();
   const [registerForm] = Form.useForm();
 
+  const [loginMutation] = useLoginMutation();
+  const [registerMutation] = useRegisterMutation();
+
   const handleLogin = async (values: any) => {
     setLoading(true);
     try {
-      const res: any = await apiClient.post('/auth/login', {
+      const res = await loginMutation({
         username: values.username.trim(),
         password: values.password
-      });
+      }).unwrap();
 
       if (res.success && res.token && res.user) {
-        apiClient.setAuth(res.token, res.user.id);
+        authSession.setAuth(res.token, res.user.id);
         message.success(`С возвращением, ${res.user.username}!`);
         onSuccess(res.user);
         onClose();
@@ -45,7 +48,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }
         message.error(res.error || 'Ошибка входа');
       }
     } catch (err: any) {
-      message.error(err.message || 'Не удалось войти');
+      message.error(err.data?.error || err.message || 'Не удалось войти');
     } finally {
       setLoading(false);
     }
@@ -54,13 +57,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }
   const handleRegister = async (values: any) => {
     setLoading(true);
     try {
-      const res: any = await apiClient.post('/auth/register', {
+      const res = await registerMutation({
         username: values.username.trim(),
         password: values.password
-      });
+      }).unwrap();
 
       if (res.success && res.token && res.user) {
-        apiClient.setAuth(res.token, res.user.id);
+        authSession.setAuth(res.token, res.user.id);
         message.success(`Добро пожаловать в Fluentiq, ${res.user.username}!`);
         onSuccess(res.user);
         onClose();
@@ -69,7 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }
         message.error(res.error || 'Ошибка регистрации');
       }
     } catch (err: any) {
-      message.error(err.message || 'Не удалось зарегистрироваться');
+      message.error(err.data?.error || err.message || 'Не удалось зарегистрироваться');
     } finally {
       setLoading(false);
     }

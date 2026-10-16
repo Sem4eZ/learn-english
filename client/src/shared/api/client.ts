@@ -1,9 +1,9 @@
+import { API_BASE_URL } from '@/shared/config';
+
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
   skipCache?: boolean;
 }
-
-const DEFAULT_PRODUCTION_API_URL = 'https://learn-english-bfqg.onrender.com';
 
 // In-memory cache for fast tab-switching and zero-latency repeat requests
 interface CacheEntry<T> {
@@ -16,7 +16,7 @@ class ApiClient {
   private cache = new Map<string, CacheEntry<any>>();
 
   constructor() {
-    // Warm up the Render backend in the background so it is ready immediately
+    // Warm up the cloud backend in the background
     this.warmUpBackend();
   }
 
@@ -30,23 +30,7 @@ class ApiClient {
   }
 
   private getBaseUrl(): string {
-    // 1. Check if an environment variable is defined in .env / .env.production
-    const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl) {
-      if (envUrl.startsWith('/')) return envUrl; // dev proxy relative URL
-      return envUrl.replace(/\/$/, '') + (envUrl.endsWith('/api') ? '' : '/api');
-    }
-
-    // 2. Check if running on localhost for local development
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname;
-      if (host === 'localhost' || host === '127.0.0.1') {
-        return '/api';
-      }
-    }
-
-    // 3. Default to the live Render Cloud backend with Turso Database
-    return `${DEFAULT_PRODUCTION_API_URL}/api`;
+    return API_BASE_URL;
   }
 
   getApiUrl(): string {

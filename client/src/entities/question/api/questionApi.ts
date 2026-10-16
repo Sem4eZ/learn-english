@@ -1,35 +1,84 @@
-import { apiClient } from '@/shared/api/client';
+import { baseApi } from '@/shared/api/baseApi';
 import { Question, QuestionsResponse, AnswerResult } from '../model/types';
 import { FALLBACK_QUESTIONS } from '@/shared/lib/fallbackData';
-import { xpEventBus } from '@/shared/lib/xpEvents';
+import { store } from '@/app/store';
+
+export const questionApiSlice = baseApi.injectEndpoints({
+  endpoints: (builder) => ({
+    getQuestions: builder.query<
+      QuestionsResponse,
+      { sectionId: string; level?: string; page?: number; limit?: number }
+    >({
+      query: (params) => ({
+        url: '/questions',
+        params,
+      }),
+      transformResponse: (res: {
+        success: boolean;
+        data: Question[];
+        pagination: QuestionsResponse['pagination'];
+      }) => ({
+        data: res.data || [],
+        pagination: res.pagination,
+      }),
+      providesTags: ['Questions'],
+    }),
+
+    generateBatch: builder.mutation<
+      Question[],
+      { sectionId: string; level?: string; count?: number; customTopic?: string }
+    >({
+      query: (body) => ({
+        url: '/questions/generate',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (res: { success: boolean; data: Question[] }) => res.data || [],
+      invalidatesTags: ['Questions'],
+    }),
+
+    submitAnswer: builder.mutation<
+      AnswerResult,
+      { questionId: number; selectedIndex: number }
+    >({
+      query: (body) => ({
+        url: '/progress/answer',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (res: { success: boolean; data: AnswerResult }) => res.data,
+      invalidatesTags: ['Stats', 'History', 'Questions'],
+    }),
+  }),
+});
+
+export const {
+  useGetQuestionsQuery,
+  useGenerateBatchMutation,
+  useSubmitAnswerMutation,
+} = questionApiSlice;
 
 export const questionApi = {
+  ...questionApiSlice,
+
   async getQuestions(params: {
     sectionId: string;
     level?: string;
     page?: number;
     limit?: number;
   }): Promise<QuestionsResponse> {
-    if (!apiClient.isOfflineMode()) {
-      try {
-        const res = await apiClient.get<{
-          success: boolean;
-          data: Question[];
-          pagination: QuestionsResponse['pagination'];
-        }>('/questions', params);
-
-        if (res && res.data && res.data.length > 0) {
-          return {
-            data: res.data,
-            pagination: res.pagination,
-          };
-        }
-      } catch (err) {
-        console.warn('Backend unavailable, using fallback questions:', err);
+    try {
+      const res = await store.dispatch(
+        questionApiSlice.endpoints.getQuestions.initiate(params, { forceRefetch: true })
+      ).unwrap();
+      if (res && res.data && res.data.length > 0) {
+        return res;
       }
+    } catch (err) {
+      console.warn('[questionApi] Backend query failed, using fallback questions:', err);
     }
 
-    // Resilient offline fallback for GitHub Pages
+    // Fallback if backend is unavailable
     let filtered = [...FALLBACK_QUESTIONS];
     if (params.sectionId && params.sectionId !== 'all') {
       const match = filtered.filter(q => q.section_id === params.sectionId);
@@ -62,13 +111,13 @@ export const questionApi = {
     count?: number;
     customTopic?: string;
   }): Promise<Question[]> {
-    if (!apiClient.isOfflineMode()) {
-      try {
-        const res = await apiClient.post<{ success: boolean; data: Question[] }>('/questions/generate', params);
-        if (res && res.data) return res.data;
-      } catch (err) {
-        console.warn('Backend generate unavailable, using fallback questions:', err);
-      }
+    try {
+      const res = await store.dispatch(
+        questionApiSlice.endpoints.generateBatch.initiate(params)
+      ).unwrap();
+      if (res && res.length > 0) return res;
+    } catch (err) {
+      console.warn('[questionApi] Generate failed, using fallback questions:', err);
     }
     return FALLBACK_QUESTIONS;
   },
@@ -77,36 +126,26 @@ export const questionApi = {
     questionId: number;
     selectedIndex: number;
   }): Promise<AnswerResult> {
-    if (!apiClient.isOfflineMode()) {
-      try {
-        const res = await apiClient.post<{ success: boolean; data: AnswerResult }>('/progress/answer', params);
-        if (res && res.data) return res.data;
-      } catch (err) {
-        console.warn('Backend unavailable, processing answer locally:', err);
-      }
+    try {
+      const res = await store.dispatch(
+        questionApiSlice.endpoints.submitAnswer.initiate(params)
+      ).unwrap();
+      if (res) return res;
+    } catch (err) {
+      console.warn('[questionApi] Submit answer backend error:', err);
     }
 
-    // Local evaluation for GitHub Pages
     const q = FALLBACK_QUESTIONS.find(item => item.id === params.questionId) || FALLBACK_QUESTIONS[0];
     const isCorrect = q.correct_index === params.selectedIndex;
-    const xpReward = isCorrect ? 20 : 5;
-
-    // Trigger local XP event bus
-    xpEventBus.emit({
-      xpReward,
-      source: 'grammar',
-      streak: 2
-    });
-
     return {
       isCorrect,
       correctIndex: q.correct_index ?? 0,
       explanation: q.explanation || (isCorrect ? 'Верно!' : 'Неверно, попробуйте еще раз.'),
       grammarRule: q.grammar_rule,
       pronunciationTip: q.pronunciation_tip,
-      xpEarned: xpReward,
-      totalXp: 140,
-      streak: 2
+      xpEarned: isCorrect ? 20 : 5,
+      totalXp: 0,
+      streak: 1,
     };
   },
 };

@@ -12,7 +12,8 @@ import { Section } from '@/entities/section/model/types';
 import { UserStats } from '@/entities/user/model/types';
 import { sectionApi } from '@/entities/section/api/sectionApi';
 import { userApi } from '@/entities/user/api/userApi';
-import { apiClient } from '@/shared/api/client';
+import { authSession } from '@/features/auth/api/authApi';
+import { INITIAL_USER_STATS } from '@/shared/lib/fallbackData';
 import { xpEventBus } from '@/shared/lib/xpEvents';
 import '@/shared/styles/global.scss';
 import styles from './App.module.scss';
@@ -69,7 +70,7 @@ export const App: React.FC = () => {
   // Fetch current authenticated user
   const loadUser = React.useCallback(async () => {
     try {
-      const res: any = await apiClient.get('/auth/me');
+      const res: any = await userApi.getMe();
       if (res && res.success && res.authenticated && res.user) {
         setCurrentUser(res.user);
       } else {
@@ -149,8 +150,9 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    apiClient.clearAuth();
+    authSession.clearAuth();
     setCurrentUser(null);
+    setStats(INITIAL_USER_STATS);
     message.info('Вы вышли из аккаунта');
     loadUser();
     loadStats();

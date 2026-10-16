@@ -1,31 +1,69 @@
-import { apiClient } from '@/shared/api/client';
+import { baseApi } from '@/shared/api/baseApi';
 import { UserStats, HistoryItem } from '../model/types';
-import { FALLBACK_USER_STATS } from '@/shared/lib/fallbackData';
+import { INITIAL_USER_STATS } from '@/shared/lib/fallbackData';
+import { store } from '@/app/store';
+
+export const userApiSlice = baseApi.injectEndpoints({
+  endpoints: (builder) => ({
+    getUserStats: builder.query<UserStats, void>({
+      query: () => '/progress/stats',
+      transformResponse: (res: { success: boolean; data: UserStats }) => res.data || INITIAL_USER_STATS,
+      providesTags: ['Stats'],
+    }),
+    getHistory: builder.query<HistoryItem[], { mistakesOnly?: boolean } | void>({
+      query: (params) => ({
+        url: '/progress/history',
+        params: params?.mistakesOnly ? { mistakesOnly: true } : undefined,
+      }),
+      transformResponse: (res: { success: boolean; data: HistoryItem[] }) => res.data || [],
+      providesTags: ['History'],
+    }),
+    getMe: builder.query<{ success: boolean; authenticated: boolean; user?: any }, void>({
+      query: () => '/auth/me',
+      providesTags: ['User'],
+    }),
+  }),
+});
+
+export const {
+  useGetUserStatsQuery,
+  useGetHistoryQuery,
+  useGetMeQuery,
+} = userApiSlice;
 
 export const userApi = {
+  ...userApiSlice,
   async getStats(): Promise<UserStats> {
-    if (!apiClient.isOfflineMode()) {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: UserStats }>('/progress/stats');
-        if (res && res.data) return res.data;
-      } catch (err) {
-        console.warn('Backend unavailable, using local stats:', err);
-      }
+    try {
+      const res = await store.dispatch(
+        userApiSlice.endpoints.getUserStats.initiate(undefined, { forceRefetch: true })
+      ).unwrap();
+      return res || INITIAL_USER_STATS;
+    } catch (err) {
+      console.warn('[userApi] Failed to load user stats from server:', err);
+      return INITIAL_USER_STATS;
     }
-    return FALLBACK_USER_STATS;
   },
 
   async getHistory(mistakesOnly = false): Promise<HistoryItem[]> {
-    if (!apiClient.isOfflineMode()) {
-      try {
-        const res = await apiClient.get<{ success: boolean; data: HistoryItem[] }>('/progress/history', {
-          mistakesOnly,
-        });
-        if (res && res.data) return res.data;
-      } catch (err) {
-        console.warn('Backend unavailable, returning empty history:', err);
-      }
+    try {
+      const res = await store.dispatch(
+        userApiSlice.endpoints.getHistory.initiate({ mistakesOnly }, { forceRefetch: true })
+      ).unwrap();
+      return res || [];
+    } catch (err) {
+      console.warn('[userApi] Failed to load history from server:', err);
+      return [];
     }
-    return [];
+  },
+
+  async getMe() {
+    try {
+      return await store.dispatch(
+        userApiSlice.endpoints.getMe.initiate(undefined, { forceRefetch: true })
+      ).unwrap();
+    } catch (err) {
+      return { success: false, authenticated: false };
+    }
   },
 };
