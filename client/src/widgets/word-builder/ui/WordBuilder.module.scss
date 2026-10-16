@@ -17,8 +17,8 @@
 .targetCard {
   border-radius: $radius-xl !important;
   padding: 32px 24px;
-  background: rgba(30, 27, 75, 0.6) !important;
-  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  background: var(--trainer-card-bg) !important;
+  border: 1px solid var(--trainer-card-border) !important;
   text-align: center;
   box-shadow: $shadow-card;
 }
@@ -26,13 +26,13 @@
 .meaningText {
   font-size: 1.8rem;
   font-weight: 800;
-  color: #38bdf8;
+  color: $primary-color;
   margin-bottom: 8px;
 }
 
 .contextSub {
   font-size: 0.95rem;
-  opacity: 0.8;
+  color: var(--trainer-prompt-color);
   font-style: italic;
   max-width: 520px;
   margin: 0 auto 12px;
@@ -40,7 +40,7 @@
 
 .assemblyArea {
   min-height: 84px;
-  border: 2px dashed rgba(99, 102, 241, 0.4);
+  border: 2px dashed rgba(99, 102, 241, 0.35);
   border-radius: $radius-lg;
   padding: 16px 20px;
   display: flex;
@@ -48,7 +48,7 @@
   gap: 10px;
   justify-content: center;
   align-items: center;
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--trainer-opt-bg);
   transition: $transition-smooth;
 
   &.correct {

@@ -275,7 +275,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <Spin size="large" />
-              <div style={{ marginTop: 16, color: 'rgba(255, 255, 255, 0.75)', fontSize: '1rem' }}>
+              <div style={{ marginTop: 16, color: 'var(--hub-desc-color)', fontSize: '1rem' }}>
                 ⚡ Загрузка слов для уровня <b>{selectedLevel === 'all' ? 'Все уровни' : selectedLevel}</b>...
               </div>
             </div>

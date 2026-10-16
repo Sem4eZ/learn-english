@@ -245,7 +245,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
           background: 'rgba(99, 102, 241, 0.08)',
           borderRadius: 12,
           border: '1px solid rgba(99, 102, 241, 0.25)',
-          color: '#e2e8f0',
+          color: 'inherit',
           fontSize: '0.92rem',
           lineHeight: 1.5,
           textAlign: 'left'

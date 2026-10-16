@@ -43,6 +43,18 @@ export const App: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    const themeName = isDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', themeName);
+    if (isDark) {
+      document.body.classList.remove('theme-light');
+      document.body.classList.add('theme-dark');
+    } else {
+      document.body.classList.remove('theme-dark');
+      document.body.classList.add('theme-light');
+    }
+  }, [isDark]);
+
   // Fetch sections
   const loadSections = async () => {
     try {

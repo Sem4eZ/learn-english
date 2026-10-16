@@ -11,12 +11,12 @@
   transition: $transition-smooth;
 
   &.dark {
-    background: $header-bg-dark;
+    background: $header-bg-dark !important;
     border-bottom: 1px solid $border-dark;
   }
 
   &.light {
-    background: $header-bg-light;
+    background: $header-bg-light !important;
     border-bottom: 1px solid $border-light;
   }
 }

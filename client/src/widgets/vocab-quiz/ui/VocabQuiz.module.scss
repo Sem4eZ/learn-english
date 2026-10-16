@@ -17,8 +17,8 @@
 .questionCard {
   border-radius: $radius-xl !important;
   padding: 32px 24px;
-  background: rgba(30, 27, 75, 0.6) !important;
-  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  background: var(--trainer-card-bg) !important;
+  border: 1px solid var(--trainer-card-border) !important;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -32,7 +32,7 @@
 .targetWord {
   font-size: 2.2rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--trainer-word-color);
   margin-bottom: 6px;
   line-height: 1.25;
 }
@@ -46,7 +46,7 @@
 
 .promptSub {
   font-size: 0.95rem;
-  opacity: 0.75;
+  color: var(--trainer-prompt-color);
 }
 
 .soundBtn {
@@ -76,9 +76,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid rgba(99, 102, 241, 0.25) !important;
-  background: rgba(15, 23, 42, 0.6) !important;
-  color: #f8fafc !important;
+  border: 1px solid var(--trainer-opt-border) !important;
+  background: var(--trainer-opt-bg) !important;
+  color: var(--trainer-opt-color) !important;
   transition: $transition-smooth;
   white-space: normal !important;
   line-height: 1.4;
@@ -86,21 +86,21 @@
   &:hover:not(:disabled) {
     transform: translateY(-2px);
     border-color: $primary-color !important;
-    background: rgba(99, 102, 241, 0.15) !important;
+    background: rgba(99, 102, 241, 0.12) !important;
   }
 
   &.correctOption {
     background: rgba(16, 185, 129, 0.2) !important;
     border-color: $success-color !important;
-    color: #34d399 !important;
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+    color: #10b981 !important;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
   }
 
   &.wrongOption {
     background: rgba(239, 68, 68, 0.2) !important;
     border-color: $danger-color !important;
-    color: #f87171 !important;
-    box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+    color: #ef4444 !important;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.25);
   }
 }
 
@@ -111,7 +111,8 @@
   width: 26px;
   height: 26px;
   border-radius: $radius-full;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(99, 102, 241, 0.12);
+  color: $primary-color;
   font-size: 0.85rem;
   font-weight: 700;
   margin-right: 10px;

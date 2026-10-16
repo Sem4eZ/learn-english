@@ -37,8 +37,8 @@
   border-radius: $radius-xl !important;
   padding: 40px 24px;
   text-align: center;
-  background: rgba(30, 27, 75, 0.65) !important;
-  border: 2px solid rgba(99, 102, 241, 0.3) !important;
+  background: var(--trainer-card-bg) !important;
+  border: 2px solid var(--trainer-card-border) !important;
   box-shadow: $shadow-card;
   transition: border-color 0.15s ease, background-color 0.15s ease;
   min-height: 260px;
@@ -70,20 +70,20 @@
 .wordDisplay {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--trainer-word-color);
   margin-bottom: 12px;
 }
 
 .translationDisplay {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #38bdf8;
+  color: $primary-color;
   margin-bottom: 8px;
 }
 
 .pairHint {
   font-size: 0.9rem;
-  opacity: 0.6;
+  color: var(--trainer-prompt-color);
 }
 
 .controlsGrid {

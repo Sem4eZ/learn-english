@@ -14,6 +14,49 @@ html, body {
   overflow-x: hidden;
 }
 
+// Surface & Card Theme Custom Properties
+:root, [data-theme="dark"] {
+  --hub-card-bg: rgba(30, 27, 75, 0.5);
+  --hub-card-border: rgba(99, 102, 241, 0.25);
+  --hub-card-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.25);
+  --hub-filter-bg: rgba(30, 27, 75, 0.4);
+  --hub-filter-border: rgba(99, 102, 241, 0.2);
+  --hub-icon-bg: rgba(99, 102, 241, 0.15);
+  --hub-icon-border: rgba(99, 102, 241, 0.3);
+  --hub-title-color: #ffffff;
+  --hub-desc-color: rgba(255, 255, 255, 0.75);
+  --hub-divider-color: rgba(255, 255, 255, 0.08);
+
+  --trainer-card-bg: rgba(30, 27, 75, 0.6);
+  --trainer-card-border: rgba(99, 102, 241, 0.3);
+  --trainer-word-color: #ffffff;
+  --trainer-prompt-color: rgba(255, 255, 255, 0.75);
+  --trainer-opt-bg: rgba(255, 255, 255, 0.04);
+  --trainer-opt-border: rgba(255, 255, 255, 0.1);
+  --trainer-opt-color: #ffffff;
+}
+
+[data-theme="light"], .theme-light {
+  --hub-card-bg: #ffffff;
+  --hub-card-border: rgba(99, 102, 241, 0.16);
+  --hub-card-shadow: 0 6px 24px -4px rgba(99, 102, 241, 0.08);
+  --hub-filter-bg: #ffffff;
+  --hub-filter-border: rgba(99, 102, 241, 0.2);
+  --hub-icon-bg: rgba(99, 102, 241, 0.08);
+  --hub-icon-border: rgba(99, 102, 241, 0.2);
+  --hub-title-color: #0f172a;
+  --hub-desc-color: #475569;
+  --hub-divider-color: rgba(0, 0, 0, 0.06);
+
+  --trainer-card-bg: #ffffff;
+  --trainer-card-border: rgba(99, 102, 241, 0.2);
+  --trainer-word-color: #0f172a;
+  --trainer-prompt-color: #475569;
+  --trainer-opt-bg: #ffffff;
+  --trainer-opt-border: #e2e8f0;
+  --trainer-opt-color: #0f172a;
+}
+
 // Custom Scrollbar
 ::-webkit-scrollbar {
   width: 8px;
