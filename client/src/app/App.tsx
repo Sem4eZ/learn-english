@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, message } from 'antd';
+import { Layout, message, Spin } from 'antd';
 import { AntdConfigProvider } from './providers/AntdConfigProvider';
 import { AppHeader } from '@/widgets/header/ui/AppHeader';
 import { ArcadeHubPage } from '@/pages/ArcadeHubPage';
@@ -8,7 +8,6 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { GenerateBatchModal } from '@/features/generate-ai-batch/ui/GenerateBatchModal';
 import { AuthModal, AuthUser } from '@/features/auth/ui/AuthModal';
-import { BackendConfigModal } from '@/features/backend-config/ui/BackendConfigModal';
 import { Section } from '@/entities/section/model/types';
 import { UserStats } from '@/entities/user/model/types';
 import { sectionApi } from '@/entities/section/api/sectionApi';
@@ -25,14 +24,13 @@ export const App: React.FC = () => {
     return localStorage.getItem('fluentiq_theme') !== 'light' && localStorage.getItem('lexiflow_theme') !== 'light';
   });
 
-  // Default homepage is now the interactive Trainers Hub ('arcade')
+  // Default homepage is the interactive Trainers Hub ('arcade')
   const [activeTab, setActiveTab] = useState<string>('arcade');
 
   const [sections, setSections] = useState<Section[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
-  const [backendModalOpen, setBackendModalOpen] = useState<boolean>(false);
 
   const [generateModalOpen, setGenerateModalOpen] = useState<boolean>(false);
   const [targetSectionForGen, setTargetSectionForGen] = useState<string>('grammar');
@@ -58,7 +56,7 @@ export const App: React.FC = () => {
     }
   }, [isDark]);
 
-  // Fetch sections
+  // Fetch sections with automatic in-memory caching
   const loadSections = React.useCallback(async () => {
     try {
       const data = await sectionApi.getSections();
@@ -68,12 +66,11 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Fetch current user auth info
+  // Fetch current authenticated user
   const loadUser = React.useCallback(async () => {
-    if (apiClient.isOfflineMode()) return;
     try {
       const res: any = await apiClient.get('/auth/me');
-      if (res.success && res.authenticated && res.user) {
+      if (res && res.success && res.authenticated && res.user) {
         setCurrentUser(res.user);
       } else {
         setCurrentUser(null);
@@ -171,7 +168,6 @@ export const App: React.FC = () => {
           currentUser={currentUser}
           onOpenAuth={() => setAuthModalOpen(true)}
           onLogout={handleLogout}
-          onOpenBackendConfig={() => setBackendModalOpen(true)}
         />
 
         <Content className={styles.content}>
@@ -222,16 +218,6 @@ export const App: React.FC = () => {
           open={authModalOpen}
           onClose={() => setAuthModalOpen(false)}
           onSuccess={handleAuthSuccess}
-        />
-
-        {/* Backend Configuration Modal */}
-        <BackendConfigModal
-          open={backendModalOpen}
-          onClose={() => setBackendModalOpen(false)}
-          onConnected={() => {
-            loadSections();
-            loadStats();
-          }}
         />
       </Layout>
     </AntdConfigProvider>

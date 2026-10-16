@@ -1,22 +1,52 @@
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
+  skipCache?: boolean;
+}
+
+const DEFAULT_PRODUCTION_API_URL = 'https://learn-english-bfqg.onrender.com';
+
+// In-memory cache for fast tab-switching and zero-latency repeat requests
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttlMs: number;
 }
 
 class ApiClient {
-  private getBaseUrl(): string {
-    const customUrl = localStorage.getItem('fluentiq_api_url');
-    if (customUrl) return customUrl.replace(/\/$/, '') + (customUrl.endsWith('/api') ? '' : '/api');
-    const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl) return envUrl.replace(/\/$/, '') + (envUrl.endsWith('/api') ? '' : '/api');
-    return '/api';
+  private cache = new Map<string, CacheEntry<any>>();
+
+  constructor() {
+    // Warm up the Render backend in the background so it is ready immediately
+    this.warmUpBackend();
   }
 
-  setApiUrl(url: string) {
-    if (url) {
-      localStorage.setItem('fluentiq_api_url', url.trim());
-    } else {
-      localStorage.removeItem('fluentiq_api_url');
+  private warmUpBackend() {
+    if (typeof window === 'undefined') return;
+    const base = this.getBaseUrl();
+    // Non-blocking ping
+    setTimeout(() => {
+      fetch(`${base}/health`, { mode: 'cors' }).catch(() => {});
+    }, 100);
+  }
+
+  private getBaseUrl(): string {
+    // 1. Check if an environment variable is defined in .env / .env.production
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) {
+      if (envUrl.startsWith('/')) return envUrl; // dev proxy relative URL
+      return envUrl.replace(/\/$/, '') + (envUrl.endsWith('/api') ? '' : '/api');
     }
+
+    // 2. Check if running on localhost for local development
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') {
+        return '/api';
+      }
+    }
+
+    // 3. Default to the live Render Cloud backend with Turso Database
+    return `${DEFAULT_PRODUCTION_API_URL}/api`;
   }
 
   getApiUrl(): string {
@@ -24,36 +54,50 @@ class ApiClient {
   }
 
   isOfflineMode(): boolean {
-    if (localStorage.getItem('fluentiq_api_url')) return false;
-    if (import.meta.env.VITE_API_URL) return false;
-    if (typeof window !== 'undefined') {
-      const host = window.location.hostname;
-      if (host.endsWith('github.io')) return true;
-    }
+    // All environments now connect directly to the live cloud backend by default
     return false;
   }
 
   private getUserId(): string | null {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem('fluentiq_user_id') || localStorage.getItem('lexiflow_user_id') || null;
   }
 
   private getToken(): string | null {
+    if (typeof window === 'undefined') return null;
     return localStorage.getItem('fluentiq_token');
   }
 
   setAuth(token: string, userId: string) {
+    if (typeof window === 'undefined') return;
     localStorage.setItem('fluentiq_token', token);
     localStorage.setItem('fluentiq_user_id', userId);
+    this.clearCache(); // Invalidate cache on user switch
   }
 
   clearAuth() {
+    if (typeof window === 'undefined') return;
     localStorage.removeItem('fluentiq_token');
     localStorage.removeItem('fluentiq_user_id');
     localStorage.removeItem('lexiflow_user_id');
+    this.clearCache();
+  }
+
+  clearCache(pattern?: string) {
+    if (!pattern) {
+      this.cache.clear();
+      return;
+    }
+    for (const key of this.cache.keys()) {
+      if (key.includes(pattern)) {
+        this.cache.delete(key);
+      }
+    }
   }
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { params, headers, ...rest } = options;
+    const { params, headers, skipCache = false, ...rest } = options;
+    const isGet = !rest.method || rest.method.toUpperCase() === 'GET';
     let url = `${this.getBaseUrl()}${endpoint}`;
 
     if (params) {
@@ -66,6 +110,15 @@ class ApiClient {
       const queryStr = searchParams.toString();
       if (queryStr) {
         url += (url.includes('?') ? '&' : '?') + queryStr;
+      }
+    }
+
+    // Check memory cache for GET requests
+    const cacheKey = `${url}:${this.getUserId() || 'guest'}`;
+    if (isGet && !skipCache) {
+      const cached = this.cache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < cached.ttlMs) {
+        return cached.data as T;
       }
     }
 
@@ -84,21 +137,61 @@ class ApiClient {
       reqHeaders['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(url, {
-      headers: reqHeaders,
-      ...rest,
-    });
+    // Auto-retry up to 2 times on cold starts (502, 503, 504 from spin-down)
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(url, {
+          headers: reqHeaders,
+          ...rest,
+        });
 
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error ${res.status}`);
+        // If server is spinning up (502, 503, 504), wait and retry cleanly
+        if ((res.status === 502 || res.status === 503 || res.status === 504) && attempt < 3) {
+          await new Promise(r => setTimeout(r, attempt * 1200));
+          continue;
+        }
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP error ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // Cache successful GET results
+        if (isGet) {
+          // Sections cached for 5 min, dictionary/stats for 45 sec
+          const ttlMs = endpoint.startsWith('/sections') ? 300000 : 45000;
+          this.cache.set(cacheKey, {
+            data,
+            timestamp: Date.now(),
+            ttlMs
+          });
+        } else {
+          // On mutations (POST/PUT/DELETE), invalidate relevant caches
+          if (endpoint.includes('dictionary') || endpoint.includes('progress')) {
+            this.clearCache('/dictionary');
+            this.clearCache('/progress');
+          }
+        }
+
+        return data as T;
+      } catch (err: any) {
+        lastError = err;
+        if (attempt < 3 && (err.message?.includes('502') || err.message?.includes('503') || err.message?.includes('Failed to fetch'))) {
+          await new Promise(r => setTimeout(r, attempt * 1200));
+          continue;
+        }
+        break;
+      }
     }
 
-    return res.json();
+    throw lastError;
   }
 
-  get<T>(endpoint: string, params?: Record<string, string | number | boolean | undefined>) {
-    return this.request<T>(endpoint, { method: 'GET', params });
+  get<T>(endpoint: string, params?: Record<string, string | number | boolean | undefined>, skipCache = false) {
+    return this.request<T>(endpoint, { method: 'GET', params, skipCache });
   }
 
   post<T>(endpoint: string, body?: any) {
