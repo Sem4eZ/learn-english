@@ -54,8 +54,8 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
     }
   }, [propSections]);
 
-  const handleNeedMoreWords = useCallback(async (count = 35) => {
-    if (isReplenishingRef.current) return;
+  const handleNeedMoreWords = useCallback(async (count = 35): Promise<DictionaryItem[]> => {
+    if (isReplenishingRef.current) return [];
     const targetLevel = selectedLevel !== 'all' ? selectedLevel : 'A1';
     const targetSection = selectedSection !== 'all' ? selectedSection : 'general';
     isReplenishingRef.current = true;
@@ -67,9 +67,12 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
           const fresh = res.data.filter(w => !existingIds.has(w.id));
           return [...prev, ...fresh];
         });
+        return res.data;
       }
+      return [];
     } catch (err) {
       console.warn('Silent auto-replenishment note:', err);
+      return [];
     } finally {
       isReplenishingRef.current = false;
     }
@@ -141,6 +144,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
       if (xpEarned > 0) {
         onRefreshStats?.();
       }
+      fetchWords();
     } catch (err) {
       console.error('Failed to update stats:', err);
     }

@@ -155,9 +155,32 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
           Вы отлично потренировали интервальные повторения: усвоено {knownCount} из {items.length} слов ({accuracy}%).
           Заработано <strong>+{totalXpEarned} XP</strong>.
         </Paragraph>
-        <Space size="middle" className={styles.summaryActions}>
+        <Space size="middle" className={styles.summaryActions} wrap>
           <Button
             type="primary"
+            size="large"
+            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
+            onClick={() => {
+              onNeedMore?.();
+              onRefresh?.();
+              setDeck(items);
+              setCurrentIndex(0);
+              setIsFlipped(false);
+              setKnownCount(0);
+              setTotalXpEarned(0);
+              setIsFinished(false);
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              borderColor: '#6366f1',
+              fontWeight: 700,
+              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+            }}
+          >
+            Изучить новые слова
+          </Button>
+
+          <Button
             size="large"
             icon={<RedoOutlined />}
             onClick={() => {
@@ -171,22 +194,6 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
             className={styles.btnAction}
           >
             Повторить колоду
-          </Button>
-          <Button
-            size="large"
-            onClick={() => {
-              onNeedMore?.();
-              onRefresh?.();
-              setDeck(items);
-              setCurrentIndex(0);
-              setIsFlipped(false);
-              setKnownCount(0);
-              setTotalXpEarned(0);
-              setIsFinished(false);
-            }}
-            className={styles.btnAction}
-          >
-            Следующие карточки
           </Button>
         </Space>
       </Card>

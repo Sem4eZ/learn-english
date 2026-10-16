@@ -237,11 +237,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
           </Tag>
         </Paragraph>
 
-        <Space size="middle" style={{ marginTop: 24 }}>
+        <Space size="middle" style={{ marginTop: 24 }} wrap>
           <Button
             type="primary"
             size="large"
-            icon={<ArrowRightOutlined />}
+            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
             onClick={() => {
               const batch = pickBatchWords(words, true);
               setExerciseWords(batch);
@@ -251,8 +251,14 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               setIsFinished(false);
               setupWord(batch[0]);
             }}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              borderColor: '#6366f1',
+              fontWeight: 700,
+              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+            }}
           >
-            Следующие 10 слов
+            Изучить новые слова
           </Button>
 
           <Button

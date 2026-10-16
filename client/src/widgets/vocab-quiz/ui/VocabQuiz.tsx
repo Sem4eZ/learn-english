@@ -23,7 +23,7 @@ export interface VocabQuizProps {
   initialDirection?: 'en-ru' | 'ru-en';
   onComplete?: (score: number, total: number, xpEarned: number) => void;
   onClose?: () => void;
-  onNeedMore?: () => void;
+  onNeedMore?: () => Promise<DictionaryItem[]> | void;
 }
 
 interface QuestionItem {
@@ -51,6 +51,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   const [combo, setCombo] = useState<number>(0);
   const [maxCombo, setMaxCombo] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [loadingNext, setLoadingNext] = useState<boolean>(false);
   const usedWordIdsRef = React.useRef<Set<number>>(new Set());
 
   // Build questions
@@ -158,6 +159,38 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     setDirection(prev => (prev === 'en-ru' ? 'ru-en' : 'en-ru'));
   };
 
+  const handleLearnNewWords = async () => {
+    let currentWords = words;
+    let unstudied = currentWords.filter(w => !usedWordIdsRef.current.has(w.id));
+
+    if (unstudied.length < 15 && onNeedMore) {
+      setLoadingNext(true);
+      try {
+        const fresh = await onNeedMore();
+        if (fresh && fresh.length > 0) {
+          const existingIds = new Set(currentWords.map(w => w.id));
+          const brandNew = fresh.filter(w => !existingIds.has(w.id));
+          currentWords = [...currentWords, ...brandNew];
+        }
+      } catch (err) {
+        console.warn('Failed to load next words:', err);
+      } finally {
+        setLoadingNext(false);
+      }
+    }
+
+    const qs = generateQuestions(currentWords, direction, true);
+    if (qs.length > 0) {
+      setQuestions(qs);
+      setCurrentIndex(0);
+      setSelectedOptionId(null);
+      setIsAnswered(false);
+      setScore(0);
+      setCombo(0);
+      setIsFinished(false);
+    }
+  };
+
   if (!words || words.length < 2) {
     return (
       <Card className={styles.summaryCard}>
@@ -187,23 +220,21 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
           </Tag>
         </Paragraph>
 
-        <Space size="middle" style={{ marginTop: 24 }}>
+        <Space size="middle" style={{ marginTop: 24 }} wrap>
           <Button
             type="primary"
             size="large"
-            icon={<ArrowRightOutlined />}
-            onClick={() => {
-              const qs = generateQuestions(words, direction, true);
-              setQuestions(qs);
-              setCurrentIndex(0);
-              setSelectedOptionId(null);
-              setIsAnswered(false);
-              setScore(0);
-              setCombo(0);
-              setIsFinished(false);
+            loading={loadingNext}
+            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
+            onClick={handleLearnNewWords}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              borderColor: '#6366f1',
+              fontWeight: 700,
+              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
             }}
           >
-            Следующие 15 заданий
+            Изучить новые слова
           </Button>
 
           <Button
@@ -220,7 +251,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
               setIsFinished(false);
             }}
           >
-            Повторить
+            Пройти снова
           </Button>
 
           {onClose && (

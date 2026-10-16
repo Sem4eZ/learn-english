@@ -147,11 +147,11 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
         <Paragraph type="secondary">
           Заработано <Tag color="cyan">+{score} XP</Tag> за понимание на слух!
         </Paragraph>
-        <Space size="middle">
+        <Space size="middle" wrap>
           <Button
             type="primary"
             size="large"
-            icon={<ArrowRightOutlined />}
+            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
             onClick={() => {
               onNeedMore?.();
               onRefresh?.();
@@ -159,8 +159,14 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
               setScore(0);
               setIsFinished(false);
             }}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              borderColor: '#6366f1',
+              fontWeight: 700,
+              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+            }}
           >
-            Следующие задания
+            Изучить новые задания
           </Button>
           <Button
             size="large"
