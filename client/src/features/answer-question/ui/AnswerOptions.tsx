@@ -19,13 +19,11 @@ const { Text, Paragraph } = Typography;
 interface AnswerOptionsProps {
   question: Question;
   onAnswerSubmitted?: (result: AnswerResult) => void;
-  onNext?: () => void;
 }
 
 export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
   question,
   onAnswerSubmitted,
-  onNext,
 }) => {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [result, setResult] = useState<AnswerResult | null>(null);
@@ -150,14 +148,6 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
                 <Text type="secondary" className={styles.phoneticsTip}>
                   💡 Фонетика: {result.pronunciationTip}
                 </Text>
-              )}
-
-              {onNext && (
-                <div className={styles.nextButtonWrapper}>
-                  <Button type="primary" size="large" onClick={onNext} className={styles.nextButton}>
-                    Следующий вопрос ➔
-                  </Button>
-                </div>
               )}
             </Space>
           </Card>

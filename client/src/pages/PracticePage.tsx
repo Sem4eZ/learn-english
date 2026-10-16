@@ -201,15 +201,6 @@ export const PracticePage: React.FC<PracticePageProps> = ({
               onAnswerSubmitted={() => {
                 onRefreshStats();
               }}
-              onNext={() => {
-                const cards = document.querySelectorAll('.ant-card');
-                const nextCard = cards[idx + 1];
-                if (nextCard) {
-                  nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else {
-                  handlePageChange(page + 1);
-                }
-              }}
             />
           ))}
 

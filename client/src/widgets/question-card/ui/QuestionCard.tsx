@@ -12,14 +12,12 @@ interface QuestionCardProps {
   question: Question;
   questionNumber: number;
   onAnswerSubmitted?: (result: AnswerResult) => void;
-  onNext?: () => void;
 }
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
   questionNumber,
   onAnswerSubmitted,
-  onNext,
 }) => {
   return (
     <Card
@@ -67,7 +65,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       <AnswerOptions
         question={question}
         onAnswerSubmitted={onAnswerSubmitted}
-        onNext={onNext}
       />
     </Card>
   );
