@@ -23,9 +23,10 @@ describe('Spaced Repetition (SRS) Engine Test Suite', () => {
     testWord3 = words[2];
     testWord4 = words[3];
 
-    // Ensure clean state for test user
+    // Ensure clean state and register test user
     db.prepare('DELETE FROM srs_reviews WHERE user_id = ?').run(TEST_USER);
     db.prepare('DELETE FROM users WHERE id = ?').run(TEST_USER);
+    db.prepare('INSERT INTO users (id, username, xp, streak) VALUES (?, ?, 0, 1)').run(TEST_USER, 'TestSRSUser');
   });
 
   it('1. Grade 1 ("Again" / forgot): Resets reps to 0, interval to 0 days, due in 10 minutes', async () => {
@@ -139,9 +140,9 @@ describe('Spaced Repetition (SRS) Engine Test Suite', () => {
     assert.ok(review.ef >= 1.3, `Ease factor should be >= 1.3, got ${review.ef}`);
   });
 
-  it('9. User auto-creation: Reviewing a word automatically initializes user record in DB', async () => {
+  it('9. User progress tracking: Reviewing words increments user XP in DB', async () => {
     const userRow = db.prepare('SELECT * FROM users WHERE id = ?').get(TEST_USER);
-    assert.ok(userRow, 'User must be automatically created in users table');
+    assert.ok(userRow, 'User must exist in users table');
     assert.ok(userRow.xp > 0, 'User must have earned XP');
   });
 

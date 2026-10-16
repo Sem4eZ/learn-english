@@ -73,11 +73,15 @@ export const App: React.FC = () => {
     if (apiClient.isOfflineMode()) return;
     try {
       const res: any = await apiClient.get('/auth/me');
-      if (res.success && res.user) {
+      if (res.success && res.authenticated && res.user) {
         setCurrentUser(res.user);
+      } else {
+        setCurrentUser(null);
+        setAuthModalOpen(true);
       }
     } catch (err) {
-      console.error('Failed to load user info:', err);
+      setCurrentUser(null);
+      setAuthModalOpen(true);
     }
   }, []);
 
@@ -174,12 +178,18 @@ export const App: React.FC = () => {
           {activeTab === 'arcade' && (
             <ArcadeHubPage
               sections={sections}
+              currentUser={currentUser}
+              onRequireAuth={() => setAuthModalOpen(true)}
               onRefreshStats={loadStats}
             />
           )}
 
           {activeTab === 'dictionary' && (
-            <DictionaryPage onRefreshStats={loadStats} />
+            <DictionaryPage 
+              currentUser={currentUser}
+              onRequireAuth={() => setAuthModalOpen(true)}
+              onRefreshStats={loadStats} 
+            />
           )}
 
           {activeTab === 'stats' && (

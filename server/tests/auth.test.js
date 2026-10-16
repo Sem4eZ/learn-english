@@ -258,23 +258,24 @@ describe('Authentication & Security Test Suite', () => {
     assert.strictEqual(body.user.isGuest, false);
   });
 
-  it('17. Me: Forged / tampered token gracefully falls back without crashing', async () => {
+  it('17. Me: Forged / tampered token gracefully returns unauthenticated without crashing', async () => {
     const res = await fetch(`${BASE_URL}/auth/me`, {
       headers: { Authorization: `Bearer INVALID_FORGED_TOKEN_DATA` }
     });
     assert.strictEqual(res.status, 200);
     const body = await res.json();
     assert.strictEqual(body.success, true);
-    // Should fallback to default/guest user
-    assert.ok(body.user);
+    assert.strictEqual(body.authenticated, false);
+    assert.strictEqual(body.user, null);
   });
 
-  it('18. Me: Request without any auth headers returns guest user', async () => {
+  it('18. Me: Request without any auth headers returns unauthenticated state cleanly', async () => {
     const res = await fetch(`${BASE_URL}/auth/me`);
     assert.strictEqual(res.status, 200);
     const body = await res.json();
     assert.strictEqual(body.success, true);
-    assert.ok(body.user);
+    assert.strictEqual(body.authenticated, false);
+    assert.strictEqual(body.user, null);
   });
 
   it('19. Me: Custom x-user-id header resolves corresponding user', async () => {

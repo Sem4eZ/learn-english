@@ -5,13 +5,18 @@
  * Sections curriculum, Server Health, and Progress Tracking.
  */
 
-const { describe, it } = require('node:test');
+const { describe, it, before } = require('node:test');
 const assert = require('node:assert/strict');
 const db = require('../src/db/schema');
 
 const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3001/api';
+const TEST_USER = 'trainer_test_user_' + Date.now();
 
 describe('Interactive Trainers & Core Engine Test Suite', () => {
+  before(() => {
+    db.prepare('DELETE FROM users WHERE id = ?').run(TEST_USER);
+    db.prepare('INSERT INTO users (id, username, xp, streak) VALUES (?, ?, 50, 1)').run(TEST_USER, 'TrainerUser');
+  });
   it('1. Health Check: Server responds with status 200 OK and valid timestamp', async () => {
     const res = await fetch(`${BASE_URL}/health`);
     assert.strictEqual(res.status, 200);
@@ -118,14 +123,17 @@ describe('Interactive Trainers & Core Engine Test Suite', () => {
     assert.ok(typeof body.data.level === 'number');
   });
 
-  it('9. Progress Answer Recording: Records answer history without error', async () => {
+  it('9. Progress Answer Recording: Records answer history without error for authenticated user', async () => {
     // Get a question id
     const qRow = db.prepare('SELECT id FROM questions LIMIT 1').get();
     if (!qRow) return; // Skip if questions table is empty
 
     const res = await fetch(`${BASE_URL}/progress/answer`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-user-id': TEST_USER
+      },
       body: JSON.stringify({
         questionId: qRow.id,
         selectedIndex: 0
@@ -145,12 +153,12 @@ describe('Interactive Trainers & Core Engine Test Suite', () => {
     assert.ok(Array.isArray(body.data));
   });
 
-  it('11. Auth Me: Guest user authentication fallback works seamlessly', async () => {
+  it('11. Auth Me: Request without credentials returns unauthenticated state cleanly', async () => {
     const res = await fetch(`${BASE_URL}/auth/me`);
     assert.strictEqual(res.status, 200);
     const body = await res.json();
     assert.strictEqual(body.success, true);
-    assert.ok(body.user);
-    assert.ok(body.user.username);
+    assert.strictEqual(body.authenticated, false);
+    assert.strictEqual(body.user, null);
   });
 });

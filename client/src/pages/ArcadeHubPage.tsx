@@ -19,6 +19,7 @@ import { WordBuilder } from '@/widgets/word-builder/ui/WordBuilder';
 import { FlashcardDeck } from '@/widgets/flashcard-deck/ui/FlashcardDeck';
 import { AudioChallenge } from '@/widgets/audio-challenge/ui/AudioChallenge';
 import { PracticePage } from '@/pages/PracticePage';
+import { AuthUser } from '@/features/auth/ui/AuthModal';
 import styles from './ArcadeHubPage.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -30,13 +31,17 @@ interface ArcadeHubPageProps {
   sections?: Section[];
   initialCategory?: string;
   initialMode?: ArcadeMode;
+  currentUser?: AuthUser | null;
+  onRequireAuth?: () => void;
 }
 
 export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({ 
   onRefreshStats,
   sections: propSections,
   initialCategory,
-  initialMode = 'idle'
+  initialMode = 'idle',
+  currentUser,
+  onRequireAuth
 }) => {
   const [selectedMode, setSelectedMode] = useState<ArcadeMode>(initialMode);
   const [words, setWords] = useState<DictionaryItem[]>([]);
@@ -109,6 +114,12 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   }, [selectedLevel, selectedSection]);
 
   const handleStartMode = async (modeId: ArcadeMode) => {
+    if (!currentUser) {
+      message.warning('Для выполнения тренировок и сохранения прогресса войдите или зарегистрируйтесь');
+      onRequireAuth?.();
+      return;
+    }
+
     if (modeId === 'grammar') {
       setSelectedMode('grammar');
       return;
@@ -224,6 +235,23 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
               Разносторонние форматы обучения: грамматика и контекст, словарные квизы, скоростные спринты, спеллинг, 3D карточки и аудирование.
             </Paragraph>
           </div>
+
+          {!currentUser && (
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 20, borderRadius: 12 }}
+              message="Вход в игру"
+              description={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginTop: 4 }}>
+                  <span>Чтобы выполнять задания, повышать уровень, зарабатывать XP и сохранять интервальные повторения, войдите в аккаунт или зарегистрируйтесь.</span>
+                  <Button type="primary" size="small" onClick={onRequireAuth}>
+                    Войти или зарегистрироваться
+                  </Button>
+                </div>
+              }
+            />
+          )}
 
           {/* Filter Bar */}
           <div className={styles.filterBar}>

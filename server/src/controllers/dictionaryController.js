@@ -1,15 +1,17 @@
 const db = require('../db/schema');
 const geminiService = require('../services/geminiService');
+const { getUserFromReq } = require('./authController');
 
 async function getDictionary(req, res) {
   try {
+    const authUser = await getUserFromReq(req);
     const { 
       search = '', 
       sectionId = '', 
       level = '', 
       favoritesOnly = 'false',
       mode = 'all',
-      userId = 'guest_user',
+      userId = authUser ? authUser.id : 'anonymous',
       page = 1, 
       limit = 30 
     } = req.query;
@@ -227,22 +229,21 @@ async function generateDictionaryWords(req, res) {
 
 async function recordSrsReview(req, res) {
   try {
-    const userId = req.headers['x-user-id'] || req.body.userId || 'user_default';
-    const { wordId, grade } = req.body;
-    const gradeNum = Math.max(1, Math.min(4, parseInt(grade, 10) || 1));
+    const { wordId, grade } = req.body || {};
 
     if (!wordId) {
       return res.status(400).json({ success: false, error: 'wordId is required' });
     }
 
-    // Ensure user exists in users table to satisfy FOREIGN KEY constraint
-    const userRow = await db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
-    if (!userRow) {
-      await db.prepare(`
-        INSERT INTO users (id, username, xp, streak, last_active_date)
-        VALUES (?, 'Learner', 0, 1, date('now'))
-      `).run(userId);
+    const user = await getUserFromReq(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Для интервального повторения и сохранения прогресса необходимо войти в аккаунт'
+      });
     }
+    const userId = user.id;
+    const gradeNum = Math.max(1, Math.min(4, parseInt(grade, 10) || 1));
 
     // SM-2 Algorithm computation
     const existing = await db.prepare('SELECT * FROM srs_reviews WHERE user_id = ? AND word_id = ?').get(userId, wordId);

@@ -23,9 +23,10 @@ describe('SRS Algorithmic Bounds & Negative Test Suite', () => {
     sampleWordB = words[1];
     sampleWordC = words[2];
 
-    // Clean user reviews
+    // Clean user reviews and register test user
     db.prepare('DELETE FROM srs_reviews WHERE user_id = ?').run(TEST_USER);
     db.prepare('DELETE FROM users WHERE id = ?').run(TEST_USER);
+    db.prepare('INSERT INTO users (id, username, xp, streak) VALUES (?, ?, 0, 1)').run(TEST_USER, 'TestSRSUser');
   });
 
   // --------------------------------------------------------------------------

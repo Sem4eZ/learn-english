@@ -21,10 +21,11 @@ describe('User Progress, Analytics & Gamification Test Suite', () => {
     sampleQuestion = db.prepare('SELECT * FROM questions ORDER BY id ASC LIMIT 1').get();
     assert.ok(sampleQuestion, 'Must have at least one question in DB for testing');
 
-    // Clean user records
+    // Clean user records and register test user
     db.prepare('DELETE FROM user_answers WHERE user_id = ?').run(TEST_USER);
     db.prepare('DELETE FROM srs_reviews WHERE user_id = ?').run(TEST_USER);
     db.prepare('DELETE FROM users WHERE id = ?').run(TEST_USER);
+    db.prepare('INSERT INTO users (id, username, xp, streak) VALUES (?, ?, 0, 1)').run(TEST_USER, 'TestProgressUser');
   });
 
   // --------------------------------------------------------------------------
