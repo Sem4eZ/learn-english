@@ -308,6 +308,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
       {/* Action Buttons */}
       <div className={styles.controlsRow}>
         <Button
+          size="large"
           icon={<ReloadOutlined />}
           onClick={() => {
             const tokens = tokenizeSentence(currentItem.sentence);
@@ -317,6 +318,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
             setIsVerified(false);
           }}
           disabled={isVerified}
+          className={styles.resetBtn}
         >
           Сбросить
         </Button>

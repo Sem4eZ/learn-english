@@ -84,8 +84,18 @@
 }
 
 .controlsRow {
-  @include flex-between;
-  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  width: 100%;
+
+  @media (max-width: 500px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
 }
 
 .selectedWordChip {
@@ -150,15 +160,43 @@
   overflow-wrap: break-word;
 }
 
-.verifyBtn {
+.actionBtn {
+  height: 44px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
   border-radius: $radius-md !important;
-  padding: 0 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.resetBtn {
+  composes: actionBtn;
+  padding: 0 24px !important;
+
+  @media (max-width: 500px) {
+    width: 100%;
+  }
+}
+
+.verifyBtn {
+  composes: actionBtn;
+  padding: 0 28px !important;
+
+  @media (max-width: 500px) {
+    width: 100%;
+  }
 }
 
 .nextBtn {
-  border-radius: $radius-md !important;
-  padding: 0 32px !important;
+  composes: actionBtn;
+  padding: 0 28px !important;
   background: $color-success !important;
   border-color: $color-success !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+
+  @media (max-width: 500px) {
+    width: 100%;
+  }
 }
 

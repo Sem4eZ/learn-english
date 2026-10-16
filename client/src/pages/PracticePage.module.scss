@@ -2,18 +2,99 @@
 @use '@/shared/styles/mixins' as *;
 
 .toolbar {
-  @include flex-between;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-bottom: 24px;
+}
+
+.toolbarHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.backButton {
+  flex-shrink: 0;
+  border-radius: $radius-sm;
+}
+
+.titleWrapper {
+  flex: 1;
+  min-width: 240px;
 }
 
 .sectionTitle {
   margin: 0 !important;
+  font-size: 1.35rem !important;
+  line-height: 1.3 !important;
+
+  @media (max-width: 600px) {
+    font-size: 1.15rem !important;
+  }
 }
 
 .sectionSubtitle {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  display: block;
+  margin-top: 2px;
+}
+
+.filterControls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: $radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  @media (max-width: 600px) {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.filterLabel {
+  font-weight: 700;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.topicSelect {
+  width: 210px;
+
+  @media (max-width: 600px) {
+    width: 145px;
+    max-width: 48vw;
+  }
+}
+
+.levelDropdown {
+  width: 78px;
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+
+  @media (max-width: 600px) {
+    margin-left: 0;
+  }
 }
 
 .addQuestionsBtn {
@@ -42,9 +123,5 @@
   display: flex;
   justify-content: center;
   margin-bottom: 24px;
-}
-
-.topicSelect {
-  min-width: 200px;
 }
 

@@ -222,6 +222,8 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
     }
   ];
 
+  const currentModeObj = modes.find(m => m.id === selectedMode);
+
   return (
     <div className={styles.container}>
       {selectedMode === 'idle' ? (
@@ -365,78 +367,140 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
             />
           ) : (
             <>
-              <div className={styles.backBtnRow}>
-                <Button
-                  icon={<ArrowLeftOutlined />}
-                  onClick={() => {
-                    setSelectedMode('idle');
-                    onRefreshStats?.();
-                  }}
-                  size="large"
-                >
-                  Назад ко всем тренажерам
-                </Button>
+              <div className={styles.activeTrainerToolbar}>
+                <div className={styles.toolbarLeft}>
+                  <Button
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => {
+                      setSelectedMode('idle');
+                      onRefreshStats?.();
+                    }}
+                    size="middle"
+                    className={styles.backBtn}
+                  >
+                    Назад к тренажерам
+                  </Button>
+                  {currentModeObj && (
+                    <div className={styles.trainerTitleInfo}>
+                      <span className={styles.trainerIcon}>{currentModeObj.icon}</span>
+                      <span className={styles.trainerTitle}>{currentModeObj.title}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.toolbarRight}>
+                  <div className={styles.gradeFilter}>
+                    <span className={styles.gradeLabel}>Грейд:</span>
+                    <Select
+                      value={selectedLevel}
+                      onChange={setSelectedLevel}
+                      className={styles.gradeSelect}
+                      options={[
+                        { label: 'Все уровни', value: 'all' },
+                        { label: 'A1 (Beginner)', value: 'A1' },
+                        { label: 'A2 (Elementary)', value: 'A2' },
+                        { label: 'B1 (Intermediate)', value: 'B1' },
+                        { label: 'B2 (Upper-Inter.)', value: 'B2' },
+                        { label: 'C1 (Advanced)', value: 'C1' },
+                      ]}
+                    />
+                  </div>
+                  <Tag color="purple" className={styles.gradeCountTag}>
+                    {loading ? 'Загрузка...' : `${words.length} слов`}
+                  </Tag>
+                </div>
               </div>
 
-              {selectedMode === 'quiz' && (
-                <VocabQuiz
-                  words={words}
-                  onComplete={(score, total, xp) => handleGameComplete(xp)}
-                  onClose={() => setSelectedMode('idle')}
-                  onNeedMore={() => handleNeedMoreWords(35)}
-                />
-              )}
+              {loading ? (
+                <div className={styles.loadingContainer}>
+                  <Spin size="large" />
+                  <div className={styles.loadingMessage}>
+                    ⚡ Загрузка слов уровня <b>{selectedLevel === 'all' ? 'Все уровни' : selectedLevel}</b>...
+                  </div>
+                </div>
+              ) : words.length === 0 ? (
+                <Card className={styles.emptyCard}>
+                  <Title level={4}>Нет доступных слов для уровня {selectedLevel}</Title>
+                  <Paragraph type="secondary">
+                    Нажмите кнопку ниже, чтобы подготовить слова для этого уровня.
+                  </Paragraph>
+                  <Button 
+                    type="primary" 
+                    icon={<ThunderboltFilled />} 
+                    onClick={() => handleNeedMoreWords(35)}
+                    loading={loading}
+                  >
+                    Сгенерировать слова для {selectedLevel}
+                  </Button>
+                </Card>
+              ) : (
+                <>
+                  {selectedMode === 'quiz' && (
+                    <VocabQuiz
+                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
+                      words={words}
+                      onComplete={(score, total, xp) => handleGameComplete(xp)}
+                      onClose={() => setSelectedMode('idle')}
+                      onNeedMore={() => handleNeedMoreWords(35)}
+                    />
+                  )}
 
-              {selectedMode === 'sprint' && (
-                <SpeedSprint
-                  words={words}
-                  onComplete={(score, combo, xp) => handleGameComplete(xp)}
-                  onClose={() => setSelectedMode('idle')}
-                  onNeedMore={() => handleNeedMoreWords(35)}
-                />
-              )}
+                  {selectedMode === 'sprint' && (
+                    <SpeedSprint
+                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
+                      words={words}
+                      onComplete={(score, combo, xp) => handleGameComplete(xp)}
+                      onClose={() => setSelectedMode('idle')}
+                      onNeedMore={() => handleNeedMoreWords(35)}
+                    />
+                  )}
 
-              {selectedMode === 'builder' && (
-                <WordBuilder
-                  words={words}
-                  onComplete={(score, total, xp) => handleGameComplete(xp)}
-                  onClose={() => setSelectedMode('idle')}
-                  onNeedMore={() => handleNeedMoreWords(35)}
-                />
-              )}
+                  {selectedMode === 'builder' && (
+                    <WordBuilder
+                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
+                      words={words}
+                      onComplete={(score, total, xp) => handleGameComplete(xp)}
+                      onClose={() => setSelectedMode('idle')}
+                      onNeedMore={() => handleNeedMoreWords(35)}
+                    />
+                  )}
 
-              {selectedMode === 'cards' && (
-                <FlashcardDeck
-                  items={words.map(w => ({
-                    id: w.id,
-                    frontMain: w.word,
-                    frontPhonetic: w.transcription,
-                    frontContext: w.example_sentence,
-                    backMain: w.translation,
-                    backDetail: w.definition,
-                    backGrammar: w.example_translation,
-                    level: w.level,
-                    category: w.section_id
-                  }))}
-                  onFinish={() => handleGameComplete(50)}
-                  onRefresh={fetchWords}
-                  onNeedMore={() => handleNeedMoreWords(35)}
-                />
-              )}
+                  {selectedMode === 'cards' && (
+                    <FlashcardDeck
+                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
+                      items={words.map(w => ({
+                        id: w.id,
+                        frontMain: w.word,
+                        frontPhonetic: w.transcription,
+                        frontContext: w.example_sentence,
+                        backMain: w.translation,
+                        backDetail: w.definition,
+                        backGrammar: w.example_translation,
+                        level: w.level,
+                        category: w.section_id
+                      }))}
+                      onFinish={() => handleGameComplete(50)}
+                      onRefresh={fetchWords}
+                      onNeedMore={() => handleNeedMoreWords(35)}
+                    />
+                  )}
 
-              {selectedMode === 'audio' && (
-                <AudioChallenge
-                  items={words.filter(w => !!w.example_sentence).map(w => ({
-                    id: w.id,
-                    sentence: w.example_sentence || w.word,
-                    translation: w.example_translation || w.translation,
-                    hint: w.definition,
-                    level: w.level
-                  }))}
-                  onComplete={(score) => handleGameComplete(score)}
-                  onRefresh={fetchWords}
-                  onNeedMore={() => handleNeedMoreWords(35)}
-                />
+                  {selectedMode === 'audio' && (
+                    <AudioChallenge
+                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
+                      items={words.map(w => ({
+                        id: w.id,
+                        sentence: w.example_sentence || w.word,
+                        translation: w.example_translation || w.translation,
+                        hint: w.definition,
+                        level: w.level
+                      }))}
+                      onComplete={(score) => handleGameComplete(score)}
+                      onRefresh={fetchWords}
+                      onNeedMore={() => handleNeedMoreWords(35)}
+                    />
+                  )}
+                </>
               )}
             </>
           )}

@@ -52,7 +52,7 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
 
       // Real-time XP & stats emission for immediate header update
       xpEventBus.emit({
-        xpReward: res.xpEarned || 5,
+        xpReward: res.xpEarned ?? (res.isCorrect ? 15 : 0),
         totalXp: res.totalXp,
         streak: res.streak,
         source: 'quiz_question'
@@ -112,7 +112,7 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
               <div className={styles.cardHeader}>
                 <Space>
                   <Tag color={result.isCorrect ? 'success' : 'error'} className={styles.resultTag}>
-                    {result.isCorrect ? 'Верно! (+15 XP)' : 'Неверно (+5 XP)'}
+                    {result.isCorrect ? 'Верно! (+15 XP)' : 'Неверно (0 XP)'}
                   </Tag>
                   {result.streak >= 2 && (
                     <Tag color="warning">🔥 Серия: {result.streak}</Tag>

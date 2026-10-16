@@ -70,6 +70,8 @@
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.55);
   margin-top: 4px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .safeExitHint {
@@ -77,6 +79,8 @@
   align-items: center;
   gap: 4px;
   color: #34d399;
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .cardWrapper {

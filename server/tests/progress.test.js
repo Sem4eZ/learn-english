@@ -105,7 +105,7 @@ describe('User Progress, Analytics & Gamification Test Suite', () => {
     assert.strictEqual(row.is_correct, 1);
   });
 
-  it('6. Answer Positive (Incorrect): Awards 5 XP for effort and marks isCorrect = false', async () => {
+  it('6. Answer Positive (Incorrect): Awards 0 XP for wrong answer and marks isCorrect = false', async () => {
     const wrongIndex = (sampleQuestion.correct_index + 1) % 4;
     const res = await fetch(`${BASE_URL}/progress/answer`, {
       method: 'POST',
@@ -120,8 +120,8 @@ describe('User Progress, Analytics & Gamification Test Suite', () => {
     const body = await res.json();
     assert.strictEqual(body.success, true);
     assert.strictEqual(body.data.isCorrect, false);
-    assert.strictEqual(body.data.xpEarned, 5);
-    assert.strictEqual(body.data.totalXp, 20); // 15 + 5
+    assert.strictEqual(body.data.xpEarned, 0);
+    assert.strictEqual(body.data.totalXp, 15); // 15 + 0
   });
 
   it('7. Streak Logic: Multiple answers on same calendar day do not double-increment streak', async () => {

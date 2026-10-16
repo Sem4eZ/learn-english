@@ -404,14 +404,139 @@ export const INITIAL_USER_STATS: UserStats = {
 export const FALLBACK_USER_STATS: UserStats = INITIAL_USER_STATS;
 
 export const FALLBACK_QUESTIONS: Question[] = [
+  // --- A1 (Beginner) ---
+  {
+    id: 101,
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'I _____ from England. My name is Alex.',
+    context_text: 'Present Simple: формы глагола "to be" (быть, являться).',
+    options: ['am', 'is', 'are', 'be'],
+    correct_index: 0,
+    explanation: 'Для местоимения первого лица единственного числа "I" в настоящем времени используется форма "am".',
+    grammar_rule: 'I am, He/She/It is, You/We/They are (To Be in Present Simple)',
+    pronunciation_tip: '"I am" часто сокращается до "I\'m" -> /aɪm/'
+  },
+  {
+    id: 102,
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'She _____ a cup of hot coffee every morning.',
+    context_text: 'Present Simple: регулярное повторяющееся действие в 3-м лице.',
+    options: ['drinks', 'drink', 'drinking', 'is drink'],
+    correct_index: 0,
+    explanation: 'В Present Simple к глаголу в 3-м лице единственного числа (he, she, it) обязательно добавляется окончание -s/-es.',
+    grammar_rule: 'Subject (he/she/it) + Verb-s (Present Simple)',
+    pronunciation_tip: 'Окончание "-s" в слове "drinks" звучит глухо: /drɪŋks/'
+  },
+  {
+    id: 103,
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'Where _____ you live?',
+    context_text: 'Вопросительные предложения в Present Simple.',
+    options: ['do', 'does', 'are', 'is'],
+    correct_index: 0,
+    explanation: 'Вопросы в Present Simple для местоимений you, we, they строятся с помощью вспомогательного глагола "do".',
+    grammar_rule: 'Question Word + do/does + Subject + Verb?',
+    pronunciation_tip: 'Связка "Where do you" часто звучит слитно: /ˈweər du juː/'
+  },
+  {
+    id: 104,
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'There _____ two books on my desk.',
+    context_text: 'Оборот there is / there are для указания местонахождения предметов.',
+    options: ['are', 'is', 'have', 'has'],
+    correct_index: 0,
+    explanation: 'Оборот "there are" используется с существительными во множественном числе ("two books").',
+    grammar_rule: 'There is + ед. число / There are + мн. число',
+    pronunciation_tip: '"There are" связывается звуком /r/: /ðeər ɑːr/'
+  },
+  {
+    id: 105,
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'They _____ like cold winter weather.',
+    context_text: 'Отрицательные предложения в Present Simple.',
+    options: ["don't", "doesn't", "aren't", "isn't"],
+    correct_index: 0,
+    explanation: 'Для местоимений they, we, you, I отрицание со смысловыми глаголами строится с помощью вспомогательного глагола "don\'t" (do not).',
+    grammar_rule: 'Subject (I/you/we/they) + don\'t + base verb',
+    pronunciation_tip: '"don\'t" произносится с дифтонгом /dəʊnt/'
+  },
+
+  // --- A2 (Elementary) ---
+  {
+    id: 201,
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'Yesterday, we _____ to a great Italian restaurant.',
+    context_text: 'Past Simple: факты и завершенные действия в прошлом с маркером времени "yesterday".',
+    options: ['went', 'go', 'gone', 'goes'],
+    correct_index: 0,
+    explanation: 'Глагол "go" — неправильный. Его форма прошедшего простого времени (Past Simple) — "went".',
+    grammar_rule: 'Irregular verbs: go -> went -> gone (Past Simple)',
+    pronunciation_tip: '"went" произносится с четким звуком /w/: /went/'
+  },
+  {
+    id: 202,
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'I was watching TV when my friend _____.',
+    context_text: 'Past Continuous и Past Simple: короткое прерывающее действие.',
+    options: ['arrived', 'arrives', 'was arriving', 'has arrived'],
+    correct_index: 0,
+    explanation: 'Длительное фоновое действие в прошлом выражается Past Continuous (was watching), а внезапное действие, прерывающее его, — Past Simple (arrived).',
+    grammar_rule: 'Past Continuous (was/were V-ing) + when + Past Simple (V2)',
+    pronunciation_tip: 'Окончание "-ed" в "arrived" произносится как звонкий /d/: /əˈraɪvd/'
+  },
+  {
+    id: 203,
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'This smartphone is _____ than my previous one.',
+    context_text: 'Сравнительная степень односложных прилагательных.',
+    options: ['faster', 'more fast', 'fastest', 'most fast'],
+    correct_index: 0,
+    explanation: 'Односложные прилагательные образуют сравнительную степень путем добавления суффикса -er: fast -> faster.',
+    grammar_rule: 'One-syllable adjective + -er + than',
+    pronunciation_tip: 'Ударение на первый слог: /ˈfɑːstər/'
+  },
+  {
+    id: 204,
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'Have you ever _____ to London?',
+    context_text: 'Present Perfect: жизненный опыт с наречием "ever".',
+    options: ['been', 'was', 'went', 'be'],
+    correct_index: 0,
+    explanation: 'Для выражения посещения места в качестве жизненного опыта в Present Perfect используется третья форма глагола to be — "been" (to).',
+    grammar_rule: 'Have/Has + Subject + ever + V3 (Past Participle)',
+    pronunciation_tip: '"been" в британском английском звучит как /biːn/ или /bɪn/'
+  },
+  {
+    id: 205,
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'You _____ wear a seatbelt while driving.',
+    context_text: 'Модальные глаголы обязательства и правил.',
+    options: ['must', 'can', 'might', 'could'],
+    correct_index: 0,
+    explanation: 'Модальный глагол "must" выражает строгое обязательство, закон или необходимость.',
+    grammar_rule: 'Must + bare infinitive (без частицы to) для выражения обязательства',
+    pronunciation_tip: 'В слове "must" буква "t" перед согласными часто редуцируется: /məs/'
+  },
+
+  // --- B1 (Intermediate) ---
   {
     id: 1,
     section_id: 'grammar',
     level: 'B1',
     question_text: 'If I _____ more free time, I would travel around Europe.',
     context_text: 'Second Conditional (гипотетическая ситуация в настоящем/будущем).',
-    options: ['have', 'had', 'would have', 'will have'],
-    correct_index: 1,
+    options: ['had', 'have', 'would have', 'will have'],
+    correct_index: 0,
     explanation: 'В придаточной части Second Conditional (после if) используется Past Simple (had), а в главной части — would + глагол.',
     grammar_rule: 'If + Past Simple, would + infinitive (Second Conditional)',
     pronunciation_tip: 'Обратите внимание на связку "If I had" -> /ɪf aɪ hæd/'
@@ -422,20 +547,58 @@ export const FALLBACK_QUESTIONS: Question[] = [
     level: 'B1',
     question_text: 'She has been working here _____ 2018.',
     context_text: 'Present Perfect Continuous (действие началось в прошлом и длится до сих пор).',
-    options: ['for', 'since', 'during', 'from'],
-    correct_index: 1,
+    options: ['since', 'for', 'during', 'from'],
+    correct_index: 0,
     explanation: 'С точной точкой отсчета во времени (год, дата, событие) используется предлог "since". Предлог "for" используется с периодами времени (for 5 years).',
     grammar_rule: 'since + точка времени (since 2018), for + период времени (for 5 years)',
     pronunciation_tip: '"since" произносится как /sɪns/, не путать с "science"'
   },
+  {
+    id: 301,
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'The new bridge _____ by engineers last year.',
+    context_text: 'Past Simple Passive: страдательный залог в прошлом.',
+    options: ['was built', 'built', 'was building', 'has been built'],
+    correct_index: 0,
+    explanation: 'Мост не сам строил, а был построен кем-то (Passive Voice). Для завершенного действия в прошлом (last year) используется was + V3 (was built).',
+    grammar_rule: 'Past Simple Passive: was/were + Past Participle (V3)',
+    pronunciation_tip: '"built" оканчивается на четкий глухой звук /t/: /bɪlt/'
+  },
+  {
+    id: 302,
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'He told me that he _____ the report earlier that morning.',
+    context_text: 'Reported Speech: согласование времен (Past Perfect для предшествующего действия).',
+    options: ['had finished', 'finished', 'has finished', 'will finish'],
+    correct_index: 0,
+    explanation: 'В косвенной речи, когда главное предложение в прошедшем времени (told), действие, совершенное еще раньше, сдвигается в Past Perfect (had finished).',
+    grammar_rule: 'Reported Speech: Past Simple / Present Perfect -> Past Perfect (had + V3)',
+    pronunciation_tip: 'Связка "he had" сокращается до "he\'d" -> /hiːd/'
+  },
+  {
+    id: 303,
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'I really enjoy _____ modern board games with colleagues.',
+    context_text: 'Герундий после определенных глаголов (enjoy + V-ing).',
+    options: ['playing', 'to play', 'play', 'played'],
+    correct_index: 0,
+    explanation: 'После глаголов предпочтения (enjoy, fancy, avoid, consider) используется герундий (глагол с окончанием -ing), а не инфинитив.',
+    grammar_rule: 'enjoy + Verb-ing (Gerund)',
+    pronunciation_tip: 'Окончание "-ing" произносится с носовым звуком /ŋ/: /ˈpleɪɪŋ/'
+  },
+
+  // --- B2 (Upper-Intermediate) ---
   {
     id: 3,
     section_id: 'grammar',
     level: 'B2',
     question_text: 'Hardly _____ the office when the client called with an urgent issue.',
     context_text: 'Inversion with negative adverbs (инверсия для усиления выразительности).',
-    options: ['I had left', 'had I left', 'did I leave', 'I left'],
-    correct_index: 1,
+    options: ['had I left', 'I had left', 'did I leave', 'I left'],
+    correct_index: 0,
     explanation: 'Когда предложение начинается с отрицательного наречия (Hardly, Scarcely, Barely), используется обратный порядок слов (инверсия): Hardly had + subject + V3.',
     grammar_rule: 'Hardly had + S + V3 ... when + Past Simple',
     pronunciation_tip: 'Ударение падает на вспомогательный глагол: "Hardly HAD I left"'
@@ -458,10 +621,97 @@ export const FALLBACK_QUESTIONS: Question[] = [
     level: 'B2',
     question_text: 'We look forward to _____ mutually beneficial partnership with your firm.',
     context_text: 'Phrasal verb with gerund: to look forward to + V-ing.',
-    options: ['establish', 'establishing', 'established', 'be established'],
-    correct_index: 1,
+    options: ['establishing', 'establish', 'established', 'be established'],
+    correct_index: 0,
     explanation: 'В устойчивом выражении "look forward to" частица "to" является предлогом, поэтому за ней следует герундий (глагол с окончанием -ing) или существительное.',
     grammar_rule: 'look forward to + Gerund (-ing) / Noun',
     pronunciation_tip: 'Связывание звуков: "forward to" -> /ˈfɔːwəd tuː/'
+  },
+  {
+    id: 401,
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'I would rather you _____ earlier for the client demo tomorrow.',
+    context_text: 'Would rather + subject + Past Simple для выражения предпочтения.',
+    options: ['arrived', 'arrive', 'will arrive', 'have arrived'],
+    correct_index: 0,
+    explanation: 'Когда после конструкции "would rather" есть подлежащее (you/he/she), для выражения предпочтения в настоящем или будущем используется форма Past Simple.',
+    grammar_rule: 'Would rather + Subject + Past Simple (present/future preference)',
+    pronunciation_tip: '"would rather you" связывается бегло: /wʊd ˈrɑːðər juː/'
+  },
+  {
+    id: 402,
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'If she had listened to the team lead, she _____ that critical error.',
+    context_text: 'Third Conditional: нереальное условие в прошлом и его последствия.',
+    options: ['would not have made', 'will not make', 'did not make', 'would not make'],
+    correct_index: 0,
+    explanation: 'В главной части Third Conditional используется конструкция would (not) have + V3, так как ситуация относится к неслучившемуся событию в прошлом.',
+    grammar_rule: 'If + had + V3, would have + V3 (Third Conditional)',
+    pronunciation_tip: '"would not have" часто сокращается в речи до "wouldn\'t have" -> /ˈwʊdnt əv/'
+  },
+
+  // --- C1 (Advanced) ---
+  {
+    id: 501,
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: 'Had we known about the latency spike earlier, we _____ the production deployment.',
+    context_text: 'Inverted Third Conditional without "if" (инверсия в условных предложениях).',
+    options: ['would have postponed', 'will postpone', 'postponed', 'would postpone'],
+    correct_index: 0,
+    explanation: 'В формальной инверсии третьего типа условных предложений "If we had known" заменяется на "Had we known", а главная часть сохраняет would have + V3.',
+    grammar_rule: 'Had + Subject + V3, would have + V3 (Inverted Conditional 3)',
+    pronunciation_tip: 'Твердое начало фразы: /hæd wiː nəʊn/'
+  },
+  {
+    id: 502,
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: 'Under no circumstances _____ allowed to disclose private user data.',
+    context_text: 'Negative Inversion: обратный порядок слов после отрицательных вводных оборотов.',
+    options: ['are engineers', 'engineers are', 'engineers were', 'were engineers'],
+    correct_index: 0,
+    explanation: 'После отрицательных фраз (Under no circumstances, On no account, At no time) используется порядок слов как в вопросе: вспомогательный глагол перед подлежащим.',
+    grammar_rule: 'Under no circumstances + Auxiliary + Subject + Main Verb',
+    pronunciation_tip: 'Логическое ударение на "NO circumstances"'
+  },
+  {
+    id: 503,
+    section_id: 'business',
+    level: 'C1',
+    question_text: 'The compliance officer insisted that the audit _____ conducted without delay.',
+    context_text: 'Subjunctive Mood (сослагательное наклонение в формальном английском).',
+    options: ['be', 'is', 'was', 'should to be'],
+    correct_index: 0,
+    explanation: 'В придаточных предложениях после глаголов требования и рекомендации (insist, demand, recommend, mandate) в Subjunctive Mood используется голый инфинитив без частицы to (be).',
+    grammar_rule: 'insist/demand/require that + Subject + base form (be / verb)',
+    pronunciation_tip: 'Форма "be" звучит акцентированно: /biː/'
+  },
+  {
+    id: 504,
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: 'Scarcely _____ the stage when the enthusiastic crowd began to applaud.',
+    context_text: 'Inversion with "Scarcely ... when" (едва ... как).',
+    options: ['had the speaker reached', 'the speaker reached', 'did the speaker reach', 'the speaker has reached'],
+    correct_index: 0,
+    explanation: 'Конструкция "Scarcely had + Subject + V3 ... when" требует Past Perfect и инверсии для выражения одного действия, немедленно последовавшего за другим.',
+    grammar_rule: 'Scarcely had + Subject + Past Participle ... when + Past Simple',
+    pronunciation_tip: '"Scarcely had" связывается как /ˈskeəsli hæd/'
+  },
+  {
+    id: 505,
+    section_id: 'tech_it',
+    level: 'C1',
+    question_text: 'It is high time we _____ our database scaling strategy.',
+    context_text: 'It is (high) time + Past Simple для выражения назревшей необходимости.',
+    options: ['revisited', 'revisit', 'will revisit', 'have revisited'],
+    correct_index: 0,
+    explanation: 'Конструкция "It is high time / It is about time + Subject" требует формы Past Simple, хотя выражает действие, которое необходимо предпринять в настоящем или будущем.',
+    grammar_rule: 'It is high time + Subject + Past Simple',
+    pronunciation_tip: '"It is high time" -> /ɪt ɪz haɪ taɪm/'
   }
 ];
+

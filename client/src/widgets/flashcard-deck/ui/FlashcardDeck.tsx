@@ -379,7 +379,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
         <div className={styles.subBarInfo}>
           <span>Раунд {roundNumber}: {currentRoundIndex + 1} из {roundCards.length}</span>
           <span className={styles.safeExitHint}>
-            <CheckCircleOutlined /> Опыт начисляется сразу • Безопасный выход в любой момент
+            <CheckCircleOutlined /> Опыт начисляется сразу
           </span>
         </div>
       </div>
