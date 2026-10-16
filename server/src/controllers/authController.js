@@ -19,6 +19,12 @@ function generateToken(user) {
   return Buffer.from(`${payload}:${sig}`).toString('base64');
 }
 
+function generateRefreshToken(user) {
+  const payload = `refresh:${user.id}:${Date.now()}`;
+  const sig = crypto.createHmac('sha256', PASSWORD_SALT).update(payload).digest('hex');
+  return Buffer.from(`${payload}:${sig}`).toString('base64');
+}
+
 function verifyToken(token) {
   try {
     const raw = Buffer.from(token, 'base64').toString('utf8');
@@ -29,6 +35,21 @@ function verifyToken(token) {
     const expectedSig = crypto.createHmac('sha256', PASSWORD_SALT).update(payload).digest('hex');
     if (sig !== expectedSig) return null;
     return { userId, username };
+  } catch (err) {
+    return null;
+  }
+}
+
+function verifyRefreshToken(token) {
+  try {
+    const raw = Buffer.from(token, 'base64').toString('utf8');
+    const parts = raw.split(':');
+    if (parts.length !== 4 || parts[0] !== 'refresh') return null;
+    const [, userId, timestamp, sig] = parts;
+    const payload = `refresh:${userId}:${timestamp}`;
+    const expectedSig = crypto.createHmac('sha256', PASSWORD_SALT).update(payload).digest('hex');
+    if (sig !== expectedSig) return null;
+    return { userId };
   } catch (err) {
     return null;
   }
@@ -88,10 +109,12 @@ async function register(req, res) {
     };
 
     const token = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
     res.json({
       success: true,
       message: 'Регистрация прошла успешно!',
       token,
+      refreshToken,
       user
     });
   } catch (err) {
@@ -128,14 +151,67 @@ async function login(req, res) {
     };
 
     const token = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
     res.json({
       success: true,
       message: 'С возвращением!',
       token,
+      refreshToken,
       user
     });
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+async function refreshAuth(req, res) {
+  try {
+    const candidate = req.body?.refreshToken || (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7).trim() : null);
+    if (!candidate) {
+      return res.status(400).json({ success: false, error: 'Отсутствует токен обновления' });
+    }
+
+    let userId = null;
+    const verifiedRef = verifyRefreshToken(candidate);
+    if (verifiedRef) {
+      userId = verifiedRef.userId;
+    } else {
+      const verifiedStd = verifyToken(candidate);
+      if (verifiedStd) {
+        userId = verifiedStd.userId;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Недействительный токен' });
+    }
+
+    const userRow = await db.prepare('SELECT id, username, xp, streak FROM users WHERE id = ?').get(userId);
+    if (!userRow) {
+      return res.status(401).json({ success: false, error: 'Пользователь не найден' });
+    }
+
+    const level = Math.floor(userRow.xp / 50) + 1;
+    const user = {
+      id: userRow.id,
+      username: userRow.username,
+      xp: userRow.xp,
+      streak: userRow.streak,
+      level,
+      isGuest: false
+    };
+
+    const newToken = generateToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+
+    return res.json({
+      success: true,
+      token: newToken,
+      refreshToken: newRefreshToken,
+      user
+    });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 }
@@ -172,6 +248,7 @@ async function getMe(req, res) {
 module.exports = {
   register,
   login,
+  refreshAuth,
   getMe,
   getUserFromReq
 };

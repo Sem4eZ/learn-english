@@ -287,4 +287,37 @@ describe('Authentication & Security Test Suite', () => {
     assert.strictEqual(body.success, true);
     assert.strictEqual(body.user.id, authUserId);
   });
+
+  it('20. Refresh: Successfully refreshes auth session and returns valid access token', async () => {
+    const loginRes = await fetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: testUser.username,
+        password: testUser.password
+      })
+    });
+    const loginBody = await loginRes.json();
+    assert.ok(loginBody.refreshToken, 'Login should provide a refreshToken');
+
+    const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: loginBody.refreshToken })
+    });
+    assert.strictEqual(refreshRes.status, 200);
+    const refreshBody = await refreshRes.json();
+    assert.strictEqual(refreshBody.success, true);
+    assert.ok(refreshBody.token, 'Should return fresh token');
+    assert.strictEqual(refreshBody.user.id, authUserId);
+  });
+
+  it('21. Refresh Negative: Rejects invalid or forged refresh token with 401', async () => {
+    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: 'forged_invalid_refresh_token' })
+    });
+    assert.strictEqual(res.status, 401);
+  });
 });

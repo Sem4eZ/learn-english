@@ -451,7 +451,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
                     {currentItem.backDetail}
                   </Paragraph>
                 )}
-                {currentItem.backGrammar && (
+                {currentItem.backGrammar && currentItem.backGrammar.trim() !== currentItem.backDetail?.trim() && (
                   <div className={styles.grammarNote}>
                     💡 <strong>Правило / Нюанс:</strong> {currentItem.backGrammar}
                   </div>
@@ -459,7 +459,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
               </div>
 
               <div className={styles.flipHint}>
-                Выберите интервал повторения карточки:
+                🔄 Нажмите на карточку для переворота
               </div>
             </div>
 
@@ -482,6 +482,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
         </div>
       ) : (
         <div>
+          <div className={styles.srsPrompt}>Выберите интервал повторения:</div>
           <div className={styles.srsRatingPanel}>
             {SRS_RATING_OPTIONS.map((opt) => (
               <button
