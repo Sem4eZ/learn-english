@@ -68,6 +68,7 @@ export const GenerateBatchModal: React.FC<GenerateBatchModalProps> = ({
       confirmLoading={loading}
       okText={loading ? 'Подготовка...' : 'Добавить задания'}
       cancelText="Отмена"
+      style={{ maxWidth: '94vw', margin: '0 auto' }}
       destroyOnHidden
     >
       <Form

@@ -11,6 +11,9 @@ interface BackendConfigModalProps {
   onConnected?: () => void;
 }
 
+const RENDER_BACKEND_URL = 'https://learn-english-bfqg.onrender.com';
+const LOCAL_BACKEND_URL = 'http://localhost:3001';
+
 export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
   open,
   onClose,
@@ -20,8 +23,9 @@ export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
   const [testing, setTesting] = useState(false);
   const isOffline = apiClient.isOfflineMode();
 
-  const handleTestAndSave = async () => {
-    const trimmed = url.trim();
+  const handleTestAndSave = async (overrideUrl?: string) => {
+    const raw = overrideUrl !== undefined ? overrideUrl : url;
+    const trimmed = raw.trim();
     if (!trimmed) {
       apiClient.setApiUrl('');
       message.info('Включен встроенный демонстрационный режим');
@@ -33,7 +37,7 @@ export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
     setTesting(true);
     try {
       const cleanUrl = trimmed.replace(/\/$/, '') + (trimmed.endsWith('/api') ? '' : '/api');
-      const testRes = await fetch(`${cleanUrl}/health`, { signal: AbortSignal.timeout(5000) });
+      const testRes = await fetch(`${cleanUrl}/health`, { signal: AbortSignal.timeout(6000) });
       if (testRes.ok) {
         apiClient.setApiUrl(trimmed);
         message.success('Успешное подключение к бэкенд-серверу!');
@@ -44,7 +48,7 @@ export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
         throw new Error(`Статус ${testRes.status}`);
       }
     } catch (err: any) {
-      message.error(`Не удалось подключиться: ${err.message || 'Сервер недоступен'}. Проверьте адрес и CORS.`);
+      message.error(`Не удалось подключиться: ${err.message || 'Сервер недоступен'}. Проверьте адрес и работу Render сервиса.`);
     } finally {
       setTesting(false);
     }
@@ -63,6 +67,8 @@ export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
     <Modal
       open={open}
       onCancel={onClose}
+      width={520}
+      style={{ maxWidth: '94vw', margin: '0 auto' }}
       title={
         <Space>
           <CloudServerOutlined style={{ color: '#1677ff' }} />
@@ -73,14 +79,14 @@ export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
         <Button key="reset" onClick={handleReset}>
           Сбросить на демо
         </Button>,
-        <Button key="save" type="primary" loading={testing} onClick={handleTestAndSave}>
+        <Button key="save" type="primary" loading={testing} onClick={() => handleTestAndSave()}>
           Сохранить и подключить
         </Button>,
       ]}
     >
       <div style={{ padding: '8px 0' }}>
-        <Paragraph type="secondary">
-          GitHub Pages предоставляет только статический хостинг. Для генерации заданий через <b>Gemini AI</b> и работы с базой данных укажите адрес вашего бэкенд-сервера (например, на Render или Railway):
+        <Paragraph type="secondary" style={{ fontSize: '0.9rem' }}>
+          GitHub Pages предоставляет только статический хостинг. Для генерации заданий через <b>Gemini AI</b> и работы с базой данных укажите адрес вашего бэкенд-сервера:
         </Paragraph>
 
         <Alert
@@ -105,11 +111,43 @@ export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
           }
         />
 
+        {/* 1-Tap Quick Presets for phones */}
+        <div style={{ marginBottom: 14 }}>
+          <Text strong style={{ fontSize: '0.85rem', display: 'block', marginBottom: 6 }}>
+            Быстрый выбор адреса в 1 клик:
+          </Text>
+          <Space wrap size="small">
+            <Button
+              size="middle"
+              icon={<CloudServerOutlined />}
+              type={url === RENDER_BACKEND_URL ? 'primary' : 'default'}
+              ghost={url === RENDER_BACKEND_URL}
+              onClick={() => {
+                setUrl(RENDER_BACKEND_URL);
+                message.info('Выбран Render URL');
+              }}
+            >
+              ⚡ Render (Облачный сервер)
+            </Button>
+            <Button
+              size="middle"
+              onClick={() => {
+                setUrl(LOCAL_BACKEND_URL);
+                message.info('Выбран Localhost URL');
+              }}
+              type={url === LOCAL_BACKEND_URL ? 'primary' : 'default'}
+              ghost={url === LOCAL_BACKEND_URL}
+            >
+              💻 Localhost:3001
+            </Button>
+          </Space>
+        </div>
+
         <div style={{ marginBottom: 8 }}>
           <Text strong>Адрес API сервера:</Text>
         </div>
         <Input
-          placeholder="https://learn-english-api.onrender.com или http://localhost:3001"
+          placeholder="https://learn-english-bfqg.onrender.com"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           prefix={<ApiOutlined />}
@@ -117,7 +155,7 @@ export const BackendConfigModal: React.FC<BackendConfigModalProps> = ({
           allowClear
         />
         <div style={{ marginTop: 8, fontSize: '0.8rem', color: 'gray' }}>
-          💡 Для локального тестирования можно указать <code>http://localhost:3001</code>
+          💡 Ваш сервер Render: <code>https://learn-english-bfqg.onrender.com</code>
         </div>
       </div>
     </Modal>
