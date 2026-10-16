@@ -5,7 +5,25 @@ interface RequestOptions extends RequestInit {
 }
 
 class ApiClient {
-  private baseUrl = '/api';
+  private getBaseUrl(): string {
+    const customUrl = localStorage.getItem('fluentiq_api_url');
+    if (customUrl) return customUrl.replace(/\/$/, '') + (customUrl.endsWith('/api') ? '' : '/api');
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) return envUrl.replace(/\/$/, '') + (envUrl.endsWith('/api') ? '' : '/api');
+    return '/api';
+  }
+
+  setApiUrl(url: string) {
+    if (url) {
+      localStorage.setItem('fluentiq_api_url', url.trim());
+    } else {
+      localStorage.removeItem('fluentiq_api_url');
+    }
+  }
+
+  getApiUrl(): string {
+    return this.getBaseUrl();
+  }
 
   private getUserId(): string {
     return localStorage.getItem('fluentiq_user_id') || localStorage.getItem('lexiflow_user_id') || DEFAULT_USER_ID;
@@ -27,7 +45,7 @@ class ApiClient {
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const { params, headers, ...rest } = options;
-    let url = `${this.baseUrl}${endpoint}`;
+    let url = `${this.getBaseUrl()}${endpoint}`;
 
     if (params) {
       const searchParams = new URLSearchParams();

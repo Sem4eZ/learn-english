@@ -64,6 +64,19 @@ app.post('/api/progress/answer', recordAnswer);
 app.get('/api/progress/stats', getStats);
 app.get('/api/progress/history', getHistory);
 
+// Serve static client build if present (for fullstack production hosting)
+const path = require('path');
+const fs = require('fs');
+const clientDist = path.resolve(__dirname, '../../client/dist');
+
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 // Start server if run directly
 if (require.main === module) {
   app.listen(PORT, () => {
