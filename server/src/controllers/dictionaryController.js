@@ -118,6 +118,31 @@ async function getDictionary(req, res) {
     `);
     const data = listStmt.all(...listParams);
 
+    // Total words matching filter in dictionary table (without practice due-date exclusion)
+    let baseWhereClauses = [];
+    let baseParams = [];
+    if (search.trim()) {
+      baseWhereClauses.push('(word LIKE ? OR translation LIKE ? OR definition LIKE ? OR example_sentence LIKE ?)');
+      const pattern = `%${search.trim()}%`;
+      baseParams.push(pattern, pattern, pattern, pattern);
+    }
+    if (sectionId && sectionId !== 'all') {
+      baseWhereClauses.push('section_id = ?');
+      baseParams.push(sectionId);
+    }
+    if (level && level !== 'all') {
+      baseWhereClauses.push('level = ?');
+      baseParams.push(level);
+    }
+    if (favoritesOnly === 'true' || favoritesOnly === '1') {
+      baseWhereClauses.push('is_favorite = 1');
+    }
+    const baseWhereSql = baseWhereClauses.length > 0 ? `WHERE ${baseWhereClauses.join(' AND ')}` : '';
+    const baseCountRow = db.prepare(`SELECT COUNT(*) as count FROM dictionary ${baseWhereSql}`).get(...baseParams);
+    const totalInDb = baseCountRow ? baseCountRow.count : 0;
+    const totalOverallRow = db.prepare('SELECT COUNT(*) as count FROM dictionary').get();
+    const totalOverall = totalOverallRow ? totalOverallRow.count : 0;
+
     res.json({
       success: true,
       data,
@@ -125,7 +150,9 @@ async function getDictionary(req, res) {
         page: pageNum,
         limit: limitNum,
         total,
-        pages: Math.ceil(total / limitNum) || 1
+        pages: Math.ceil(total / limitNum) || 1,
+        totalInDb,
+        totalOverall
       }
     });
   } catch (err) {

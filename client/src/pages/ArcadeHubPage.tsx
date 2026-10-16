@@ -43,6 +43,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedSection, setSelectedSection] = useState<string>(initialCategory || 'all');
+  const [totalInDb, setTotalInDb] = useState<number>(0);
   const isReplenishingRef = useRef<boolean>(false);
 
   // Load sections if not passed via props
@@ -88,6 +89,8 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
         limit: 150
       });
       setWords(res.data);
+      const dbCount = res.pagination?.totalInDb ?? res.pagination?.total ?? res.data.length;
+      setTotalInDb(dbCount);
       if (res.data.length < 30) {
         handleNeedMoreWords(35);
       }
@@ -266,8 +269,8 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
             </Space>
 
             <Space wrap align="center">
-              <Tag color="purple" style={{ fontSize: '0.95rem', padding: '4px 12px' }}>
-                Доступно слов в базе: {words.length}
+              <Tag color="purple" style={{ fontSize: '0.95rem', padding: '6px 14px', fontWeight: 600, borderRadius: 8 }}>
+                Доступно слов в базе: {totalInDb || words.length}
               </Tag>
             </Space>
           </div>

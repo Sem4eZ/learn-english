@@ -35,5 +35,7 @@ export interface DictionaryResponse {
     limit: number;
     total: number;
     pages: number;
+    totalInDb?: number;
+    totalOverall?: number;
   };
 }
