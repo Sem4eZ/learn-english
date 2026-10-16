@@ -37,6 +37,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root redirect to live frontend
+app.get('/', (req, res) => {
+  res.redirect('https://sem4ez.github.io/learn-english/');
+});
+
 // Health check (supports Render /healthz and /api/health)
 app.get(['/api/health', '/healthz'], (req, res) => {
   res.json({ status: 'ok', service: 'Fluentiq API', timestamp: new Date().toISOString() });
