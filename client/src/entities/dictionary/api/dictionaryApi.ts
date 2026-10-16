@@ -1,29 +1,6 @@
 import { baseApi } from '@/shared/api/baseApi';
 import { DictionaryItem, DictionaryFilterParams, DictionaryResponse } from '../model/types';
-import { FALLBACK_WORDS } from '@/shared/lib/fallbackData';
 import { store } from '@/app/store';
-
-let localWordsCache: DictionaryItem[] | null = null;
-
-function getOfflineWords(): DictionaryItem[] {
-  if (localWordsCache) return localWordsCache;
-  try {
-    const saved = localStorage.getItem('fluentiq_offline_words');
-    if (saved) {
-      localWordsCache = JSON.parse(saved);
-      return localWordsCache!;
-    }
-  } catch (_) {}
-  localWordsCache = [...FALLBACK_WORDS];
-  return localWordsCache;
-}
-
-function saveOfflineWords(words: DictionaryItem[]) {
-  localWordsCache = words;
-  try {
-    localStorage.setItem('fluentiq_offline_words', JSON.stringify(words));
-  } catch (_) {}
-}
 
 export const dictionaryApiSlice = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -98,76 +75,17 @@ export const dictionaryApi = {
   ...dictionaryApiSlice,
 
   async getDictionary(params: DictionaryFilterParams = {}): Promise<DictionaryResponse> {
-    try {
-      const res = await store.dispatch(
-        dictionaryApiSlice.endpoints.getDictionary.initiate(params, { forceRefetch: true })
-      ).unwrap();
-      if (res && res.success) {
-        if (res.data && res.data.length > 0) {
-          saveOfflineWords(res.data);
-        }
-        return res;
-      }
-    } catch (err) {
-      console.warn('[dictionaryApi] Backend query failed, using offline cache:', err);
-    }
-
-    // Resilient fallback if server is unreachable
-    let filtered = getOfflineWords();
-    if (params.sectionId && params.sectionId !== 'all') {
-      filtered = filtered.filter(w => w.section_id === params.sectionId);
-    }
-    if (params.level && params.level !== 'all') {
-      filtered = filtered.filter(w => w.level === params.level);
-    }
-    if (params.favoritesOnly) {
-      filtered = filtered.filter(w => w.is_favorite);
-    }
-    if (params.search && params.search.trim()) {
-      const q = params.search.toLowerCase().trim();
-      filtered = filtered.filter(w =>
-        w.word.toLowerCase().includes(q) ||
-        w.translation.toLowerCase().includes(q) ||
-        (w.definition && w.definition.toLowerCase().includes(q))
-      );
-    }
-
-    const page = params.page || 1;
-    const limit = params.limit || 50;
-    const startIndex = (page - 1) * limit;
-    const pageItems = filtered.slice(startIndex, startIndex + limit);
-
-    return {
-      success: true,
-      data: pageItems,
-      pagination: {
-        page,
-        limit,
-        total: filtered.length,
-        pages: Math.ceil(filtered.length / limit) || 1,
-        totalInDb: filtered.length,
-        totalOverall: filtered.length,
-      },
-    };
+    return await store.dispatch(
+      dictionaryApiSlice.endpoints.getDictionary.initiate(params, { forceRefetch: true })
+    ).unwrap();
   },
 
   async toggleFavorite(id: number): Promise<DictionaryItem> {
-    try {
-      const res = await store.dispatch(
-        dictionaryApiSlice.endpoints.toggleFavorite.initiate(id)
-      ).unwrap();
-      if (res && res.data) return res.data;
-    } catch (err) {
-      console.warn('[dictionaryApi] Backend favorite toggle failed:', err);
-    }
-    const words = getOfflineWords();
-    const item = words.find(w => w.id === id);
-    if (item) {
-      item.is_favorite = item.is_favorite ? 0 : 1;
-      saveOfflineWords(words);
-      return item;
-    }
-    throw new Error('Слово не найдено');
+    const res = await store.dispatch(
+      dictionaryApiSlice.endpoints.toggleFavorite.initiate(id)
+    ).unwrap();
+    if (res && res.data) return res.data;
+    throw new Error('Не удалось изменить статус избранного');
   },
 
   async reviewWord(wordId: number, grade: number): Promise<any> {
@@ -177,46 +95,14 @@ export const dictionaryApi = {
   },
 
   async generateWords(level = 'A1', sectionId = 'general', count = 35) {
-    try {
-      return await store.dispatch(
-        dictionaryApiSlice.endpoints.generateWords.initiate({ level, sectionId, count })
-      ).unwrap();
-    } catch (err) {
-      console.warn('[dictionaryApi] Generator unavailable, returning cached words:', err);
-      const words = getOfflineWords();
-      return {
-        success: true,
-        message: 'Используются встроенные слова',
-        data: words,
-        totalCount: words.length,
-      };
-    }
+    return await store.dispatch(
+      dictionaryApiSlice.endpoints.generateWords.initiate({ level, sectionId, count })
+    ).unwrap();
   },
 
   async lookupWord(word: string) {
-    try {
-      return await store.dispatch(
-        dictionaryApiSlice.endpoints.lookupWord.initiate({ word })
-      ).unwrap();
-    } catch (err: any) {
-      console.warn('[dictionaryApi] Lookup unavailable:', err);
-      const words = getOfflineWords();
-      const existing = words.find(w => w.word.toLowerCase() === word.toLowerCase().trim());
-      if (existing) {
-        return {
-          success: true,
-          data: existing,
-          isNew: false,
-          message: `Слово «${existing.word}» найдено в словаре!`,
-        };
-      }
-      return {
-        success: false,
-        data: null as any,
-        isNew: false,
-        message: 'Слово не найдено',
-        error: err.message || 'Ошибка сервера',
-      };
-    }
+    return await store.dispatch(
+      dictionaryApiSlice.endpoints.lookupWord.initiate({ word })
+    ).unwrap();
   },
 };

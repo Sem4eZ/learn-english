@@ -92,10 +92,20 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     selectedTargets.forEach(t => usedWordIdsRef.current.add(t.id));
 
     return selectedTargets.map(target => {
-      const distractors = wordList
-        .filter(w => w.id !== target.id)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 3);
+      const targetText = (dir === 'en-ru' ? target.translation : target.word).trim().toLowerCase();
+      const seenTexts = new Set<string>([targetText]);
+      const distractors: DictionaryItem[] = [];
+
+      const pool = [...wordList].sort(() => 0.5 - Math.random());
+      for (const w of pool) {
+        if (w.id === target.id) continue;
+        const text = (dir === 'en-ru' ? w.translation : w.word).trim().toLowerCase();
+        if (text && !seenTexts.has(text)) {
+          seenTexts.add(text);
+          distractors.push(w);
+          if (distractors.length >= 3) break;
+        }
+      }
 
       const allFour = [target, ...distractors];
       const shuffledOptions = allFour

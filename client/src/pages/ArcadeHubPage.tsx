@@ -224,6 +224,48 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
 
   const currentModeObj = modes.find(m => m.id === selectedMode);
 
+  const cardItems = React.useMemo(() => {
+    const seen = new Set<string>();
+    const unique = [];
+    for (const w of words) {
+      const key = (w.word || '').trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        unique.push({
+          id: w.id,
+          frontMain: w.word,
+          frontPhonetic: w.transcription,
+          frontContext: w.example_sentence,
+          backMain: w.translation,
+          backDetail: w.definition,
+          backGrammar: w.example_translation,
+          level: w.level,
+          category: w.section_id
+        });
+      }
+    }
+    return unique.sort(() => 0.5 - Math.random());
+  }, [words]);
+
+  const audioItems = React.useMemo(() => {
+    const seen = new Set<string>();
+    const unique = [];
+    for (const w of words) {
+      const s = (w.example_sentence || w.word || '').trim();
+      if (s && !seen.has(s.toLowerCase())) {
+        seen.add(s.toLowerCase());
+        unique.push({
+          id: w.id,
+          sentence: s,
+          translation: w.example_translation || w.translation,
+          hint: w.definition,
+          level: w.level
+        });
+      }
+    }
+    return unique.sort(() => 0.5 - Math.random());
+  }, [words]);
+
   return (
     <div className={styles.container}>
       {selectedMode === 'idle' ? (
@@ -282,17 +324,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                   className={styles.sectionSelect}
                   options={[
                     { label: 'Все темы и категории', value: 'all' },
-                    ...(sections.length > 0
-                      ? sections.map(s => ({ label: s.title, value: s.id }))
-                      : [
-                          { label: 'Грамматика и конструкции', value: 'grammar' },
-                          { label: 'Деловой английский', value: 'business' },
-                          { label: 'Фразовые и идиомы', value: 'phrasal_idioms' },
-                          { label: 'Разговорный и сленг', value: 'conversational' },
-                          { label: 'IT и разработка', value: 'tech_it' },
-                          { label: 'Путешествия', value: 'travel' },
-                          { label: 'IELTS / TOEFL', value: 'ielts_toefl' },
-                        ])
+                    ...sections.map(s => ({ label: s.title, value: s.id }))
                   ]}
                 />
               </Space>
@@ -468,17 +500,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                   {selectedMode === 'cards' && (
                     <FlashcardDeck
                       key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
-                      items={words.map(w => ({
-                        id: w.id,
-                        frontMain: w.word,
-                        frontPhonetic: w.transcription,
-                        frontContext: w.example_sentence,
-                        backMain: w.translation,
-                        backDetail: w.definition,
-                        backGrammar: w.example_translation,
-                        level: w.level,
-                        category: w.section_id
-                      }))}
+                      items={cardItems}
                       onFinish={() => handleGameComplete(50)}
                       onRefresh={fetchWords}
                       onNeedMore={() => handleNeedMoreWords(35)}
@@ -488,13 +510,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                   {selectedMode === 'audio' && (
                     <AudioChallenge
                       key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
-                      items={words.map(w => ({
-                        id: w.id,
-                        sentence: w.example_sentence || w.word,
-                        translation: w.example_translation || w.translation,
-                        hint: w.definition,
-                        level: w.level
-                      }))}
+                      items={audioItems}
                       onComplete={(score) => handleGameComplete(score)}
                       onRefresh={fetchWords}
                       onNeedMore={() => handleNeedMoreWords(35)}

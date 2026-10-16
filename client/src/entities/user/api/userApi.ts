@@ -1,6 +1,5 @@
 import { baseApi } from '@/shared/api/baseApi';
-import { UserStats, HistoryItem } from '../model/types';
-import { INITIAL_USER_STATS } from '@/shared/lib/fallbackData';
+import { UserStats, HistoryItem, INITIAL_USER_STATS } from '../model/types';
 import { store } from '@/app/store';
 
 export const userApiSlice = baseApi.injectEndpoints({

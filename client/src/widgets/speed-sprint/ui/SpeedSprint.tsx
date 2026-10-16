@@ -47,6 +47,7 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
   const [isFinished, setIsFinished] = useState<boolean>(false);
 
   const timerRef = useRef<any>(null);
+  const lastTargetIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (words.length < 25) {
@@ -55,17 +56,30 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
   }, [words.length]);
 
   // Generate pair
-  const pickNextPair = (wordList: DictionaryItem[], curCombo: number) => {
+  const pickNextPair = (wordList: DictionaryItem[], _curCombo: number) => {
     if (wordList.length < 2) return null;
 
-    const target = wordList[Math.floor(Math.random() * wordList.length)];
-    const isMatch = Math.random() > 0.45;
+    // Pick a word different from the previous one to prevent immediate repetition
+    const pool = wordList.filter(w => w.id !== lastTargetIdRef.current);
+    const candidateList = pool.length > 0 ? pool : wordList;
+    const target = candidateList[Math.floor(Math.random() * candidateList.length)];
+    lastTargetIdRef.current = target.id;
 
+    let isMatch = Math.random() > 0.45;
     let translation = target.translation;
+
     if (!isMatch) {
-      const distractors = wordList.filter(w => w.id !== target.id);
-      const wrong = distractors[Math.floor(Math.random() * distractors.length)];
-      translation = wrong.translation;
+      const targetTrans = target.translation.trim().toLowerCase();
+      const distractors = wordList.filter(w => 
+        w.id !== target.id && 
+        w.translation.trim().toLowerCase() !== targetTrans
+      );
+      if (distractors.length > 0) {
+        const wrong = distractors[Math.floor(Math.random() * distractors.length)];
+        translation = wrong.translation;
+      } else {
+        isMatch = true;
+      }
     }
 
     return {
