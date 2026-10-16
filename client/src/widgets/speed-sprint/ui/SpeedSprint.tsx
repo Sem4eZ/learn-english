@@ -12,6 +12,7 @@ import {
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './SpeedSprint.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -20,6 +21,7 @@ export interface SpeedSprintProps {
   words: DictionaryItem[];
   onComplete?: (score: number, maxCombo: number, xpEarned: number) => void;
   onClose?: () => void;
+  onNeedMore?: () => void;
 }
 
 interface SprintPair {
@@ -32,7 +34,8 @@ interface SprintPair {
 export const SpeedSprint: React.FC<SpeedSprintProps> = ({
   words,
   onComplete,
-  onClose
+  onClose,
+  onNeedMore
 }) => {
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -44,6 +47,12 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
   const [isFinished, setIsFinished] = useState<boolean>(false);
 
   const timerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (words.length < 25) {
+      onNeedMore?.();
+    }
+  }, [words.length]);
 
   // Generate pair
   const pickNextPair = (wordList: DictionaryItem[], curCombo: number) => {
@@ -131,6 +140,11 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
       setFeedback('wrong');
     }
 
+    // Sync SRS review in background
+    if (currentPair?.item) {
+      SRSEngine.syncReviewWithServer(currentPair.item.id, isCorrect ? 3 : 1);
+    }
+
     // Quick reset feedback and next card
     setTimeout(() => {
       setFeedback(null);
@@ -176,14 +190,26 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
           Максимальная серия: <Tag color="warning"><FireFilled /> {maxCombo} подряд</Tag>
         </Paragraph>
         <Paragraph>
-          <Tag color="cyan" style={{ fontSize: '1.1rem', padding: '6px 16px' }}>
+          <Tag color="cyan" className={styles.rewardTag}>
             <ThunderboltFilled /> +{xpEarned} XP получено
           </Tag>
         </Paragraph>
 
-        <Space size="middle" style={{ marginTop: 24 }}>
+        <Space size="middle" className={styles.summaryActions} wrap>
           <Button
             type="primary"
+            size="large"
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
+            onClick={() => {
+              onNeedMore?.();
+              startNewGame();
+            }}
+            className={styles.primaryActionBtn}
+          >
+            Играть с новыми словами
+          </Button>
+
+          <Button
             size="large"
             icon={<RedoOutlined />}
             onClick={startNewGame}
@@ -212,18 +238,18 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
       <div>
         <div className={styles.topBar}>
           <div className={`${styles.timerPill} ${isUrgent ? styles.urgent : ''}`}>
-            <Tag color={isUrgent ? 'error' : 'processing'} style={{ fontSize: '1.1rem', padding: '4px 12px' }}>
+            <Tag color={isUrgent ? 'error' : 'processing'} className={styles.timerTag}>
               <ClockCircleFilled /> {timeLeft}с
             </Tag>
           </div>
 
           <Space size="middle">
             {combo >= 2 && (
-              <Tag color="warning" style={{ fontSize: '1rem', fontWeight: 800 }}>
+              <Tag color="warning" className={styles.comboTag}>
                 <FireFilled /> {combo}x ({mult}x Очки!)
               </Tag>
             )}
-            <Tag color="cyan" style={{ fontSize: '1.1rem', fontWeight: 800 }}>
+            <Tag color="cyan" className={styles.scoreTag}>
               <ThunderboltFilled /> {score} pts
             </Tag>
           </Space>

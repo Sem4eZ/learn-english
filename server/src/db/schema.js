@@ -8,7 +8,9 @@ const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
 
-const dbPath = process.env.DATABASE_PATH || './data/english_mastery.db';
+const dbPath = process.env.DATABASE_PATH 
+  ? path.resolve(__dirname, '../../', process.env.DATABASE_PATH)
+  : path.resolve(__dirname, '../../data/english_mastery.db');
 const dbDir = path.dirname(dbPath);
 
 if (!fs.existsSync(dbDir)) {
@@ -21,6 +23,7 @@ const db = new DatabaseSync(dbPath);
 db.exec('PRAGMA journal_mode = WAL;');
 db.exec('PRAGMA synchronous = NORMAL;');
 db.exec('PRAGMA foreign_keys = ON;');
+db.exec('PRAGMA busy_timeout = 5000;');
 
 // Initialize tables
 db.exec(`

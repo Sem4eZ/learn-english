@@ -118,7 +118,7 @@ export const PracticePage: React.FC<PracticePageProps> = ({
             <Select
               value={currentSectionId}
               onChange={handleTopicChange}
-              style={{ minWidth: 200 }}
+              className={styles.topicSelect}
               options={[
                 { label: 'Все темы (микс)', value: 'all' },
                 ...(allSections.length > 0
@@ -163,7 +163,7 @@ export const PracticePage: React.FC<PracticePageProps> = ({
         <div className={styles.loadingContainer}>
           <Spin size="large" />
           <div className={styles.loadingText}>
-            <Title level={4}>Генерируется ответ...</Title>
+            <Title level={4}>Загрузка заданий...</Title>
             <Text type="secondary">
               Подготавливаем практические задания и разбор
             </Text>

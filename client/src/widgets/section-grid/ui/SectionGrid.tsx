@@ -23,13 +23,13 @@ interface SectionGridProps {
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
-  BookOutlined: <BookOutlined style={{ fontSize: 24, color: '#6366f1' }} />,
-  RocketOutlined: <RocketOutlined style={{ fontSize: 24, color: '#06b6d4' }} />,
-  CodeOutlined: <CodeOutlined style={{ fontSize: 24, color: '#10b981' }} />,
-  CompassOutlined: <CompassOutlined style={{ fontSize: 24, color: '#f59e0b' }} />,
-  FireOutlined: <FireOutlined style={{ fontSize: 24, color: '#ef4444' }} />,
-  CommentOutlined: <CommentOutlined style={{ fontSize: 24, color: '#a855f7' }} />,
-  TrophyOutlined: <TrophyOutlined style={{ fontSize: 24, color: '#ec4899' }} />,
+  BookOutlined: <BookOutlined className={`${styles.sectionIcon} ${styles.iconIndigo}`} />,
+  RocketOutlined: <RocketOutlined className={`${styles.sectionIcon} ${styles.iconCyan}`} />,
+  CodeOutlined: <CodeOutlined className={`${styles.sectionIcon} ${styles.iconEmerald}`} />,
+  CompassOutlined: <CompassOutlined className={`${styles.sectionIcon} ${styles.iconAmber}`} />,
+  FireOutlined: <FireOutlined className={`${styles.sectionIcon} ${styles.iconRose}`} />,
+  CommentOutlined: <CommentOutlined className={`${styles.sectionIcon} ${styles.iconPurple}`} />,
+  TrophyOutlined: <TrophyOutlined className={`${styles.sectionIcon} ${styles.iconPink}`} />,
 };
 
 export const SectionGrid: React.FC<SectionGridProps> = ({
@@ -54,20 +54,17 @@ export const SectionGrid: React.FC<SectionGridProps> = ({
             <Card
               hoverable
               className={styles.sectionCard}
-              styles={{ body: { display: 'flex', flexDirection: 'column', height: '100%' } }}
               onClick={() => onSelectSection(section.id)}
             >
               <div>
                 <div className={styles.cardTop}>
                   <div className={styles.iconWrapper}>
-                    {ICON_MAP[section.icon] || <BookOutlined style={{ fontSize: 24, color: '#6366f1' }} />}
+                    {ICON_MAP[section.icon] || <BookOutlined className={`${styles.sectionIcon} ${styles.iconIndigo}`} />}
                   </div>
 
                   <Badge
                     count={section.question_count ? `${section.question_count} уроков` : 'Доступно'}
-                    style={{
-                      backgroundColor: section.question_count ? '#10b981' : '#6366f1',
-                    }}
+                    className={section.question_count ? styles.badgeActive : styles.badgeDefault}
                   />
                 </div>
 

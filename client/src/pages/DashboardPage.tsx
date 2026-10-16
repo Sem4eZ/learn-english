@@ -1,15 +1,21 @@
 import React from 'react';
 import { StatsOverview } from '@/widgets/stats-panel/ui/StatsOverview';
 import { UserStats } from '@/entities/user/model/types';
+import styles from './DashboardPage.module.scss';
 
 interface DashboardPageProps {
   stats: UserStats | null;
+  onRefreshStats?: () => void;
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ stats }) => {
+export const DashboardPage: React.FC<DashboardPageProps> = ({ stats, onRefreshStats }) => {
+  React.useEffect(() => {
+    onRefreshStats?.();
+  }, [onRefreshStats]);
+
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <StatsOverview stats={stats} />
+    <div className={styles.container}>
+      <StatsOverview stats={stats} onRefreshStats={onRefreshStats} />
     </div>
   );
 };

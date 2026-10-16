@@ -11,6 +11,7 @@ import { Question, AnswerResult } from '@/entities/question/model/types';
 import { questionApi } from '@/entities/question/api/questionApi';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { xpEventBus } from '@/shared/lib/xpEvents';
 import styles from './AnswerOptions.module.scss';
 
 const { Text, Paragraph } = Typography;
@@ -51,6 +52,14 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
         soundEffects.playWrong();
       }
 
+      // Real-time XP & stats emission for immediate header update
+      xpEventBus.emit({
+        xpReward: res.xpEarned || 5,
+        totalXp: res.totalXp,
+        streak: res.streak,
+        source: 'quiz_question'
+      });
+
       onAnswerSubmitted?.(res);
     } catch (err) {
       console.error('Answer submission error:', err);
@@ -63,7 +72,7 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
 
   return (
     <div className={styles.container}>
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space direction="vertical" className={styles.fullWidth} size="middle">
         <div className={styles.optionsGrid}>
           {question.options.map((option, idx) => {
             const isThisSelected = selectedIdx === idx;
@@ -88,8 +97,8 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
                   {option}
                 </span>
 
-                {isThisCorrect && <CheckCircleFilled style={{ color: '#10b981', fontSize: 20 }} />}
-                {isThisWrong && <CloseCircleFilled style={{ color: '#ef4444', fontSize: 20 }} />}
+                {isThisCorrect && <CheckCircleFilled className={styles.correctIcon} />}
+                {isThisWrong && <CloseCircleFilled className={styles.wrongIcon} />}
               </Button>
             );
           })}
@@ -101,10 +110,10 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
             bordered
             className={`${styles.explanationCard} ${result.isCorrect ? styles.correct : styles.wrong}`}
           >
-            <Space direction="vertical" style={{ width: '100%' }} size="small">
+            <Space direction="vertical" className={styles.fullWidth} size="small">
               <div className={styles.cardHeader}>
                 <Space>
-                  <Tag color={result.isCorrect ? 'success' : 'error'} style={{ fontSize: '0.9rem', padding: '4px 10px' }}>
+                  <Tag color={result.isCorrect ? 'success' : 'error'} className={styles.resultTag}>
                     {result.isCorrect ? 'Верно! (+15 XP)' : 'Неверно (+5 XP)'}
                   </Tag>
                   {result.streak >= 2 && (
@@ -122,7 +131,7 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
               </div>
 
               <Paragraph className={styles.explanationText}>
-                <InfoCircleOutlined style={{ marginRight: 6, color: '#6366f1' }} />
+                <InfoCircleOutlined className={styles.infoIcon} />
                 {result.explanation}
               </Paragraph>
 

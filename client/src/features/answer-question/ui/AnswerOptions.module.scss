@@ -87,3 +87,28 @@
   border-radius: $radius-sm;
   padding: 0 24px;
 }
+
+.fullWidth {
+  width: 100%;
+}
+
+.correctIcon {
+  color: $color-success;
+  font-size: 20px;
+}
+
+.wrongIcon {
+  color: $color-danger;
+  font-size: 20px;
+}
+
+.resultTag {
+  font-size: 0.9rem !important;
+  padding: 4px 10px !important;
+}
+
+.infoIcon {
+  margin-right: 6px;
+  color: $color-primary;
+}
+

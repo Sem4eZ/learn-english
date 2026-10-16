@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './AudioChallenge.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -27,6 +28,7 @@ interface AudioChallengeProps {
   items: AudioItem[];
   onComplete?: (score: number) => void;
   onRefresh?: () => void;
+  onNeedMore?: () => void;
 }
 
 // Clean punctuation and split into tokens
@@ -112,9 +114,18 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
     } else {
       soundEffects.playWrong();
     }
+
+    if (currentItem?.id) {
+      SRSEngine.syncReviewWithServer(currentItem.id, isMatch ? 3 : 1);
+    }
   };
 
   const handleNext = () => {
+    const remaining = items.length - (currentIndex + 1);
+    if (remaining < 4) {
+      onNeedMore?.();
+    }
+
     if (currentIndex + 1 >= items.length) {
       fireCelebration();
       setIsFinished(true);
@@ -141,9 +152,23 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
         <Paragraph type="secondary">
           Заработано <Tag color="cyan">+{score} XP</Tag> за понимание на слух!
         </Paragraph>
-        <Space size="middle">
+        <Space size="middle" wrap>
           <Button
             type="primary"
+            size="large"
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
+            onClick={() => {
+              onNeedMore?.();
+              onRefresh?.();
+              setCurrentIndex(0);
+              setScore(0);
+              setIsFinished(false);
+            }}
+            className={styles.primaryActionBtn}
+          >
+            Изучить новые задания
+          </Button>
+          <Button
             size="large"
             icon={<ReloadOutlined />}
             onClick={() => {
@@ -154,11 +179,6 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
           >
             Начать заново
           </Button>
-          {onRefresh && (
-            <Button size="large" onClick={onRefresh}>
-              Новые задания
-            </Button>
-          )}
         </Space>
       </Card>
     );
@@ -174,7 +194,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
         <Space>
           {currentItem.level && <Tag color="purple">{currentItem.level}</Tag>}
           <Tag color="cyan">
-            <ThunderboltFilled style={{ marginRight: 4 }} />
+            <ThunderboltFilled className={styles.goldIcon} />
             +{score} XP
           </Tag>
         </Space>
@@ -188,7 +208,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
 
       {/* Big Audio Player Card */}
       <Card className={styles.audioPlayerCard}>
-        <Title level={4} style={{ marginBottom: 16 }}>
+        <Title level={4} className={styles.cardTitle}>
           🎧 Послушайте фразу и соберите предложение
         </Title>
 
@@ -272,10 +292,10 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
           message={isCorrect ? 'Отлично! Вы верно собрали предложение (+20 XP)' : 'Не совсем точно'}
           description={
             <div>
-              <div style={{ marginTop: 4 }}>
+              <div className={styles.feedbackSentence}>
                 <strong>Оригинал:</strong> {currentItem.sentence}
               </div>
-              <div style={{ marginTop: 2, opacity: 0.85 }}>
+              <div className={styles.feedbackTranslation}>
                 <strong>Перевод:</strong> {currentItem.translation}
               </div>
             </div>
@@ -307,7 +327,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
             icon={<CheckOutlined />}
             onClick={handleVerify}
             disabled={selectedTokens.length === 0}
-            style={{ borderRadius: 12, padding: '0 32px' }}
+            className={styles.verifyBtn}
           >
             Проверить
           </Button>
@@ -317,7 +337,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
             size="large"
             icon={<ArrowRightOutlined />}
             onClick={handleNext}
-            style={{ borderRadius: 12, padding: '0 32px', background: '#10b981', borderColor: '#10b981' }}
+            className={styles.nextBtn}
           >
             Следующее ➔
           </Button>

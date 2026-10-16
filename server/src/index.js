@@ -12,7 +12,13 @@ const { register, login, getMe } = require('./controllers/authController');
 const { getSections } = require('./controllers/sectionsController');
 const { getQuestions, generateBatch } = require('./controllers/questionsController');
 const { recordAnswer, getStats, getHistory } = require('./controllers/progressController');
-const { getDictionary, toggleFavorite, generateDictionaryWords, recordSrsReview } = require('./controllers/dictionaryController');
+const { 
+  getDictionary, 
+  toggleFavorite, 
+  generateDictionaryWords, 
+  recordSrsReview, 
+  lookupWord 
+} = require('./controllers/dictionaryController');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,6 +55,7 @@ app.post('/api/questions/generate', generateBatch);
 // Dictionary & SRS
 app.get('/api/dictionary', getDictionary);
 app.post('/api/dictionary/generate', generateDictionaryWords);
+app.post('/api/dictionary/lookup', lookupWord);
 app.post('/api/dictionary/review', recordSrsReview);
 app.post('/api/dictionary/:id/favorite', toggleFavorite);
 
@@ -57,11 +64,15 @@ app.post('/api/progress/answer', recordAnswer);
 app.get('/api/progress/stats', getStats);
 app.get('/api/progress/history', getHistory);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n======================================================`);
-  console.log(`  🚀 Fluentiq API Server active on http://localhost:${PORT}`);
-  console.log(`  📚 Native SQLite WAL & Spaced Repetition (SRS) Ready`);
-  console.log(`======================================================\n`);
-});
+// Start server if run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n======================================================`);
+    console.log(`  🚀 Fluentiq API Server active on http://localhost:${PORT}`);
+    console.log(`  📚 Native SQLite WAL & Spaced Repetition (SRS) Ready`);
+    console.log(`======================================================\n`);
+  });
+}
+
+module.exports = app;
 

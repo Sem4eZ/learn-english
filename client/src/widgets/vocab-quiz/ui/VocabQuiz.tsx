@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Progress, Tag, Space, Typography } from 'antd';
+import { Card, Button, Progress, Tag, Space, Typography, Segmented } from 'antd';
 import { 
   SoundOutlined, 
   CheckOutlined, 
@@ -14,6 +14,7 @@ import {
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './VocabQuiz.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -23,6 +24,7 @@ export interface VocabQuizProps {
   initialDirection?: 'en-ru' | 'ru-en';
   onComplete?: (score: number, total: number, xpEarned: number) => void;
   onClose?: () => void;
+  onNeedMore?: () => Promise<DictionaryItem[]> | void;
 }
 
 interface QuestionItem {
@@ -34,13 +36,17 @@ interface QuestionItem {
   }[];
 }
 
+export type RoundMode = '15' | '30' | '45' | '60' | 'all';
+
 export const VocabQuiz: React.FC<VocabQuizProps> = ({
   words,
   initialDirection = 'en-ru',
   onComplete,
-  onClose
+  onClose,
+  onNeedMore
 }) => {
   const [direction, setDirection] = useState<'en-ru' | 'ru-en'>(initialDirection);
+  const [roundMode, setRoundMode] = useState<RoundMode>('15');
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
@@ -49,17 +55,43 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   const [combo, setCombo] = useState<number>(0);
   const [maxCombo, setMaxCombo] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [loadingNext, setLoadingNext] = useState<boolean>(false);
+  const usedWordIdsRef = React.useRef<Set<number>>(new Set());
 
   // Build questions
-  const generateQuestions = (wordList: DictionaryItem[], dir: 'en-ru' | 'ru-en') => {
+  const generateQuestions = (
+    wordList: DictionaryItem[], 
+    dir: 'en-ru' | 'ru-en', 
+    preferUnused = true,
+    mode: RoundMode = roundMode
+  ) => {
     if (wordList.length === 0) return [];
 
-    const shuffledWords = [...wordList].sort(() => 0.5 - Math.random());
-    const count = Math.min(shuffledWords.length, 12);
+    let availableWords = preferUnused
+      ? wordList.filter(w => !usedWordIdsRef.current.has(w.id))
+      : wordList;
+
+    const targetCount = mode === 'all' 
+      ? availableWords.length 
+      : parseInt(mode, 10) || 15;
+
+    if (availableWords.length < targetCount) {
+      onNeedMore?.();
+      if (availableWords.length < 4) {
+        usedWordIdsRef.current.clear();
+        availableWords = wordList;
+      }
+    }
+
+    const shuffledWords = [...availableWords].sort(() => 0.5 - Math.random());
+    const count = mode === 'all' 
+      ? shuffledWords.length 
+      : Math.min(shuffledWords.length, targetCount);
     const selectedTargets = shuffledWords.slice(0, count);
 
+    selectedTargets.forEach(t => usedWordIdsRef.current.add(t.id));
+
     return selectedTargets.map(target => {
-      // Pick 3 distractors from wordList (or fallback if small pool)
       const distractors = wordList
         .filter(w => w.id !== target.id)
         .sort(() => 0.5 - Math.random())
@@ -82,7 +114,23 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   };
 
   useEffect(() => {
-    const qs = generateQuestions(words, direction);
+    if (questions.length === 0 && words.length > 0) {
+      const qs = generateQuestions(words, direction, true, roundMode);
+      setQuestions(qs);
+      setCurrentIndex(0);
+      setSelectedOptionId(null);
+      setIsAnswered(false);
+      setScore(0);
+      setCombo(0);
+      setMaxCombo(0);
+      setIsFinished(false);
+    }
+  }, [words, direction]);
+
+  const handleRoundModeChange = (modeVal: string | number) => {
+    const newMode = modeVal as RoundMode;
+    setRoundMode(newMode);
+    const qs = generateQuestions(words, direction, true, newMode);
     setQuestions(qs);
     setCurrentIndex(0);
     setSelectedOptionId(null);
@@ -91,7 +139,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     setCombo(0);
     setMaxCombo(0);
     setIsFinished(false);
-  }, [words, direction]);
+  };
 
   const currentQ = questions[currentIndex];
 
@@ -112,11 +160,29 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
       setCombo(0);
     }
 
-    // Pronounce English word automatically
+    // Pronounce English word automatically and sync SRS review
     if (currentQ) {
       soundEffects.speak(currentQ.targetWord.word);
+      // Grade 3 (Хорошо) postpones word for 1-3 days; Grade 1 (Снова) schedules for repeat in session
+      SRSEngine.syncReviewWithServer(currentQ.targetWord.id, isCorrect ? 3 : 1);
+    }
+
+    // Auto-request next batch of words when remaining questions < 5
+    const remaining = questions.length - (currentIndex + 1);
+    if (remaining < 5) {
+      onNeedMore?.();
     }
   };
+
+  // Auto-pronounce English word when question is displayed
+  useEffect(() => {
+    if (currentQ && direction === 'en-ru' && !isFinished) {
+      const timer = setTimeout(() => {
+        soundEffects.speak(currentQ.targetWord.word);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, direction, isFinished, currentQ]);
 
   const handleNext = () => {
     if (currentIndex + 1 >= questions.length) {
@@ -133,6 +199,38 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
 
   const handleToggleDirection = () => {
     setDirection(prev => (prev === 'en-ru' ? 'ru-en' : 'en-ru'));
+  };
+
+  const handleLearnNewWords = async () => {
+    let currentWords = words;
+    let unstudied = currentWords.filter(w => !usedWordIdsRef.current.has(w.id));
+
+    if (unstudied.length < 15 && onNeedMore) {
+      setLoadingNext(true);
+      try {
+        const fresh = await onNeedMore();
+        if (fresh && fresh.length > 0) {
+          const existingIds = new Set(currentWords.map(w => w.id));
+          const brandNew = fresh.filter(w => !existingIds.has(w.id));
+          currentWords = [...currentWords, ...brandNew];
+        }
+      } catch (err) {
+        console.warn('Failed to load next words:', err);
+      } finally {
+        setLoadingNext(false);
+      }
+    }
+
+    const qs = generateQuestions(currentWords, direction, true);
+    if (qs.length > 0) {
+      setQuestions(qs);
+      setCurrentIndex(0);
+      setSelectedOptionId(null);
+      setIsAnswered(false);
+      setScore(0);
+      setCombo(0);
+      setIsFinished(false);
+    }
   };
 
   if (!words || words.length < 2) {
@@ -158,19 +256,32 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
         <Paragraph type="secondary">
           Точность ответов: <Text strong>{accuracy}%</Text> • Макс. комбо: <Tag color="warning"><FireFilled /> {maxCombo}</Tag>
         </Paragraph>
+        <div className={styles.srsNoticeBox}>
+          💡 <Text strong className={styles.srsNoticeTitle}>Интервальное повторение:</Text> слова, на которые вы ответили верно, запланированы на повторение через 1–3 дня для надежного закрепления. Сейчас вам будут предложены новые свежие слова!
+        </div>
         <Paragraph>
-          <Tag color="cyan" style={{ fontSize: '1.05rem', padding: '4px 12px' }}>
+          <Tag color="cyan" className={styles.rewardTag}>
             <ThunderboltFilled /> +{xpEarned} XP получено
           </Tag>
         </Paragraph>
 
-        <Space size="middle" style={{ marginTop: 24 }}>
+        <Space size="middle" className={styles.summaryActions} wrap>
           <Button
             type="primary"
             size="large"
+            loading={loadingNext}
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
+            onClick={handleLearnNewWords}
+            className={styles.primaryActionBtn}
+          >
+            {roundMode === 'all' ? 'Пройти новые слова' : `Изучить следующие слова (+${roundMode})`}
+          </Button>
+
+          <Button
+            size="large"
             icon={<RedoOutlined />}
             onClick={() => {
-              const qs = generateQuestions(words, direction);
+              const qs = generateQuestions(words, direction, false, roundMode);
               setQuestions(qs);
               setCurrentIndex(0);
               setSelectedOptionId(null);
@@ -200,10 +311,10 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
 
   return (
     <div className={styles.quizContainer}>
-      {/* Top Bar with direction, score and streak */}
+      {/* Top Bar with direction, round mode, score and streak */}
       <div>
         <div className={styles.topBar}>
-          <Space>
+          <Space wrap size="middle">
             <Text type="secondary" strong>
               Вопрос {currentIndex + 1} из {questions.length}
             </Text>
@@ -215,6 +326,19 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
             >
               {direction === 'en-ru' ? 'EN ➔ RU' : 'RU ➔ EN'}
             </Button>
+            <Segmented
+              size="small"
+              value={roundMode}
+              onChange={handleRoundModeChange}
+              disabled={isAnswered}
+              options={[
+                { label: '15', value: '15' },
+                { label: '30', value: '30' },
+                { label: '45', value: '45' },
+                { label: '60', value: '60' },
+                { label: `Все (${words.length})`, value: 'all' }
+              ]}
+            />
           </Space>
 
           <Space>
@@ -243,14 +367,18 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
         {direction === 'en-ru' ? (
           <div>
             <div className={styles.targetWord}>
-              {currentQ.targetWord.word}
-              <Button
-                type="text"
-                shape="circle"
-                icon={<SoundOutlined className={styles.soundBtn} />}
-                onClick={() => soundEffects.speak(currentQ.targetWord.word)}
+              <span>{currentQ.targetWord.word}</span>
+              <button
+                type="button"
+                className={styles.soundBtnCircle}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundEffects.speak(currentQ.targetWord.word);
+                }}
                 title="Озвучить"
-              />
+              >
+                <SoundOutlined />
+              </button>
             </div>
             {currentQ.targetWord.transcription && (
               <div className={styles.phonetic}>
@@ -263,15 +391,15 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
           </div>
         ) : (
           <div>
-            <div className={styles.targetWord} style={{ color: '#34d399' }}>
+            <div className={`${styles.targetWord} ${styles.targetWordRu}`}>
               {currentQ.targetWord.translation}
             </div>
             {currentQ.targetWord.definition && (
-              <div className={styles.promptSub} style={{ marginTop: 8 }}>
+              <div className={`${styles.promptSub} ${styles.subTextMarginSmall}`}>
                 "{currentQ.targetWord.definition}"
               </div>
             )}
-            <div className={styles.promptSub} style={{ marginTop: 12 }}>
+            <div className={`${styles.promptSub} ${styles.subTextMarginMedium}`}>
               Выберите английский эквивалент:
             </div>
           </div>
@@ -297,15 +425,15 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
               onClick={() => handleSelectOption(opt.id, opt.isCorrect)}
               disabled={isAnswered && opt.id !== selectedOptionId && !opt.isCorrect}
             >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div className={styles.optionContent}>
                 <span className={styles.optionIndexBadge}>
                   {letters[idx]}
                 </span>
                 <span>{opt.text}</span>
               </div>
-              {isAnswered && opt.isCorrect && <CheckOutlined style={{ color: '#34d399' }} />}
+              {isAnswered && opt.isCorrect && <CheckOutlined className={styles.correctIcon} />}
               {isAnswered && opt.id === selectedOptionId && !opt.isCorrect && (
-                <CloseOutlined style={{ color: '#f87171' }} />
+                <CloseOutlined className={styles.wrongIcon} />
               )}
             </Button>
           );

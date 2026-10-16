@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Button, Progress, Tag, Space, Typography, message } from 'antd';
+import { Card, Button, Progress, Tag, Space, Typography, message, Segmented, Tooltip } from 'antd';
 import { 
   SoundOutlined, 
   SyncOutlined, 
   TrophyFilled,
-  RedoOutlined
+  RedoOutlined,
+  ThunderboltFilled,
+  CheckCircleOutlined,
+  ArrowRightOutlined,
+  SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
@@ -29,30 +33,55 @@ interface FlashcardDeckProps {
   items: FlashcardItem[];
   onFinish?: (knownCount: number, total: number) => void;
   onRefresh?: () => void;
+  onNeedMore?: () => void;
 }
+
+export type FlashcardRoundMode = '15' | '30' | '45' | '60' | 'all';
 
 export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
   items,
   onFinish,
   onRefresh,
+  onNeedMore,
 }) => {
-  const [deck, setDeck] = useState<FlashcardItem[]>(items);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [roundMode, setRoundMode] = useState<FlashcardRoundMode>('15');
+  const [roundCards, setRoundCards] = useState<FlashcardItem[]>([]);
+  const [remainingPool, setRemainingPool] = useState<FlashcardItem[]>([]);
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+  const [roundNumber, setRoundNumber] = useState(1);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [knownCount, setKnownCount] = useState(0);
-  const [totalXpEarned, setTotalXpEarned] = useState(0);
-  const [isFinished, setIsFinished] = useState(false);
+  const [roundKnownCount, setRoundKnownCount] = useState(0);
+  const [roundXpEarned, setRoundXpEarned] = useState(0);
+  const [sessionKnownCount, setSessionKnownCount] = useState(0);
+  const [sessionXpEarned, setSessionXpEarned] = useState(0);
+  const [isRoundFinished, setIsRoundFinished] = useState(false);
+  const [isDeckFinished, setIsDeckFinished] = useState(false);
 
+  // Initialize or replenish cards
   useEffect(() => {
-    setDeck(items);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setKnownCount(0);
-    setTotalXpEarned(0);
-    setIsFinished(false);
-  }, [items]);
+    if (!items || items.length === 0) return;
 
-  const currentItem = deck[currentIndex];
+    if (roundCards.length === 0 && remainingPool.length === 0) {
+      // First round initialization
+      const targetSize = roundMode === 'all' ? items.length : (parseInt(roundMode, 10) || 15);
+      const initialBatch = items.slice(0, targetSize);
+      const leftover = items.slice(targetSize);
+      setRoundCards(initialBatch);
+      setRemainingPool(leftover);
+      setCurrentRoundIndex(0);
+    } else {
+      // Merge newly arrived items into remainingPool without duplicates
+      setRemainingPool(prev => {
+        const activeIds = new Set(roundCards.map(c => c.id));
+        const poolIds = new Set(prev.map(c => c.id));
+        const fresh = items.filter(c => !activeIds.has(c.id) && !poolIds.has(c.id));
+        if (fresh.length === 0) return prev;
+        return [...prev, ...fresh];
+      });
+    }
+  }, [items, roundMode]);
+
+  const currentItem = roundCards[currentRoundIndex];
 
   const handleFlip = useCallback(() => {
     soundEffects.playFx('flip');
@@ -65,14 +94,18 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
     const option = SRS_RATING_OPTIONS.find(o => o.grade === grade);
     const xpReward = option ? option.xpReward : 10;
 
-    // Trigger SuperMemo-2 server sync in background
+    // Trigger SuperMemo-2 server sync in background (immediately awards XP & emits xpEventBus)
     SRSEngine.syncReviewWithServer(currentItem.id, grade);
 
+    // Update real-time XP counters
+    setSessionXpEarned(prev => prev + xpReward);
+    setRoundXpEarned(prev => prev + xpReward);
+
     if (grade === 1) {
-      // Again: Re-insert into queue for this session
+      // Again: Re-insert into queue for this micro-round
       soundEffects.playWrong();
-      message.info({ content: 'Карточка повторится в текущей сессии', duration: 1.5 });
-      setDeck(prev => [...prev, currentItem]);
+      message.info({ content: 'Карточка повторится в конце этого раунда', duration: 1.5 });
+      setRoundCards(prev => [...prev, currentItem]);
     } else {
       // Successful recall
       if (grade === 4) {
@@ -81,25 +114,78 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
       } else {
         soundEffects.playCorrect();
       }
-      setKnownCount(prev => prev + 1);
+      setRoundKnownCount(prev => prev + 1);
+      setSessionKnownCount(prev => prev + 1);
     }
 
-    setTotalXpEarned(prev => prev + xpReward);
+    // Auto-request replenishment if remaining queue is low
+    const totalRemaining = remainingPool.length + (roundCards.length - (currentRoundIndex + 1));
+    if (totalRemaining < 15) {
+      onNeedMore?.();
+    }
 
-    if (currentIndex + 1 >= deck.length) {
+    // Check if current round completed
+    if (currentRoundIndex + 1 >= roundCards.length) {
+      soundEffects.playCombo();
       fireCelebration();
-      setIsFinished(true);
-      onFinish?.(knownCount + (grade > 1 ? 1 : 0), items.length);
+      setIsRoundFinished(true);
+
+      if (remainingPool.length === 0) {
+        setIsDeckFinished(true);
+        onFinish?.(sessionKnownCount + (grade > 1 ? 1 : 0), items.length);
+      }
     } else {
       setIsFlipped(false);
-      setCurrentIndex(prev => prev + 1);
+      setCurrentRoundIndex(prev => prev + 1);
     }
-  }, [currentItem, currentIndex, deck.length, knownCount, items.length, onFinish]);
+  }, [currentItem, currentRoundIndex, roundCards.length, remainingPool.length, sessionKnownCount, items.length, onFinish, onNeedMore]);
+
+  // Round progression handlers
+  const handleNextRound = useCallback(() => {
+    const targetSize = roundMode === 'all' ? remainingPool.length : (parseInt(roundMode, 10) || 15);
+    const nextBatch = remainingPool.slice(0, targetSize);
+    const nextPool = remainingPool.slice(targetSize);
+
+    if (nextBatch.length === 0) {
+      onNeedMore?.();
+      onRefresh?.();
+      return;
+    }
+
+    setRoundCards(nextBatch);
+    setRemainingPool(nextPool);
+    setCurrentRoundIndex(0);
+    setRoundNumber(prev => prev + 1);
+    setRoundKnownCount(0);
+    setRoundXpEarned(0);
+    setIsRoundFinished(false);
+    setIsFlipped(false);
+
+    if (nextPool.length < 15) {
+      onNeedMore?.();
+    }
+  }, [roundMode, remainingPool, onNeedMore, onRefresh]);
+
+  const handleRepeatRound = useCallback(() => {
+    setCurrentRoundIndex(0);
+    setRoundKnownCount(0);
+    setRoundXpEarned(0);
+    setIsRoundFinished(false);
+    setIsFlipped(false);
+  }, []);
+
+  const handleRoundModeChange = useCallback((newMode: FlashcardRoundMode) => {
+    setRoundMode(newMode);
+    if (newMode === 'all' && remainingPool.length > 0) {
+      setRoundCards(prev => [...prev, ...remainingPool]);
+      setRemainingPool([]);
+      message.success('Все оставшиеся слова объединены в текущий раунд');
+    }
+  }, [remainingPool]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
 
       if (e.code === 'Space') {
@@ -135,143 +221,251 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
     );
   }
 
-  if (isFinished) {
-    const accuracy = Math.round((knownCount / items.length) * 100);
+  // Celebratory Round Finished screen (after 15 cards)
+  if (isRoundFinished) {
+    const roundTotal = roundCards.length;
+    const accuracy = roundTotal > 0 ? Math.round((roundKnownCount / roundTotal) * 100) : 100;
+    const hasMoreRounds = remainingPool.length > 0;
+    const targetBatchSize = roundMode === 'all' ? remainingPool.length : (parseInt(roundMode, 10) || 15);
+    const nextRoundCount = Math.min(targetBatchSize, remainingPool.length);
+
     return (
-      <Card className={styles.summaryCard}>
-        <TrophyFilled className={styles.summaryTrophy} />
-        <Title level={2}>Колода пройдена!</Title>
+      <Card className={styles.roundCompletionCard}>
+        <TrophyFilled className={styles.roundCompletionTrophy} />
+        <Title level={2}>
+          {isDeckFinished ? 'Колода полностью завершена!' : `Раунд ${roundNumber} пройден!`}
+        </Title>
         <Paragraph type="secondary" className={styles.summarySubtitle}>
-          Вы отлично потренировали интервальные повторения: усвоено {knownCount} из {items.length} слов ({accuracy}%).
-          Заработано <strong>+{totalXpEarned} XP</strong>.
+          Отличный прогресс! Вы уверенно прошли {roundTotal} карточек ({accuracy}% усвоено).
+          Весь полученный опыт уже начислен в ваш профиль.
         </Paragraph>
-        <Space size="middle" className={styles.summaryActions}>
-          <Button
-            type="primary"
-            size="large"
-            icon={<RedoOutlined />}
-            onClick={() => {
-              setDeck(items);
-              setCurrentIndex(0);
-              setIsFlipped(false);
-              setKnownCount(0);
-              setTotalXpEarned(0);
-              setIsFinished(false);
-            }}
-            className={styles.btnAction}
-          >
-            Повторить колоду
-          </Button>
-          {onRefresh && (
-            <Button size="large" onClick={onRefresh} className={styles.btnAction}>
-              Загрузить новые
+
+        {/* Round Stat Summary */}
+        <div className={styles.roundStatsRow}>
+          <div className={styles.roundStatItem}>
+            <div className={`${styles.roundStatVal} ${styles.success}`}>
+              {roundKnownCount} / {roundTotal}
+            </div>
+            <div className={styles.roundStatLabel}>Усвоено в раунде</div>
+          </div>
+
+          <div className={styles.roundStatItem}>
+            <div className={`${styles.roundStatVal} ${styles.gold}`}>
+              +{roundXpEarned} XP
+            </div>
+            <div className={styles.roundStatLabel}>Опыт за раунд</div>
+          </div>
+
+          <div className={styles.roundStatItem}>
+            <div className={styles.roundStatVal}>
+              +{sessionXpEarned} XP
+            </div>
+            <div className={styles.roundStatLabel}>Всего за сессию</div>
+          </div>
+
+          <div className={styles.roundStatItem}>
+            <div className={styles.roundStatVal}>
+              {remainingPool.length}
+            </div>
+            <div className={styles.roundStatLabel}>Слов в очереди</div>
+          </div>
+        </div>
+
+        {/* Round Navigation Actions */}
+        <Space size="middle" className={styles.summaryActions} wrap>
+          {hasMoreRounds ? (
+            <Button
+              type="primary"
+              size="large"
+              icon={<ArrowRightOutlined />}
+              onClick={handleNextRound}
+              className={styles.primaryActionBtn}
+            >
+              Изучить следующие {nextRoundCount} слов
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              size="large"
+              icon={<ThunderboltFilled className={styles.goldIcon} />}
+              onClick={() => {
+                onNeedMore?.();
+                onRefresh?.();
+                const targetSize = roundMode === 'all' ? items.length : (parseInt(roundMode, 10) || 15);
+                setRoundCards(items.slice(0, targetSize));
+                setRemainingPool(items.slice(targetSize));
+                setCurrentRoundIndex(0);
+                setRoundNumber(1);
+                setRoundKnownCount(0);
+                setRoundXpEarned(0);
+                setIsRoundFinished(false);
+                setIsDeckFinished(false);
+              }}
+              className={styles.primaryActionBtn}
+            >
+              Изучить новые слова
             </Button>
           )}
+
+          <Button
+            size="large"
+            icon={<RedoOutlined />}
+            onClick={handleRepeatRound}
+            className={styles.btnAction}
+          >
+            Повторить этот раунд
+          </Button>
+
+          <Button
+            size="large"
+            onClick={() => onFinish?.(sessionKnownCount, items.length)}
+            className={styles.btnAction}
+          >
+            Завершить сессию
+          </Button>
         </Space>
       </Card>
     );
   }
 
-  const progressPercent = Math.round(((currentIndex) / deck.length) * 100);
+  const progressPercent = roundCards.length > 0 
+    ? Math.round((currentRoundIndex / roundCards.length) * 100) 
+    : 0;
+
+  const totalInQueue = remainingPool.length + (roundCards.length - currentRoundIndex);
 
   return (
     <div className={styles.deckContainer}>
-      {/* Top progress bar */}
-      <div>
-        <div className={styles.topBar}>
-          <Text type="secondary" strong>
-            Карточка {currentIndex + 1} из {deck.length}
-          </Text>
-          <Space>
-            {currentItem.level && <Tag color="purple">{currentItem.level}</Tag>}
-            {currentItem.category && <Tag color="blue">{currentItem.category}</Tag>}
-            <Tag color="success">Усвоено: {knownCount}</Tag>
-            <Tag color="gold">+{totalXpEarned} XP</Tag>
-          </Space>
+      {/* Top Header & Progress */}
+      <div className={styles.topBar}>
+        <div className={styles.topBarRow}>
+          <div className={styles.roundTitleGroup}>
+            <span className={styles.roundTitleText}>
+              Раунд {roundNumber} • Карточка {currentRoundIndex + 1} из {roundCards.length}
+            </span>
+            <span className={styles.deckPoolHint}>
+              (В очереди: {totalInQueue} слов)
+            </span>
+          </div>
+
+          <div className={styles.topBarBadges}>
+            {currentItem?.level && <Tag color="purple">{currentItem.level}</Tag>}
+            {currentItem?.category && <Tag color="blue">{currentItem.category}</Tag>}
+            <Tag color="success">Усвоено: {roundKnownCount}</Tag>
+
+            <Tooltip title="Опыт начисляется мгновенно на каждом ответе. Вы можете выйти в любой момент — всё уже сохранено на балансе.">
+              <Tag className={styles.xpSavedBadge}>
+                <SafetyCertificateOutlined /> +{sessionXpEarned} XP сохранено
+              </Tag>
+            </Tooltip>
+
+            <Segmented
+              className={styles.modeSegmented}
+              value={roundMode}
+              onChange={(val) => handleRoundModeChange(val as FlashcardRoundMode)}
+              options={[
+                { label: '15', value: '15' },
+                { label: '30', value: '30' },
+                { label: '45', value: '45' },
+                { label: '60', value: '60' },
+                { label: `Все (${items.length})`, value: 'all' },
+              ]}
+            />
+          </div>
         </div>
+
         <Progress percent={progressPercent} strokeColor="#6366f1" showInfo={false} />
+
+        <div className={styles.subBarInfo}>
+          <span>Раунд {roundNumber}: {currentRoundIndex + 1} из {roundCards.length}</span>
+          <span className={styles.safeExitHint}>
+            <CheckCircleOutlined /> Опыт начисляется сразу • Безопасный выход в любой момент
+          </span>
+        </div>
       </div>
 
       {/* 3D Flip Card */}
-      <div className={styles.cardWrapper} onClick={handleFlip}>
-        <div className={`${styles.cardInner} ${isFlipped ? styles.flipped : ''}`}>
-          
-          {/* Front Face */}
-          <div className={styles.cardFront}>
-            <div className={styles.cardHeader}>
-              <Tag color="geekblue">Нажмите, чтобы перевернуть</Tag>
-              <Button
-                type="text"
-                shape="circle"
-                icon={<SoundOutlined className={styles.soundIconFront} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  soundEffects.speak(currentItem.frontMain);
-                }}
-                title="Озвучить"
-              />
-            </div>
-
-            <div className={styles.cardContent}>
-              <div className={styles.mainWord}>
-                {currentItem.frontMain}
+      {currentItem && (
+        <div className={styles.cardWrapper} onClick={handleFlip}>
+          <div className={`${styles.cardInner} ${isFlipped ? styles.flipped : ''}`}>
+            
+            {/* Front Face */}
+            <div className={styles.cardFront}>
+              <div className={styles.cardHeader}>
+                <Tag color="geekblue">Нажмите, чтобы перевернуть</Tag>
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<SoundOutlined className={styles.soundIconFront} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    soundEffects.speak(currentItem.frontMain);
+                  }}
+                  title="Озвучить"
+                />
               </div>
-              {currentItem.frontPhonetic && (
-                <div className={styles.phonetic}>
-                  {currentItem.frontPhonetic}
+
+              <div className={styles.cardContent}>
+                <div className={styles.mainWord}>
+                  {currentItem.frontMain}
                 </div>
-              )}
-              {currentItem.frontContext && (
-                <div className={styles.contextSnippet}>
-                  "{currentItem.frontContext}"
-                </div>
-              )}
-            </div>
-
-            <div className={styles.flipHint}>
-              🔄 Кликните по карточке или нажмите [Пробел] для переворота
-            </div>
-          </div>
-
-          {/* Back Face */}
-          <div className={styles.cardBack}>
-            <div className={styles.cardHeader}>
-              <Tag color="green">Перевод и разбор</Tag>
-              <Button
-                type="text"
-                shape="circle"
-                icon={<SoundOutlined className={styles.soundIconBack} />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  soundEffects.speak(currentItem.frontMain);
-                }}
-                title="Озвучить"
-              />
-            </div>
-
-            <div className={styles.cardContent}>
-              <div className={styles.translationText}>
-                {currentItem.backMain}
+                {currentItem.frontPhonetic && (
+                  <div className={styles.phonetic}>
+                    {currentItem.frontPhonetic}
+                  </div>
+                )}
+                {currentItem.frontContext && (
+                  <div className={styles.contextSnippet}>
+                    "{currentItem.frontContext}"
+                  </div>
+                )}
               </div>
-              {currentItem.backDetail && (
-                <Paragraph className={styles.backDetailText}>
-                  {currentItem.backDetail}
-                </Paragraph>
-              )}
-              {currentItem.backGrammar && (
-                <div className={styles.grammarNote}>
-                  💡 <strong>Правило / Нюанс:</strong> {currentItem.backGrammar}
+
+              <div className={styles.flipHint}>
+                🔄 Кликните по карточке или нажмите [Пробел] для переворота
+              </div>
+            </div>
+
+            {/* Back Face */}
+            <div className={styles.cardBack}>
+              <div className={styles.cardHeader}>
+                <Tag color="green">Перевод и разбор</Tag>
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<SoundOutlined className={styles.soundIconBack} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    soundEffects.speak(currentItem.frontMain);
+                  }}
+                  title="Озвучить"
+                />
+              </div>
+
+              <div className={styles.cardContent}>
+                <div className={styles.translationText}>
+                  {currentItem.backMain}
                 </div>
-              )}
+                {currentItem.backDetail && (
+                  <Paragraph className={styles.backDetailText}>
+                    {currentItem.backDetail}
+                  </Paragraph>
+                )}
+                {currentItem.backGrammar && (
+                  <div className={styles.grammarNote}>
+                    💡 <strong>Правило / Нюанс:</strong> {currentItem.backGrammar}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.flipHint}>
+                Выберите интервал повторения карточки:
+              </div>
             </div>
 
-            <div className={styles.flipHint}>
-              Выберите интервал повторения карточки:
-            </div>
           </div>
-
         </div>
-      </div>
+      )}
 
       {/* Action Controls & 4 SRS Rating Buttons */}
       {!isFlipped ? (
@@ -281,8 +475,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
             size="large"
             icon={<SyncOutlined />}
             onClick={handleFlip}
-            className={styles.btnAction}
-            style={{ minWidth: 220 }}
+            className={`${styles.btnAction} ${styles.flipBtn}`}
           >
             Показать ответ [Пробел]
           </Button>
@@ -308,12 +501,12 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
                   <span className={styles.ratingTitle}>{opt.title}</span>
                   <span className={styles.shortcutBadge}>{opt.shortcut}</span>
                 </div>
-                <div className={styles.ratingSubTime}>{opt.subTime}</div>
+                <div className={styles.ratingSubTime}>{opt.subTime} (+{opt.xpReward} XP)</div>
               </button>
             ))}
           </div>
 
-          <div className={styles.actionControls} style={{ marginTop: 12 }}>
+          <div className={`${styles.actionControls} ${styles.hideAnswerControls}`}>
             <Button
               type="text"
               size="middle"

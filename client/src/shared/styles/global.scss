@@ -14,6 +14,125 @@ html, body {
   overflow-x: hidden;
 }
 
+// Centralized Color Tokens & Semantic Properties
+:root, [data-theme="dark"] {
+  // Brand & Accent Palette
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-primary-light: rgba(99, 102, 241, 0.12);
+  --color-primary-border: rgba(99, 102, 241, 0.28);
+  --color-accent: #06b6d4;
+  --color-accent-light: rgba(6, 182, 212, 0.12);
+  --color-success: #10b981;
+  --color-success-light: rgba(16, 185, 129, 0.14);
+  --color-warning: #f59e0b;
+  --color-warning-light: rgba(245, 158, 11, 0.14);
+  --color-danger: #ef4444;
+  --color-danger-light: rgba(239, 68, 68, 0.14);
+  --color-purple: #a855f7;
+  --color-purple-light: rgba(168, 85, 247, 0.14);
+
+  // Surfaces & Backgrounds
+  --color-bg-base: #0f172a;
+  --color-bg-surface: rgba(30, 27, 75, 0.5);
+  --color-bg-surface-elevated: #1e1b4b;
+  --color-bg-subtle: rgba(99, 102, 241, 0.08);
+  --color-bg-card: rgba(30, 27, 75, 0.6);
+
+  // Typography
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.75);
+  --color-text-muted: rgba(255, 255, 255, 0.45);
+
+  // Borders & Dividers
+  --color-border-card: rgba(99, 102, 241, 0.25);
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-interactive: rgba(99, 102, 241, 0.35);
+
+  // Shadows
+  --color-shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.35);
+  --color-shadow-glow: 0 4px 14px rgba(99, 102, 241, 0.4);
+
+  // Hub & Trainer specific aliases
+  --hub-card-bg: var(--color-bg-surface);
+  --hub-card-border: var(--color-border-card);
+  --hub-card-shadow: var(--color-shadow-card);
+  --hub-filter-bg: rgba(30, 27, 75, 0.4);
+  --hub-filter-border: var(--color-border-card);
+  --hub-icon-bg: var(--color-primary-light);
+  --hub-icon-border: var(--color-border-interactive);
+  --hub-title-color: var(--color-text-primary);
+  --hub-desc-color: var(--color-text-secondary);
+  --hub-divider-color: var(--color-border-subtle);
+
+  --trainer-card-bg: var(--color-bg-card);
+  --trainer-card-border: var(--color-border-interactive);
+  --trainer-word-color: var(--color-text-primary);
+  --trainer-prompt-color: var(--color-text-secondary);
+  --trainer-opt-bg: rgba(255, 255, 255, 0.04);
+  --trainer-opt-border: var(--color-border-subtle);
+  --trainer-opt-color: var(--color-text-primary);
+}
+
+[data-theme="light"], .theme-light {
+  // Brand & Accent Palette
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-primary-light: rgba(99, 102, 241, 0.08);
+  --color-primary-border: rgba(99, 102, 241, 0.2);
+  --color-accent: #0891b2;
+  --color-accent-light: rgba(6, 182, 212, 0.08);
+  --color-success: #059669;
+  --color-success-light: rgba(16, 185, 129, 0.1);
+  --color-warning: #d97706;
+  --color-warning-light: rgba(245, 158, 11, 0.1);
+  --color-danger: #dc2626;
+  --color-danger-light: rgba(239, 68, 68, 0.1);
+  --color-purple: #9333ea;
+  --color-purple-light: rgba(168, 85, 247, 0.1);
+
+  // Surfaces & Backgrounds
+  --color-bg-base: #f8fafc;
+  --color-bg-surface: #ffffff;
+  --color-bg-surface-elevated: #ffffff;
+  --color-bg-subtle: rgba(99, 102, 241, 0.05);
+  --color-bg-card: #ffffff;
+
+  // Typography
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  // Borders & Dividers
+  --color-border-card: rgba(99, 102, 241, 0.16);
+  --color-border-subtle: rgba(0, 0, 0, 0.06);
+  --color-border-interactive: rgba(99, 102, 241, 0.22);
+
+  // Shadows
+  --color-shadow-card: 0 6px 24px -4px rgba(99, 102, 241, 0.08);
+  --color-shadow-glow: 0 4px 14px rgba(99, 102, 241, 0.25);
+
+  // Hub & Trainer specific aliases
+  --hub-card-bg: var(--color-bg-surface);
+  --hub-card-border: var(--color-border-card);
+  --hub-card-shadow: var(--color-shadow-card);
+  --hub-filter-bg: var(--color-bg-surface);
+  --hub-filter-border: var(--color-border-card);
+  --hub-icon-bg: var(--color-primary-light);
+  --hub-icon-border: var(--color-border-interactive);
+  --hub-title-color: var(--color-text-primary);
+  --hub-desc-color: var(--color-text-secondary);
+  --hub-divider-color: var(--color-border-subtle);
+
+  --trainer-card-bg: var(--color-bg-card);
+  --trainer-card-border: var(--color-border-card);
+  --trainer-word-color: var(--color-text-primary);
+  --trainer-prompt-color: var(--color-text-secondary);
+  --trainer-opt-bg: var(--color-bg-surface);
+  --trainer-opt-border: #e2e8f0;
+  --trainer-opt-color: var(--color-text-primary);
+}
+
 // Custom Scrollbar
 ::-webkit-scrollbar {
   width: 8px;

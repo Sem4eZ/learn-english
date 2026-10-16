@@ -65,3 +65,60 @@
   color: $success-color;
   margin-top: 2px;
 }
+
+.tagsRow {
+  margin-bottom: 6px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vocabRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vocabHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vocabWord {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.vocabPhonetic {
+  font-family: monospace;
+  color: $color-accent;
+  font-size: 0.9rem;
+}
+
+.vocabTranslation {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.vocabContext {
+  font-style: italic;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 8px;
+  border-radius: $radius-sm;
+  margin-top: 4px;
+}
+
+.modeSegmented {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+

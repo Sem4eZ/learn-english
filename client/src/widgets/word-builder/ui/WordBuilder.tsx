@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Progress, Tag, Space, Typography } from 'antd';
 import { 
   SoundOutlined, 
-  CheckOutlined, 
   BulbOutlined, 
   UndoOutlined, 
   ArrowRightOutlined, 
@@ -13,6 +12,7 @@ import {
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
+import { SRSEngine } from '@/shared/lib/srs';
 import styles from './WordBuilder.module.scss';
 
 const { Title, Text, Paragraph } = Typography;
@@ -21,6 +21,7 @@ export interface WordBuilderProps {
   words: DictionaryItem[];
   onComplete?: (score: number, total: number, xpEarned: number) => void;
   onClose?: () => void;
+  onNeedMore?: () => void;
 }
 
 interface LetterTile {
@@ -32,7 +33,8 @@ interface LetterTile {
 export const WordBuilder: React.FC<WordBuilderProps> = ({
   words,
   onComplete,
-  onClose
+  onClose,
+  onNeedMore
 }) => {
   const [exerciseWords, setExerciseWords] = useState<DictionaryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -42,22 +44,38 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const [score, setScore] = useState<number>(0);
   const [hintsUsed, setHintsUsed] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const usedWordIdsRef = React.useRef<Set<number>>(new Set());
+
+  const pickBatchWords = (wordList: DictionaryItem[], preferUnused = true) => {
+    let suitable = wordList.filter(w => !w.word.includes(' ') && w.word.length <= 14);
+    if (preferUnused) {
+      const unused = suitable.filter(w => !usedWordIdsRef.current.has(w.id));
+      if (unused.length >= 5) {
+        suitable = unused;
+      } else {
+        usedWordIdsRef.current.clear();
+      }
+    }
+
+    if (suitable.length < 15) {
+      onNeedMore?.();
+    }
+
+    const shuffled = [...suitable].sort(() => 0.5 - Math.random());
+    const finalWords = shuffled.slice(0, 10);
+    finalWords.forEach(w => usedWordIdsRef.current.add(w.id));
+    return finalWords.length >= 3 ? finalWords : wordList.slice(0, 8);
+  };
 
   // Initialize
   useEffect(() => {
-    if (words.length > 0) {
-      // Pick up to 10 words that have simple english word characters
-      const suitable = words
-        .filter(w => !w.word.includes(' ') && w.word.length <= 14)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 10);
-
-      const finalWords = suitable.length >= 3 ? suitable : words.slice(0, 8);
-      setExerciseWords(finalWords);
+    if (words.length > 0 && exerciseWords.length === 0) {
+      const batch = pickBatchWords(words, true);
+      setExerciseWords(batch);
       setCurrentIndex(0);
       setScore(0);
       setIsFinished(false);
-      setupWord(finalWords[0]);
+      setupWord(batch[0]);
     }
   }, [words]);
 
@@ -140,9 +158,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         soundEffects.playCorrect();
         setIsCorrect(true);
         setScore(prev => prev + 1);
+        SRSEngine.syncReviewWithServer(currentWord.id, 3);
       } else {
         soundEffects.playWrong();
         setIsCorrect(false);
+        SRSEngine.syncReviewWithServer(currentWord.id, 1);
       }
     }
   };
@@ -174,6 +194,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   }, [scrambledLetters, assembledLetters, isCorrect, isFinished, currentWord]);
 
   const handleNextWord = () => {
+    const remaining = exerciseWords.length - (currentIndex + 1);
+    if (remaining < 4) {
+      onNeedMore?.();
+    }
+
     if (currentIndex + 1 >= exerciseWords.length) {
       fireCelebration();
       setIsFinished(true);
@@ -202,21 +227,38 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       <Card className={styles.summaryCard}>
         <TrophyFilled className={styles.summaryTrophy} />
         <Title level={2}>Спеллинг-тренировка завершена!</Title>
-        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#6366f1', margin: '12px 0' }}>
+        <div className={styles.summaryScore}>
           {score} / {exerciseWords.length} слов
         </div>
         <Paragraph type="secondary">
           Использовано подсказок: {hintsUsed}
         </Paragraph>
         <Paragraph>
-          <Tag color="cyan" style={{ fontSize: '1.1rem', padding: '6px 16px' }}>
+          <Tag color="cyan" className={styles.rewardTag}>
             <ThunderboltFilled /> +{xpEarned} XP получено
           </Tag>
         </Paragraph>
 
-        <Space size="middle" style={{ marginTop: 24 }}>
+        <Space size="middle" className={styles.summaryActions} wrap>
           <Button
             type="primary"
+            size="large"
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
+            onClick={() => {
+              const batch = pickBatchWords(words, true);
+              setExerciseWords(batch);
+              setCurrentIndex(0);
+              setScore(0);
+              setHintsUsed(0);
+              setIsFinished(false);
+              setupWord(batch[0]);
+            }}
+            className={styles.primaryActionBtn}
+          >
+            Изучить новые слова
+          </Button>
+
+          <Button
             size="large"
             icon={<RedoOutlined />}
             onClick={() => {
@@ -281,7 +323,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
           icon={<SoundOutlined />}
           onClick={() => soundEffects.speak(currentWord.word)}
           title="Прослушать произношение"
-          style={{ marginTop: 4 }}
+          className={styles.soundActionBtn}
         />
       </Card>
 
@@ -349,7 +391,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             size="large"
             icon={<ArrowRightOutlined />}
             onClick={handleNextWord}
-            style={{ background: '#10b981', borderColor: '#10b981' }}
+            className={styles.successBtn}
           >
             {currentIndex + 1 >= exerciseWords.length ? 'Завершить' : 'Следующее слово'}
           </Button>
