@@ -4,6 +4,7 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 import { CEFR_LEVELS } from '@/shared/config/constants';
 import { Section } from '@/entities/section/model/types';
 import { questionApi } from '@/entities/question/api/questionApi';
+import styles from './GenerateBatchModal.module.scss';
 
 interface GenerateBatchModalProps {
   visible: boolean;
@@ -57,7 +58,7 @@ export const GenerateBatchModal: React.FC<GenerateBatchModalProps> = ({
     <Modal
       title={
         <span>
-          <PlusCircleOutlined style={{ marginRight: 8, color: '#6366f1' }} />
+          <PlusCircleOutlined className={styles.modalTitleIcon} />
           Добавление вопросов по теме
         </span>
       }

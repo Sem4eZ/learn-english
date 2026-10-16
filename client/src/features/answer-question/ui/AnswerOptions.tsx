@@ -63,7 +63,7 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
 
   return (
     <div className={styles.container}>
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space direction="vertical" className={styles.fullWidth} size="middle">
         <div className={styles.optionsGrid}>
           {question.options.map((option, idx) => {
             const isThisSelected = selectedIdx === idx;
@@ -88,8 +88,8 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
                   {option}
                 </span>
 
-                {isThisCorrect && <CheckCircleFilled style={{ color: '#10b981', fontSize: 20 }} />}
-                {isThisWrong && <CloseCircleFilled style={{ color: '#ef4444', fontSize: 20 }} />}
+                {isThisCorrect && <CheckCircleFilled className={styles.correctIcon} />}
+                {isThisWrong && <CloseCircleFilled className={styles.wrongIcon} />}
               </Button>
             );
           })}
@@ -101,10 +101,10 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
             bordered
             className={`${styles.explanationCard} ${result.isCorrect ? styles.correct : styles.wrong}`}
           >
-            <Space direction="vertical" style={{ width: '100%' }} size="small">
+            <Space direction="vertical" className={styles.fullWidth} size="small">
               <div className={styles.cardHeader}>
                 <Space>
-                  <Tag color={result.isCorrect ? 'success' : 'error'} style={{ fontSize: '0.9rem', padding: '4px 10px' }}>
+                  <Tag color={result.isCorrect ? 'success' : 'error'} className={styles.resultTag}>
                     {result.isCorrect ? 'Верно! (+15 XP)' : 'Неверно (+5 XP)'}
                   </Tag>
                   {result.streak >= 2 && (
@@ -122,7 +122,7 @@ export const AnswerOptions: React.FC<AnswerOptionsProps> = ({
               </div>
 
               <Paragraph className={styles.explanationText}>
-                <InfoCircleOutlined style={{ marginRight: 6, color: '#6366f1' }} />
+                <InfoCircleOutlined className={styles.infoIcon} />
                 {result.explanation}
               </Paragraph>
 

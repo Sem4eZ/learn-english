@@ -41,6 +41,12 @@
     transition: opacity 0.3s ease;
   }
 
+  :global(.ant-card-body) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
   &:hover {
     transform: translateY(-5px);
     border-color: rgba(99, 102, 241, 0.45) !important;
@@ -76,6 +82,51 @@
   @include flex-center;
   transition: transform 0.3s ease;
 }
+
+.sectionIcon {
+  font-size: 24px;
+}
+
+.iconIndigo {
+  color: $color-primary;
+}
+
+.iconCyan {
+  color: $color-accent;
+}
+
+.iconEmerald {
+  color: $color-success;
+}
+
+.iconAmber {
+  color: $color-warning;
+}
+
+.iconRose {
+  color: $color-danger;
+}
+
+.iconPurple {
+  color: $color-purple;
+}
+
+.iconPink {
+  color: $color-pink;
+}
+
+.badgeActive {
+  :global(.ant-badge-count) {
+    background-color: $color-success !important;
+  }
+}
+
+.badgeDefault {
+  :global(.ant-badge-count) {
+    background-color: $color-primary !important;
+  }
+}
+
 
 .cardTitle {
   margin-bottom: 10px !important;

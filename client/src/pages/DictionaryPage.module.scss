@@ -168,3 +168,71 @@
   margin-bottom: 24px;
 }
 
+.headerSubtitle {
+  font-size: 1rem;
+}
+
+.sprintBtnIcon {
+  color: $color-warning;
+}
+
+.generateBtnIcon {
+  color: $color-success;
+}
+
+.generateBtn {
+  font-weight: 600;
+}
+
+.lookupSuffixBtn {
+  border-radius: $radius-xs !important;
+}
+
+.lookupLoadingText {
+  margin-top: 16px;
+  color: var(--ant-color-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.emptySearchContainer {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.emptySearchAction {
+  margin-top: 20px;
+}
+
+.lookupAddBtn {
+  background: $primary-gradient !important;
+  border-color: $color-primary !important;
+  font-weight: 700 !important;
+  box-shadow: $shadow-glow-primary !important;
+}
+
+.modalBody {
+  padding: 16px 0;
+}
+
+.modalTitleIconIndigo {
+  margin-right: 8px;
+  color: $color-primary;
+}
+
+.modalTitleIconCyan {
+  margin-right: 8px;
+  color: $color-accent;
+}
+
+.modalTitleIconAmber {
+  margin-right: 8px;
+  color: $color-warning;
+}
+
+.modalTitleIconPurple {
+  margin-right: 8px;
+  color: $color-purple;
+}
+
+

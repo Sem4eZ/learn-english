@@ -232,7 +232,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                 <Select
                   value={selectedLevel}
                   onChange={setSelectedLevel}
-                  style={{ minWidth: 140 }}
+                  className={styles.levelSelect}
                   options={[
                     { label: 'Все уровни', value: 'all' },
                     { label: 'A1 (Beginner)', value: 'A1' },
@@ -249,7 +249,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                 <Select
                   value={selectedSection}
                   onChange={setSelectedSection}
-                  style={{ minWidth: 200 }}
+                  className={styles.sectionSelect}
                   options={[
                     { label: 'Все темы и категории', value: 'all' },
                     ...(sections.length > 0
@@ -269,16 +269,16 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
             </Space>
 
             <Space wrap align="center">
-              <Tag color="purple" style={{ fontSize: '0.95rem', padding: '6px 14px', fontWeight: 600, borderRadius: 8 }}>
+              <Tag color="purple" className={styles.dbCountTag}>
                 Доступно слов в базе: {totalInDb || words.length}
               </Tag>
             </Space>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div className={styles.loadingContainer}>
               <Spin size="large" />
-              <div style={{ marginTop: 16, color: 'var(--hub-desc-color)', fontSize: '1rem' }}>
+              <div className={styles.loadingMessage}>
                 ⚡ Загрузка слов для уровня <b>{selectedLevel === 'all' ? 'Все уровни' : selectedLevel}</b>...
               </div>
             </div>
@@ -295,7 +295,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                         <Title level={4} className={styles.modeTitle}>
                           {m.title}
                         </Title>
-                        <Tag color={m.badgeColor} style={{ marginTop: 4 }}>
+                        <Tag color={m.badgeColor} className={styles.modeBadge}>
                           {m.badge}
                         </Tag>
                       </div>

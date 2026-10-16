@@ -41,13 +41,13 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats }) => {
       key: 'acc',
       render: (_: any, record: any) => {
         const acc = record.attempted > 0 ? Math.round((record.correct / record.attempted) * 100) : 0;
-        return <Progress percent={acc} size="small" style={{ width: 120 }} />;
+        return <Progress percent={acc} size="small" className={styles.progressMini} />;
       },
     },
   ];
 
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+    <Space direction="vertical" size="large" className={styles.container}>
       <div className={styles.header}>
         <Title level={2} className={styles.title}>
           Дашборд прогресса
@@ -62,7 +62,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats }) => {
         <Col xs={24} sm={12} lg={6}>
           <Card bordered className={styles.statCard}>
             <div className={styles.statHeader}>
-              <TrophyFilled style={{ fontSize: 28, color: '#a855f7' }} />
+              <TrophyFilled className={`${styles.statIcon} ${styles.iconPurple}`} />
               <div>
                 <Text type="secondary" className={styles.statLabel}>
                   Звание и уровень
@@ -83,7 +83,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats }) => {
         <Col xs={24} sm={12} lg={6}>
           <Card bordered className={styles.statCard}>
             <div className={styles.statHeader}>
-              <FireFilled style={{ fontSize: 28, color: '#f59e0b' }} />
+              <FireFilled className={`${styles.statIcon} ${styles.iconAmber}`} />
               <div>
                 <Text type="secondary" className={styles.statLabel}>
                   Серия дней (Streak)
@@ -103,7 +103,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats }) => {
         <Col xs={24} sm={12} lg={6}>
           <Card bordered className={styles.statCard}>
             <div className={styles.statHeader}>
-              <ThunderboltFilled style={{ fontSize: 28, color: '#06b6d4' }} />
+              <ThunderboltFilled className={`${styles.statIcon} ${styles.iconCyan}`} />
               <div>
                 <Text type="secondary" className={styles.statLabel}>
                   Всего заработано
@@ -123,7 +123,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats }) => {
         <Col xs={24} sm={12} lg={6}>
           <Card bordered className={styles.statCard}>
             <div className={styles.statHeader}>
-              <CheckCircleOutlined style={{ fontSize: 28, color: '#10b981' }} />
+              <CheckCircleOutlined className={`${styles.statIcon} ${styles.iconEmerald}`} />
               <div>
                 <Text type="secondary" className={styles.statLabel}>
                   Общая точность

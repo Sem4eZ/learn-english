@@ -238,39 +238,23 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
         <Paragraph type="secondary">
           Точность ответов: <Text strong>{accuracy}%</Text> • Макс. комбо: <Tag color="warning"><FireFilled /> {maxCombo}</Tag>
         </Paragraph>
-        <div style={{
-          margin: '16px auto',
-          maxWidth: 520,
-          padding: '12px 18px',
-          background: 'rgba(99, 102, 241, 0.08)',
-          borderRadius: 12,
-          border: '1px solid rgba(99, 102, 241, 0.25)',
-          color: 'inherit',
-          fontSize: '0.92rem',
-          lineHeight: 1.5,
-          textAlign: 'left'
-        }}>
-          💡 <Text strong style={{ color: '#818cf8' }}>Интервальное повторение:</Text> слова, на которые вы ответили верно, запланированы на повторение через 1–3 дня для надежного закрепления. Сейчас вам будут предложены новые свежие слова!
+        <div className={styles.srsNoticeBox}>
+          💡 <Text strong className={styles.srsNoticeTitle}>Интервальное повторение:</Text> слова, на которые вы ответили верно, запланированы на повторение через 1–3 дня для надежного закрепления. Сейчас вам будут предложены новые свежие слова!
         </div>
         <Paragraph>
-          <Tag color="cyan" style={{ fontSize: '1.05rem', padding: '4px 12px' }}>
+          <Tag color="cyan" className={styles.rewardTag}>
             <ThunderboltFilled /> +{xpEarned} XP получено
           </Tag>
         </Paragraph>
 
-        <Space size="middle" style={{ marginTop: 24 }} wrap>
+        <Space size="middle" className={styles.summaryActions} wrap>
           <Button
             type="primary"
             size="large"
             loading={loadingNext}
-            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
             onClick={handleLearnNewWords}
-            style={{
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              borderColor: '#6366f1',
-              fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
-            }}
+            className={styles.primaryActionBtn}
           >
             Изучить следующие слова (+15)
           </Button>
@@ -382,15 +366,15 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
           </div>
         ) : (
           <div>
-            <div className={styles.targetWord} style={{ color: '#34d399' }}>
+            <div className={`${styles.targetWord} ${styles.targetWordRu}`}>
               {currentQ.targetWord.translation}
             </div>
             {currentQ.targetWord.definition && (
-              <div className={styles.promptSub} style={{ marginTop: 8 }}>
+              <div className={`${styles.promptSub} ${styles.subTextMarginSmall}`}>
                 "{currentQ.targetWord.definition}"
               </div>
             )}
-            <div className={styles.promptSub} style={{ marginTop: 12 }}>
+            <div className={`${styles.promptSub} ${styles.subTextMarginMedium}`}>
               Выберите английский эквивалент:
             </div>
           </div>
@@ -416,15 +400,15 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
               onClick={() => handleSelectOption(opt.id, opt.isCorrect)}
               disabled={isAnswered && opt.id !== selectedOptionId && !opt.isCorrect}
             >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div className={styles.optionContent}>
                 <span className={styles.optionIndexBadge}>
                   {letters[idx]}
                 </span>
                 <span>{opt.text}</span>
               </div>
-              {isAnswered && opt.isCorrect && <CheckOutlined style={{ color: '#34d399' }} />}
+              {isAnswered && opt.isCorrect && <CheckOutlined className={styles.correctIcon} />}
               {isAnswered && opt.id === selectedOptionId && !opt.isCorrect && (
-                <CloseOutlined style={{ color: '#f87171' }} />
+                <CloseOutlined className={styles.wrongIcon} />
               )}
             </Button>
           );

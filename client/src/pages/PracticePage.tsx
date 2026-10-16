@@ -118,7 +118,7 @@ export const PracticePage: React.FC<PracticePageProps> = ({
             <Select
               value={currentSectionId}
               onChange={handleTopicChange}
-              style={{ minWidth: 200 }}
+              className={styles.topicSelect}
               options={[
                 { label: 'Все темы (микс)', value: 'all' },
                 ...(allSections.length > 0

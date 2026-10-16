@@ -90,3 +90,41 @@
   border-radius: $radius-md;
   font-weight: 600;
 }
+
+.dropdownUserInfo {
+  padding: 4px 0;
+}
+
+.dropdownUserName {
+  font-weight: 700;
+}
+
+.dropdownUserMeta {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.statIconAmber {
+  margin-right: 4px;
+  color: $color-warning;
+}
+
+.statIconCyan {
+  margin-right: 4px;
+  color: $color-accent;
+}
+
+.userProfileBtn {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.userAvatar {
+  background-color: $color-primary !important;
+}
+
+.userName {
+  font-weight: 600;
+}
+

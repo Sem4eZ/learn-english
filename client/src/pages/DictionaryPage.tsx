@@ -202,7 +202,7 @@ export const DictionaryPage: React.FC = () => {
           <Title level={2} className={styles.title}>
             Интерактивный словарь
           </Title>
-          <Text type="secondary" style={{ fontSize: '1rem' }}>
+          <Text type="secondary" className={styles.headerSubtitle}>
             Тематическая лексика, идиомы, транскрипция, произношение и тренировка в карточках.
           </Text>
         </div>
@@ -230,7 +230,7 @@ export const DictionaryPage: React.FC = () => {
           </Button>
 
           <Button
-            icon={<FireFilled style={{ color: '#f59e0b' }} />}
+            icon={<FireFilled className={styles.sprintBtnIcon} />}
             size="large"
             onClick={() => setSprintModalOpen(true)}
             disabled={items.length < 2}
@@ -248,11 +248,11 @@ export const DictionaryPage: React.FC = () => {
           </Button>
 
           <Button
-            icon={<PlusCircleOutlined style={{ color: '#10b981' }} />}
+            icon={<PlusCircleOutlined className={styles.generateBtnIcon} />}
             size="large"
             loading={generating}
             onClick={handleGenerateWords}
-            style={{ fontWeight: 600 }}
+            className={styles.generateBtn}
           >
             ✨ Пополнить новыми словами
           </Button>
@@ -289,7 +289,7 @@ export const DictionaryPage: React.FC = () => {
                 loading={isLookingUp}
                 icon={<SearchOutlined />}
                 onClick={() => handleLookupWord(search.trim())}
-                style={{ borderRadius: 6 }}
+                className={styles.lookupSuffixBtn}
               >
                 Найти / Добавить
               </Button>
@@ -353,28 +353,23 @@ export const DictionaryPage: React.FC = () => {
       ) : isLookingUp ? (
         <Card className={styles.emptyCard}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, color: 'var(--ant-color-text)', fontSize: '1.05rem', fontWeight: 600 }}>
+          <div className={styles.lookupLoadingText}>
             Ищем слово «{search.trim()}», готовим перевод, транскрипцию и примеры...
           </div>
         </Card>
       ) : items.length === 0 ? (
         <Card className={styles.emptyCard}>
           {search.trim() ? (
-            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div className={styles.emptySearchContainer}>
               <Empty description={<span>Слово <b>«{search.trim()}»</b> пока отсутствует в словаре</span>} />
-              <div style={{ marginTop: 20 }}>
+              <div className={styles.emptySearchAction}>
                 <Button
                   type="primary"
                   size="large"
                   loading={isLookingUp}
                   icon={<SearchOutlined />}
                   onClick={() => handleLookupWord(search.trim())}
-                  style={{
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                    borderColor: '#6366f1',
-                    fontWeight: 700,
-                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
-                  }}
+                  className={styles.lookupAddBtn}
                 >
                   Найти перевод и добавить «{search.trim()}» в словарь
                 </Button>
@@ -481,7 +476,7 @@ export const DictionaryPage: React.FC = () => {
       <Modal
         title={
           <span>
-            <AppstoreOutlined style={{ marginRight: 8, color: '#6366f1' }} />
+            <AppstoreOutlined className={styles.modalTitleIconIndigo} />
             Тренировка карточек словаря
           </span>
         }
@@ -491,7 +486,7 @@ export const DictionaryPage: React.FC = () => {
         width={920}
         destroyOnHidden
       >
-        <div style={{ padding: '16px 0' }}>
+        <div className={styles.modalBody}>
           <FlashcardDeck
             items={flashcardItems}
             onFinish={() => {}}
@@ -503,7 +498,7 @@ export const DictionaryPage: React.FC = () => {
       <Modal
         title={
           <span>
-            <ThunderboltFilled style={{ marginRight: 8, color: '#06b6d4' }} />
+            <ThunderboltFilled className={styles.modalTitleIconCyan} />
             Квиз по запоминанию: выбор 1 из 4
           </span>
         }
@@ -513,7 +508,7 @@ export const DictionaryPage: React.FC = () => {
         width={760}
         destroyOnHidden
       >
-        <div style={{ padding: '16px 0' }}>
+        <div className={styles.modalBody}>
           <VocabQuiz
             words={items}
             onClose={() => setQuizModalOpen(false)}
@@ -525,7 +520,7 @@ export const DictionaryPage: React.FC = () => {
       <Modal
         title={
           <span>
-            <FireFilled style={{ marginRight: 8, color: '#f59e0b' }} />
+            <FireFilled className={styles.modalTitleIconAmber} />
             Скоростной спринт на 60 секунд
           </span>
         }
@@ -535,7 +530,7 @@ export const DictionaryPage: React.FC = () => {
         width={720}
         destroyOnHidden
       >
-        <div style={{ padding: '16px 0' }}>
+        <div className={styles.modalBody}>
           <SpeedSprint
             words={items}
             onClose={() => setSprintModalOpen(false)}
@@ -547,7 +542,7 @@ export const DictionaryPage: React.FC = () => {
       <Modal
         title={
           <span>
-            <BookOutlined style={{ marginRight: 8, color: '#a855f7' }} />
+            <BookOutlined className={styles.modalTitleIconPurple} />
             Конструктор слов и спеллинг
           </span>
         }
@@ -557,7 +552,7 @@ export const DictionaryPage: React.FC = () => {
         width={760}
         destroyOnHidden
       >
-        <div style={{ padding: '16px 0' }}>
+        <div className={styles.modalBody}>
           <WordBuilder
             words={items}
             onClose={() => setBuilderModalOpen(false)}

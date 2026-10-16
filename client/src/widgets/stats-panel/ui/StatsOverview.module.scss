@@ -51,3 +51,32 @@
 .tableCard {
   border-radius: $radius-lg !important;
 }
+
+.container {
+  width: 100%;
+}
+
+.progressMini {
+  width: 120px;
+}
+
+.statIcon {
+  font-size: 28px;
+}
+
+.iconPurple {
+  color: $color-purple;
+}
+
+.iconAmber {
+  color: $color-warning;
+}
+
+.iconCyan {
+  color: $color-accent;
+}
+
+.iconEmerald {
+  color: $color-success;
+}
+

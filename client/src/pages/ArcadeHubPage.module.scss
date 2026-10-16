@@ -105,3 +105,34 @@
 .backBtnRow {
   margin-bottom: 20px;
 }
+
+.levelSelect {
+  min-width: 140px;
+}
+
+.sectionSelect {
+  min-width: 200px;
+}
+
+.dbCountTag {
+  font-size: 0.95rem !important;
+  padding: 6px 14px !important;
+  font-weight: 600 !important;
+  border-radius: $radius-sm !important;
+}
+
+.loadingContainer {
+  text-align: center;
+  padding: 60px 0;
+}
+
+.loadingMessage {
+  margin-top: 16px;
+  color: var(--hub-desc-color);
+  font-size: 1rem;
+}
+
+.modeBadge {
+  margin-top: 4px;
+}
+

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Progress, Tag, Space, Typography } from 'antd';
 import { 
   SoundOutlined, 
-  CheckOutlined, 
   BulbOutlined, 
   UndoOutlined, 
   ArrowRightOutlined, 
@@ -228,23 +227,23 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       <Card className={styles.summaryCard}>
         <TrophyFilled className={styles.summaryTrophy} />
         <Title level={2}>Спеллинг-тренировка завершена!</Title>
-        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#6366f1', margin: '12px 0' }}>
+        <div className={styles.summaryScore}>
           {score} / {exerciseWords.length} слов
         </div>
         <Paragraph type="secondary">
           Использовано подсказок: {hintsUsed}
         </Paragraph>
         <Paragraph>
-          <Tag color="cyan" style={{ fontSize: '1.1rem', padding: '6px 16px' }}>
+          <Tag color="cyan" className={styles.rewardTag}>
             <ThunderboltFilled /> +{xpEarned} XP получено
           </Tag>
         </Paragraph>
 
-        <Space size="middle" style={{ marginTop: 24 }} wrap>
+        <Space size="middle" className={styles.summaryActions} wrap>
           <Button
             type="primary"
             size="large"
-            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
             onClick={() => {
               const batch = pickBatchWords(words, true);
               setExerciseWords(batch);
@@ -254,12 +253,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               setIsFinished(false);
               setupWord(batch[0]);
             }}
-            style={{
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              borderColor: '#6366f1',
-              fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
-            }}
+            className={styles.primaryActionBtn}
           >
             Изучить новые слова
           </Button>
@@ -329,7 +323,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
           icon={<SoundOutlined />}
           onClick={() => soundEffects.speak(currentWord.word)}
           title="Прослушать произношение"
-          style={{ marginTop: 4 }}
+          className={styles.soundActionBtn}
         />
       </Card>
 
@@ -397,7 +391,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             size="large"
             icon={<ArrowRightOutlined />}
             onClick={handleNextWord}
-            style={{ background: '#10b981', borderColor: '#10b981' }}
+            className={styles.successBtn}
           >
             {currentIndex + 1 >= exerciseWords.length ? 'Завершить' : 'Следующее слово'}
           </Button>

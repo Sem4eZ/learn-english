@@ -159,7 +159,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
           <Button
             type="primary"
             size="large"
-            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
             onClick={() => {
               onNeedMore?.();
               onRefresh?.();
@@ -170,12 +170,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
               setTotalXpEarned(0);
               setIsFinished(false);
             }}
-            style={{
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              borderColor: '#6366f1',
-              fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
-            }}
+            className={styles.primaryActionBtn}
           >
             Изучить новые слова
           </Button>
@@ -309,8 +304,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
             size="large"
             icon={<SyncOutlined />}
             onClick={handleFlip}
-            className={styles.btnAction}
-            style={{ minWidth: 220 }}
+            className={`${styles.btnAction} ${styles.flipBtn}`}
           >
             Показать ответ [Пробел]
           </Button>
@@ -341,7 +335,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
             ))}
           </div>
 
-          <div className={styles.actionControls} style={{ marginTop: 12 }}>
+          <div className={`${styles.actionControls} ${styles.hideAnswerControls}`}>
             <Button
               type="text"
               size="middle"

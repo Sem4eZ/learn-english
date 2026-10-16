@@ -156,7 +156,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
           <Button
             type="primary"
             size="large"
-            icon={<ThunderboltFilled style={{ color: '#fbbf24' }} />}
+            icon={<ThunderboltFilled className={styles.goldIcon} />}
             onClick={() => {
               onNeedMore?.();
               onRefresh?.();
@@ -164,12 +164,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
               setScore(0);
               setIsFinished(false);
             }}
-            style={{
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              borderColor: '#6366f1',
-              fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
-            }}
+            className={styles.primaryActionBtn}
           >
             Изучить новые задания
           </Button>
@@ -199,7 +194,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
         <Space>
           {currentItem.level && <Tag color="purple">{currentItem.level}</Tag>}
           <Tag color="cyan">
-            <ThunderboltFilled style={{ marginRight: 4 }} />
+            <ThunderboltFilled className={styles.goldIcon} />
             +{score} XP
           </Tag>
         </Space>
@@ -213,7 +208,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
 
       {/* Big Audio Player Card */}
       <Card className={styles.audioPlayerCard}>
-        <Title level={4} style={{ marginBottom: 16 }}>
+        <Title level={4} className={styles.cardTitle}>
           🎧 Послушайте фразу и соберите предложение
         </Title>
 
@@ -297,10 +292,10 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
           message={isCorrect ? 'Отлично! Вы верно собрали предложение (+20 XP)' : 'Не совсем точно'}
           description={
             <div>
-              <div style={{ marginTop: 4 }}>
+              <div className={styles.feedbackSentence}>
                 <strong>Оригинал:</strong> {currentItem.sentence}
               </div>
-              <div style={{ marginTop: 2, opacity: 0.85 }}>
+              <div className={styles.feedbackTranslation}>
                 <strong>Перевод:</strong> {currentItem.translation}
               </div>
             </div>
@@ -332,7 +327,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
             icon={<CheckOutlined />}
             onClick={handleVerify}
             disabled={selectedTokens.length === 0}
-            style={{ borderRadius: 12, padding: '0 32px' }}
+            className={styles.verifyBtn}
           >
             Проверить
           </Button>
@@ -342,7 +337,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
             size="large"
             icon={<ArrowRightOutlined />}
             onClick={handleNext}
-            style={{ borderRadius: 12, padding: '0 32px', background: '#10b981', borderColor: '#10b981' }}
+            className={styles.nextBtn}
           >
             Следующее ➔
           </Button>

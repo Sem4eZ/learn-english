@@ -49,9 +49,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       key: 'user-info',
       disabled: true,
       label: (
-        <div style={{ padding: '4px 0' }}>
-          <div style={{ fontWeight: 700 }}>{currentUser?.username || 'Гость'}</div>
-          <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Уровень {level} • {xp} XP</div>
+        <div className={styles.dropdownUserInfo}>
+          <div className={styles.dropdownUserName}>{currentUser?.username || 'Гость'}</div>
+          <div className={styles.dropdownUserMeta}>Уровень {level} • {xp} XP</div>
         </div>
       )
     },
@@ -129,12 +129,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Stats & User Widgets */}
         <Space size="small">
           <Tag color="warning" className={styles.statTag}>
-            <FireFilled style={{ marginRight: 4, color: '#f59e0b' }} />
+            <FireFilled className={styles.statIconAmber} />
             {streak} дн.
           </Tag>
 
           <Tag color="cyan" className={styles.statTag}>
-            <ThunderboltFilled style={{ marginRight: 4, color: '#06b6d4' }} />
+            <ThunderboltFilled className={styles.statIconCyan} />
             {xp} XP
           </Tag>
 
@@ -156,11 +156,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </Button>
           ) : (
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <Button type="text" className={styles.userBtn} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Avatar size="small" style={{ backgroundColor: '#6366f1' }}>
+              <Button type="text" className={`${styles.userBtn} ${styles.userProfileBtn}`}>
+                <Avatar size="small" className={styles.userAvatar}>
                   {currentUser?.username?.charAt(0).toUpperCase()}
                 </Avatar>
-                <span style={{ fontWeight: 600 }}>{currentUser?.username}</span>
+                <span className={styles.userName}>{currentUser?.username}</span>
               </Button>
             </Dropdown>
           )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { StatsOverview } from '@/widgets/stats-panel/ui/StatsOverview';
 import { UserStats } from '@/entities/user/model/types';
+import styles from './DashboardPage.module.scss';
 
 interface DashboardPageProps {
   stats: UserStats | null;
@@ -8,7 +9,7 @@ interface DashboardPageProps {
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ stats }) => {
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div className={styles.container}>
       <StatsOverview stats={stats} />
     </div>
   );

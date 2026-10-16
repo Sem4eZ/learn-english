@@ -316,3 +316,23 @@
   opacity: 0.9;
   max-width: 640px;
 }
+
+.primaryActionBtn {
+  background: $primary-gradient !important;
+  border-color: $color-primary !important;
+  font-weight: 700 !important;
+  box-shadow: $shadow-glow-primary !important;
+}
+
+.goldIcon {
+  color: $color-warning;
+}
+
+.flipBtn {
+  min-width: 220px;
+}
+
+.hideAnswerControls {
+  margin-top: 12px;
+}
+

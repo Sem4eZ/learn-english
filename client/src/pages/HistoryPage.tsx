@@ -60,7 +60,7 @@ export const HistoryPage: React.FC = () => {
             />
           </div>
 
-          <Space size="small" style={{ marginBottom: 6 }}>
+          <Space size="small" className={styles.tagsRow}>
             <Tag color="purple">Уровень: {record.level}</Tag>
             <Tag color="blue">{record.section_id}</Tag>
           </Space>

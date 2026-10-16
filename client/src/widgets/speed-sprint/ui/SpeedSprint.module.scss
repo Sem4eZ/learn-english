@@ -153,3 +153,39 @@
   color: $primary-color;
   margin: 12px 0;
 }
+
+.rewardTag {
+  font-size: 1.1rem !important;
+  padding: 6px 16px !important;
+}
+
+.summaryActions {
+  margin-top: 24px;
+}
+
+.primaryActionBtn {
+  background: $primary-gradient !important;
+  border-color: $color-primary !important;
+  font-weight: 700 !important;
+  box-shadow: $shadow-glow-primary !important;
+}
+
+.goldIcon {
+  color: $color-warning;
+}
+
+.timerTag {
+  font-size: 1.1rem !important;
+  padding: 4px 12px !important;
+}
+
+.comboTag {
+  font-size: 1rem !important;
+  font-weight: 800 !important;
+}
+
+.scoreTag {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+}
+
