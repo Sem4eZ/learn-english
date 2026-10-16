@@ -1,10 +1,10 @@
 /**
  * Fluentiq Database Engine
- * Dual-Mode Data Persistence:
+ * Dual-Mode Data Persistence with Automatic Resilient Failover:
  * 1. Cloud Serverless libSQL (Turso): Active when TURSO_DATABASE_URL is set (Render/Production)
  *    - Zero sleep / persistent across all deployments & spin-downs
  *    - 9 GB free storage for millions of vocabulary words and user progress
- * 2. High-performance native SQLite (Node 22 built-in): Active locally / in offline tests
+ * 2. High-performance native SQLite (Node 22 built-in): Active locally / in offline tests / automatic failover
  * 
  * Provides unified async interface with backward-compatible synchronous fallback for tests.
  */
@@ -12,9 +12,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const TURSO_DATABASE_URL = process.env.TURSO_DATABASE_URL || '';
-const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN || '';
-const isTurso = Boolean(TURSO_DATABASE_URL);
+const TURSO_DATABASE_URL = (process.env.TURSO_DATABASE_URL || '').trim();
+const TURSO_AUTH_TOKEN = (process.env.TURSO_AUTH_TOKEN || '').trim();
+
+// Detect whether URL is set and is not a placeholder
+const isPlaceholder = TURSO_DATABASE_URL.includes('твоеимя') || 
+                      TURSO_DATABASE_URL.includes('yourname') || 
+                      TURSO_DATABASE_URL.includes('your-db');
+
+const shouldAttemptTurso = Boolean(TURSO_DATABASE_URL) && !isPlaceholder;
 
 // Standard curriculum sections
 const seedSections = [
@@ -351,230 +357,212 @@ function normalizeArgs(params) {
   return params;
 }
 
-let db = null;
+// ----------------------------------------------------------------------------
+// Local SQLite Engine Initialization (Always available as rock-solid fallback)
+// ----------------------------------------------------------------------------
+const { DatabaseSync } = require('node:sqlite');
 
-if (isTurso) {
-  // ============================================================================
-  // MODE 1: Turso Cloud libSQL (Remote Persistent Database)
-  // ============================================================================
-  console.log(`[Database] 🌐 Connecting to Turso Cloud Database: ${TURSO_DATABASE_URL}`);
-  const { createClient } = require('@libsql/client');
+const dbPath = process.env.DATABASE_PATH 
+  ? path.resolve(__dirname, '../../', process.env.DATABASE_PATH)
+  : path.resolve(__dirname, '../../data/english_mastery.db');
+const dbDir = path.dirname(dbPath);
 
-  const client = createClient({
-    url: TURSO_DATABASE_URL,
-    authToken: TURSO_AUTH_TOKEN
-  });
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
-  // Asynchronous schema setup & seeding for Turso
-  const readyPromise = (async () => {
-    try {
-      // Split and execute DDL statements
-      const statements = SCHEMA_DDL
-        .split(';')
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
+const localDb = new DatabaseSync(dbPath);
 
-      for (const sql of statements) {
-        await client.execute(sql);
-      }
+// High performance SQLite settings
+localDb.exec('PRAGMA journal_mode = WAL;');
+localDb.exec('PRAGMA synchronous = NORMAL;');
+localDb.exec('PRAGMA foreign_keys = ON;');
+localDb.exec('PRAGMA busy_timeout = 5000;');
 
-      // Check migration column
+localDb.exec(SCHEMA_DDL);
+
+try {
+  localDb.exec('ALTER TABLE users ADD COLUMN password_hash TEXT;');
+} catch (_) {}
+
+// Seed default sections locally if empty
+const checkSections = localDb.prepare('SELECT COUNT(*) as count FROM sections');
+if (checkSections.get().count === 0) {
+  const insertSection = localDb.prepare(`
+    INSERT INTO sections (id, title, description, icon, default_level, prompt_focus)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  for (const s of seedSections) {
+    insertSection.run(s.id, s.title, s.description, s.icon, s.default_level, s.prompt_focus);
+  }
+}
+
+// Seed default user locally if empty
+const checkUser = localDb.prepare('SELECT COUNT(*) as count FROM users');
+if (checkUser.get().count === 0) {
+  localDb.prepare(`
+    INSERT INTO users (id, username, email, xp, streak, last_active_date)
+    VALUES ('user_default', 'Learner', 'learner@example.com', 50, 1, ?)
+  `).run(new Date().toISOString().slice(0, 10));
+}
+
+// Seed rich dictionary vocabulary locally if empty
+const checkDict = localDb.prepare('SELECT COUNT(*) as count FROM dictionary');
+if (checkDict.get().count === 0) {
+  const insertDict = localDb.prepare(`
+    INSERT INTO dictionary (
+      word, transcription, part_of_speech, translation, definition,
+      example_sentence, example_translation, level, section_id, is_favorite
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  for (const w of seedWords) {
+    insertDict.run(
+      w.word, w.transcription, w.part_of_speech, w.translation, w.definition,
+      w.example_sentence, w.example_translation, w.level, w.section_id, w.is_favorite
+    );
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Unified Database Wrapper
+// ----------------------------------------------------------------------------
+let activeTursoClient = null;
+let useTurso = false;
+
+if (isPlaceholder) {
+  console.warn(`[Database] ⚠️ TURSO_DATABASE_URL contains placeholder "${TURSO_DATABASE_URL}". Please set your real Turso URL in Render. Using local SQLite.`);
+}
+
+let tursoInitPromise = Promise.resolve();
+
+if (shouldAttemptTurso) {
+  console.log(`[Database] 🌐 Attempting Turso Cloud connection: ${TURSO_DATABASE_URL}`);
+  try {
+    const { createClient } = require('@libsql/client');
+    const client = createClient({
+      url: TURSO_DATABASE_URL,
+      authToken: TURSO_AUTH_TOKEN
+    });
+
+    tursoInitPromise = (async () => {
       try {
-        await client.execute('ALTER TABLE users ADD COLUMN password_hash TEXT;');
-      } catch (_) {
-        // Column already exists
-      }
+        // Test basic connectivity first
+        await client.execute('SELECT 1 as connected');
 
-      // Seed sections if empty
-      const secCountRes = await client.execute('SELECT COUNT(*) as count FROM sections');
-      const secCount = secCountRes.rows[0]?.count || 0;
-      if (secCount === 0) {
-        console.log('[Database] Seeding initial curriculum sections on Turso...');
-        for (const s of seedSections) {
-          await client.execute({
-            sql: `INSERT INTO sections (id, title, description, icon, default_level, prompt_focus) VALUES (?, ?, ?, ?, ?, ?)`,
-            args: [s.id, s.title, s.description, s.icon, s.default_level, s.prompt_focus]
-          });
+        // Split and execute DDL statements
+        const statements = SCHEMA_DDL
+          .split(';')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+
+        for (const sql of statements) {
+          await client.execute(sql);
         }
-      }
 
-      // Seed demo user if empty
-      const userCountRes = await client.execute('SELECT COUNT(*) as count FROM users');
-      const userCount = userCountRes.rows[0]?.count || 0;
-      if (userCount === 0) {
-        await client.execute({
-          sql: `INSERT INTO users (id, username, email, xp, streak, last_active_date) VALUES ('user_default', 'Learner', 'learner@example.com', 50, 1, ?)`,
-          args: [new Date().toISOString().slice(0, 10)]
-        });
-      }
+        try {
+          await client.execute('ALTER TABLE users ADD COLUMN password_hash TEXT;');
+        } catch (_) {}
 
-      // Seed dictionary if empty
-      const dictCountRes = await client.execute('SELECT COUNT(*) as count FROM dictionary');
-      const dictCount = dictCountRes.rows[0]?.count || 0;
-      if (dictCount === 0) {
-        console.log('[Database] Seeding initial dictionary vocabulary on Turso...');
-        for (const w of seedWords) {
-          await client.execute({
-            sql: `INSERT INTO dictionary (
-              word, transcription, part_of_speech, translation, definition,
-              example_sentence, example_translation, level, section_id, is_favorite
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            args: [
-              w.word, w.transcription, w.part_of_speech, w.translation, w.definition,
-              w.example_sentence, w.example_translation, w.level, w.section_id, w.is_favorite
-            ]
-          });
+        // Seed sections if empty
+        const secCountRes = await client.execute('SELECT COUNT(*) as count FROM sections');
+        const secCount = secCountRes.rows[0]?.count || 0;
+        if (secCount === 0) {
+          console.log('[Database] Seeding initial curriculum sections on Turso...');
+          for (const s of seedSections) {
+            await client.execute({
+              sql: `INSERT INTO sections (id, title, description, icon, default_level, prompt_focus) VALUES (?, ?, ?, ?, ?, ?)`,
+              args: [s.id, s.title, s.description, s.icon, s.default_level, s.prompt_focus]
+            });
+          }
         }
+
+        activeTursoClient = client;
+        useTurso = true;
+        console.log('[Database] ✅ Turso Cloud Database connected and verified.');
+      } catch (err) {
+        console.warn(`[Database] ⚠️ Turso Cloud connection failed (${err.message}). Seamlessly falling back to local SQLite.`);
+        useTurso = false;
+        activeTursoClient = null;
       }
+    })();
+  } catch (clientErr) {
+    console.warn(`[Database] ⚠️ Failed to initialize Turso client (${clientErr.message}). Using local SQLite.`);
+    useTurso = false;
+  }
+}
 
-      console.log('[Database] ✅ Turso Cloud Database connection and schema verified.');
-    } catch (err) {
-      console.error('[Database] ❌ Error initializing Turso Cloud schema:', err);
-      throw err;
-    }
-  })();
+const db = {
+  get isTurso() {
+    return useTurso;
+  },
+  readyPromise: tursoInitPromise,
 
-  db = {
-    isTurso: true,
-    readyPromise,
-    client,
-
-    prepare(sql) {
+  prepare(sql) {
+    if (useTurso && activeTursoClient) {
       return {
         async get(...params) {
-          await readyPromise;
+          await tursoInitPromise;
           const args = normalizeArgs(params);
-          const res = await client.execute({ sql, args });
-          return res.rows[0] !== undefined ? res.rows[0] : undefined;
+          try {
+            const res = await activeTursoClient.execute({ sql, args });
+            return res.rows[0] !== undefined ? res.rows[0] : undefined;
+          } catch (err) {
+            console.warn('[Database] Turso query error, falling back to local DB:', err.message);
+            return localDb.prepare(sql).get(...args);
+          }
         },
+
         async all(...params) {
-          await readyPromise;
+          await tursoInitPromise;
           const args = normalizeArgs(params);
-          const res = await client.execute({ sql, args });
-          return Array.from(res.rows);
+          try {
+            const res = await activeTursoClient.execute({ sql, args });
+            return Array.from(res.rows);
+          } catch (err) {
+            console.warn('[Database] Turso query error, falling back to local DB:', err.message);
+            return localDb.prepare(sql).all(...args);
+          }
         },
+
         async run(...params) {
-          await readyPromise;
+          await tursoInitPromise;
           const args = normalizeArgs(params);
-          const res = await client.execute({ sql, args });
-          return {
-            lastInsertRowid: res.lastInsertRowid != null ? Number(res.lastInsertRowid) : 0,
-            changes: res.rowsAffected
-          };
+          try {
+            const res = await activeTursoClient.execute({ sql, args });
+            return {
+              lastInsertRowid: res.lastInsertRowid != null ? Number(res.lastInsertRowid) : 0,
+              changes: res.rowsAffected
+            };
+          } catch (err) {
+            console.warn('[Database] Turso query error, falling back to local DB:', err.message);
+            return localDb.prepare(sql).run(...args);
+          }
         }
       };
-    },
-
-    async exec(sql) {
-      await readyPromise;
-      if (typeof client.executeMultiple === 'function') {
-        return await client.executeMultiple(sql);
-      }
-      const statements = sql.split(';').map(s => s.trim()).filter(Boolean);
-      for (const s of statements) {
-        await client.execute(s);
-      }
     }
-  };
 
-} else {
-  // ============================================================================
-  // MODE 2: Native SQLite (Node 22 built-in DatabaseSync)
-  // ============================================================================
-  const { DatabaseSync } = require('node:sqlite');
+    return localDb.prepare(sql);
+  },
 
-  const dbPath = process.env.DATABASE_PATH 
-    ? path.resolve(__dirname, '../../', process.env.DATABASE_PATH)
-    : path.resolve(__dirname, '../../data/english_mastery.db');
-  const dbDir = path.dirname(dbPath);
-
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-  }
-
-  const localDb = new DatabaseSync(dbPath);
-
-  // High performance SQLite settings
-  localDb.exec('PRAGMA journal_mode = WAL;');
-  localDb.exec('PRAGMA synchronous = NORMAL;');
-  localDb.exec('PRAGMA foreign_keys = ON;');
-  localDb.exec('PRAGMA busy_timeout = 5000;');
-
-  localDb.exec(SCHEMA_DDL);
-
-  try {
-    localDb.exec('ALTER TABLE users ADD COLUMN password_hash TEXT;');
-  } catch (_) {
-    // Column already exists
-  }
-
-  // Seed default sections
-  const checkSections = localDb.prepare('SELECT COUNT(*) as count FROM sections');
-  if (checkSections.get().count === 0) {
-    const insertSection = localDb.prepare(`
-      INSERT INTO sections (id, title, description, icon, default_level, prompt_focus)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-    for (const s of seedSections) {
-      insertSection.run(s.id, s.title, s.description, s.icon, s.default_level, s.prompt_focus);
-    }
-  }
-
-  // Seed default user
-  const checkUser = localDb.prepare('SELECT COUNT(*) as count FROM users');
-  if (checkUser.get().count === 0) {
-    localDb.prepare(`
-      INSERT INTO users (id, username, email, xp, streak, last_active_date)
-      VALUES ('user_default', 'Learner', 'learner@example.com', 50, 1, ?)
-    `).run(new Date().toISOString().slice(0, 10));
-  }
-
-  // Seed rich dictionary vocabulary if empty
-  const checkDict = localDb.prepare('SELECT COUNT(*) as count FROM dictionary');
-  if (checkDict.get().count === 0) {
-    const insertDict = localDb.prepare(`
-      INSERT INTO dictionary (
-        word, transcription, part_of_speech, translation, definition,
-        example_sentence, example_translation, level, section_id, is_favorite
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    for (const w of seedWords) {
-      insertDict.run(
-        w.word, w.transcription, w.part_of_speech, w.translation, w.definition,
-        w.example_sentence, w.example_translation, w.level, w.section_id, w.is_favorite
-      );
-    }
-  }
-
-  // Unified db wrapper providing both sync and async capability
-  db = {
-    isTurso: false,
-    readyPromise: Promise.resolve(),
-    localDb,
-
-    prepare(sql) {
-      const stmt = localDb.prepare(sql);
-      return {
-        get(...params) {
-          const args = normalizeArgs(params);
-          return stmt.get(...args);
-        },
-        all(...params) {
-          const args = normalizeArgs(params);
-          return stmt.all(...args);
-        },
-        run(...params) {
-          const args = normalizeArgs(params);
-          return stmt.run(...args);
+  async exec(sql) {
+    await tursoInitPromise;
+    if (useTurso && activeTursoClient) {
+      try {
+        if (typeof activeTursoClient.executeMultiple === 'function') {
+          return await activeTursoClient.executeMultiple(sql);
         }
-      };
-    },
-
-    exec(sql) {
-      return localDb.exec(sql);
+        const statements = sql.split(';').map(s => s.trim()).filter(Boolean);
+        for (const s of statements) {
+          await activeTursoClient.execute(s);
+        }
+        return;
+      } catch (err) {
+        console.warn('[Database] Turso exec error, falling back to local DB:', err.message);
+      }
     }
-  };
-}
+    return localDb.exec(sql);
+  }
+};
 
 module.exports = db;
