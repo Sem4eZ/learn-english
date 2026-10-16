@@ -175,11 +175,11 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'dictionary' && (
-            <DictionaryPage />
+            <DictionaryPage onRefreshStats={loadStats} />
           )}
 
           {activeTab === 'stats' && (
-            <DashboardPage stats={stats} />
+            <DashboardPage stats={stats} onRefreshStats={loadStats} />
           )}
 
           {activeTab === 'history' && (

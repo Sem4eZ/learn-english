@@ -30,7 +30,11 @@
 }
 
 .targetWord {
-  font-size: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 2.3rem;
   font-weight: 800;
   color: var(--trainer-word-color);
   margin-bottom: 6px;
@@ -49,10 +53,30 @@
   color: var(--trainer-prompt-color);
 }
 
-.soundBtn {
-  font-size: 20px;
-  color: $primary-color;
-  margin-left: 8px;
+.soundBtnCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: $radius-full;
+  background: rgba(99, 102, 241, 0.16);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #818cf8;
+  font-size: 18px;
+  cursor: pointer;
+  transition: $transition-smooth;
+  padding: 0;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.32);
+    color: #fff;
+    transform: scale(1.08);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .optionsGrid {

@@ -38,7 +38,11 @@ import styles from './DictionaryPage.module.scss';
 
 const { Title, Text } = Typography;
 
-export const DictionaryPage: React.FC = () => {
+interface DictionaryPageProps {
+  onRefreshStats?: () => void;
+}
+
+export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }) => {
   const [items, setItems] = useState<DictionaryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -489,7 +493,7 @@ export const DictionaryPage: React.FC = () => {
         <div className={styles.modalBody}>
           <FlashcardDeck
             items={flashcardItems}
-            onFinish={() => {}}
+            onFinish={() => onRefreshStats?.()}
           />
         </div>
       </Modal>
@@ -503,7 +507,10 @@ export const DictionaryPage: React.FC = () => {
           </span>
         }
         open={quizModalOpen}
-        onCancel={() => setQuizModalOpen(false)}
+        onCancel={() => {
+          setQuizModalOpen(false);
+          onRefreshStats?.();
+        }}
         footer={null}
         width={760}
         destroyOnHidden
@@ -511,7 +518,11 @@ export const DictionaryPage: React.FC = () => {
         <div className={styles.modalBody}>
           <VocabQuiz
             words={items}
-            onClose={() => setQuizModalOpen(false)}
+            onClose={() => {
+              setQuizModalOpen(false);
+              onRefreshStats?.();
+            }}
+            onComplete={() => onRefreshStats?.()}
           />
         </div>
       </Modal>
@@ -525,7 +536,10 @@ export const DictionaryPage: React.FC = () => {
           </span>
         }
         open={sprintModalOpen}
-        onCancel={() => setSprintModalOpen(false)}
+        onCancel={() => {
+          setSprintModalOpen(false);
+          onRefreshStats?.();
+        }}
         footer={null}
         width={720}
         destroyOnHidden
@@ -533,7 +547,11 @@ export const DictionaryPage: React.FC = () => {
         <div className={styles.modalBody}>
           <SpeedSprint
             words={items}
-            onClose={() => setSprintModalOpen(false)}
+            onClose={() => {
+              setSprintModalOpen(false);
+              onRefreshStats?.();
+            }}
+            onComplete={() => onRefreshStats?.()}
           />
         </div>
       </Modal>

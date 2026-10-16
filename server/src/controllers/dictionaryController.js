@@ -22,9 +22,25 @@ async function getDictionary(req, res) {
     let params = [];
 
     if (search.trim()) {
-      whereClauses.push('(d.word LIKE ? OR d.translation LIKE ? OR d.definition LIKE ? OR d.example_sentence LIKE ?)');
-      const pattern = `%${search.trim()}%`;
-      params.push(pattern, pattern, pattern, pattern);
+      const cleanTerm = search.trim().toLowerCase();
+      const pattern = `%${cleanTerm}%`;
+
+      // Check if any words match word or translation directly
+      const wordMatchCheck = db.prepare(`
+        SELECT COUNT(*) as count 
+        FROM dictionary d 
+        WHERE LOWER(d.word) LIKE ? OR LOWER(d.translation) LIKE ?
+      `).get(pattern, pattern);
+
+      if (wordMatchCheck && wordMatchCheck.count > 0) {
+        // Strict match: word and translation only (eliminates noisy false positives from examples)
+        whereClauses.push('(LOWER(d.word) LIKE ? OR LOWER(d.translation) LIKE ?)');
+        params.push(pattern, pattern);
+      } else {
+        // Fallback match: if no direct word/translation matched, check definition & examples
+        whereClauses.push('(LOWER(d.word) LIKE ? OR LOWER(d.translation) LIKE ? OR LOWER(d.definition) LIKE ? OR LOWER(d.example_sentence) LIKE ?)');
+        params.push(pattern, pattern, pattern, pattern);
+      }
     }
 
     if (sectionId && sectionId !== 'all') {
@@ -52,18 +68,21 @@ async function getDictionary(req, res) {
           CASE 
             WHEN LOWER(d.word) = ? THEN 1
             WHEN LOWER(d.word) LIKE ? THEN 2
-            WHEN LOWER(d.word) LIKE ? THEN 3
+            WHEN LOWER(d.translation) = ? THEN 3
             WHEN LOWER(d.translation) LIKE ? THEN 4
-            WHEN LOWER(d.translation) LIKE ? THEN 5
-            ELSE 6
+            WHEN LOWER(d.word) LIKE ? THEN 5
+            WHEN LOWER(d.translation) LIKE ? THEN 6
+            ELSE 7
           END ASC,
+          LENGTH(d.word) ASC,
           d.id DESC
       `;
       orderParams = [
         cleanTerm,
         `${cleanTerm}%`,
-        `%${cleanTerm}%`,
+        cleanTerm,
         `${cleanTerm}%`,
+        `%${cleanTerm}%`,
         `%${cleanTerm}%`
       ];
     } else if (mode === 'practice') {

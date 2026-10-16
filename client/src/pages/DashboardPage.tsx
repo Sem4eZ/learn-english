@@ -5,12 +5,17 @@ import styles from './DashboardPage.module.scss';
 
 interface DashboardPageProps {
   stats: UserStats | null;
+  onRefreshStats?: () => void;
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ stats }) => {
+export const DashboardPage: React.FC<DashboardPageProps> = ({ stats, onRefreshStats }) => {
+  React.useEffect(() => {
+    onRefreshStats?.();
+  }, [onRefreshStats]);
+
   return (
     <div className={styles.container}>
-      <StatsOverview stats={stats} />
+      <StatsOverview stats={stats} onRefreshStats={onRefreshStats} />
     </div>
   );
 };

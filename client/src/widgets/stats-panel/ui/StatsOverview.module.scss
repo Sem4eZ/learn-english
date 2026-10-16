@@ -1,82 +1,671 @@
 @use '@/shared/styles/variables' as *;
 @use '@/shared/styles/mixins' as *;
 
-.header {
-  margin-bottom: 24px;
-}
-
-.title {
-  margin-bottom: 6px !important;
-}
-
-.subtitle {
-  font-size: 1rem;
-}
-
-.statCard {
-  border-radius: $radius-lg !important;
-  height: 100%;
-  transition: $transition-smooth;
-}
-
-.statHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.statLabel {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-}
-
-.statTitle {
-  margin: 0 !important;
-}
-
-.statFooter {
-  font-size: 0.8rem;
-  display: block;
-  text-align: right;
-  margin-top: 4px;
-}
-
-.accuracyFooter {
-  font-size: 0.85rem;
-  margin-top: 4px;
-  display: block;
-}
-
-.tableCard {
-  border-radius: $radius-lg !important;
-}
-
 .container {
   width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.progressMini {
-  width: 120px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.statIcon {
-  font-size: 28px;
+// -------------------------------------------------------------
+// Header Banner
+// -------------------------------------------------------------
+.headerWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  :global(.theme-light) & {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+}
+
+.headerTitle {
+  margin: 0 0 6px 0 !important;
+  font-size: 1.85rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+}
+
+.headerSubtitle {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.65);
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.55);
+  }
+}
+
+.refreshBtn {
+  border-radius: $radius-md !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+// -------------------------------------------------------------
+// Hero Stat Cards (Row 1)
+// -------------------------------------------------------------
+.heroGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.heroCard {
+  border-radius: $radius-lg !important;
+  transition: $transition-smooth;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-card;
+  }
+}
+
+.heroCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.iconCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
 .iconPurple {
+  background: rgba(168, 85, 247, 0.15);
   color: $color-purple;
 }
 
 .iconAmber {
+  background: rgba(245, 158, 11, 0.15);
   color: $color-warning;
 }
 
 .iconCyan {
+  background: rgba(6, 182, 212, 0.15);
   color: $color-accent;
 }
 
 .iconEmerald {
+  background: rgba(16, 185, 129, 0.15);
   color: $color-success;
+}
+
+.heroMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.heroLabel {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.heroTitle {
+  margin: 0 !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+}
+
+.heroFooterText {
+  font-size: 0.82rem;
+  margin-top: 8px;
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.55);
+  }
+}
+
+.rankBadge {
+  margin-top: 4px;
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+// -------------------------------------------------------------
+// Dynamics & Weekly Activity Row
+// -------------------------------------------------------------
+.twoColGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sectionCard {
+  border-radius: $radius-lg !important;
+  transition: $transition-smooth;
+}
+
+.cardTitleHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+// Vocabulary Dynamics 3-stat block
+.vocabMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vocabMetricBox {
+  padding: 16px;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  transition: $transition-smooth;
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.25);
+  }
+}
+
+.vocabMetricNumber {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: $color-primary;
+}
+
+.vocabMetricLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 4px;
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.55);
+  }
+}
+
+.totalDictProgressBox {
+  padding: 16px;
+  border-radius: $radius-md;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.totalDictHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+// -------------------------------------------------------------
+// Weekly Activity Bar Chart
+// -------------------------------------------------------------
+.chartContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  height: 190px;
+  padding-top: 24px;
+}
+
+.chartColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.barTrack {
+  width: 100%;
+  max-width: 44px;
+  height: 140px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+}
+
+.barFill {
+  width: 100%;
+  border-radius: $radius-sm $radius-sm 2px 2px;
+  background: linear-gradient(180deg, $color-accent 0%, $color-primary 100%);
+  transition: height 0.4s ease-out;
+  min-height: 4px;
+  position: relative;
+
+  &:hover {
+    filter: brightness(1.15);
+  }
+}
+
+.barFillToday {
+  background: linear-gradient(180deg, #ec4899 0%, $color-purple 100%);
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.35);
+}
+
+.barXpPill {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: $color-accent;
+  white-space: nowrap;
+}
+
+.barDayLabel {
+  font-size: 0.78rem;
+  margin-top: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.55);
+  }
+}
+
+.barDayToday {
+  color: $color-pink !important;
+  font-weight: 700;
+}
+
+// -------------------------------------------------------------
+// SRS Memory Stages
+// -------------------------------------------------------------
+.srsProgressBar {
+  height: 14px;
+  border-radius: $radius-full;
+  display: flex;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.08);
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.08);
+  }
+}
+
+.srsSegmentMastered {
+  background: $color-success;
+  transition: width 0.3s;
+}
+
+.srsSegmentReview {
+  background: $color-accent;
+  transition: width 0.3s;
+}
+
+.srsSegmentLearning {
+  background: $color-warning;
+  transition: width 0.3s;
+}
+
+.srsSegmentNew {
+  background: rgba(255, 255, 255, 0.15);
+  transition: width 0.3s;
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.12);
+  }
+}
+
+.srsCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.srsStageCard {
+  padding: 16px;
+  border-radius: $radius-md;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+
+  :global(.theme-light) & {
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(0, 0, 0, 0.015);
+  }
+}
+
+.stageDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.dotMastered {
+  background: $color-success;
+}
+
+.dotReview {
+  background: $color-accent;
+}
+
+.dotLearning {
+  background: $color-warning;
+}
+
+.dotNew {
+  background: rgba(255, 255, 255, 0.4);
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.35);
+  }
+}
+
+.stageCount {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 6px 0 2px 0;
+}
+
+.stageDesc {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+// -------------------------------------------------------------
+// CEFR Mastery Grid
+// -------------------------------------------------------------
+.cefrGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cefrCard {
+  padding: 16px;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+}
+
+.cefrLevelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cefrTitle {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.6);
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.55);
+  }
+}
+
+// -------------------------------------------------------------
+// Trainer Performance & Badges Row
+// -------------------------------------------------------------
+.trainerList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.trainerItem {
+  padding: 16px;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+}
+
+.trainerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.trainerName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.trainerAccuracyPill {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: $color-success;
+}
+
+// Badges
+.badgesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.badgeCard {
+  padding: 12px 14px;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: $transition-smooth;
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+}
+
+.badgeUnlocked {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.05);
+
+  :global(.theme-light) & {
+    background: rgba(245, 158, 11, 0.08);
+  }
+}
+
+.badgeLocked {
+  opacity: 0.55;
+  filter: grayscale(0.8);
+}
+
+.badgeIcon {
+  font-size: 24px;
+  color: $color-warning;
+}
+
+.badgeText {
+  display: flex;
+  flex-direction: column;
+}
+
+.badgeTitle {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.badgeDesc {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.5);
+  }
+}
+
+// -------------------------------------------------------------
+// Course Table Card
+// -------------------------------------------------------------
+.tableCard {
+  border-radius: $radius-lg !important;
+  overflow: hidden;
+}
+
+.progressMini {
+  width: 110px;
+}
+
+// -------------------------------------------------------------
+// SVG Visualization elements (100% css classes, 0 inline styles)
+// -------------------------------------------------------------
+.srsSvg {
+  width: 100%;
+  height: 18px;
+  border-radius: $radius-full;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.srsRectMastered {
+  fill: $color-success;
+  transition: width 0.3s ease;
+}
+
+.srsRectReview {
+  fill: $color-accent;
+  transition: width 0.3s ease;
+}
+
+.srsRectLearning {
+  fill: $color-warning;
+  transition: width 0.3s ease;
+}
+
+.srsRectNew {
+  fill: rgba(255, 255, 255, 0.15);
+  transition: width 0.3s ease;
+
+  :global(.theme-light) & {
+    fill: rgba(0, 0, 0, 0.12);
+  }
+}
+
+.barSvg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  display: block;
+}
+
+.svgBarRegular {
+  fill: url(#barGradRegular);
+  transition: y 0.3s ease, height 0.3s ease;
+
+  &:hover {
+    filter: brightness(1.2);
+  }
+}
+
+.svgBarToday {
+  fill: url(#barGradToday);
+  filter: drop-shadow(0 2px 6px rgba(236, 72, 153, 0.4));
+  transition: y 0.3s ease, height 0.3s ease;
+
+  &:hover {
+    filter: brightness(1.2) drop-shadow(0 4px 10px rgba(236, 72, 153, 0.6));
+  }
 }
 

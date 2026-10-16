@@ -159,12 +159,22 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
       SRSEngine.syncReviewWithServer(currentQ.targetWord.id, isCorrect ? 3 : 1);
     }
 
-    // Proactively request next batch of words when remaining questions < 5
+    // Auto-request next batch of words when remaining questions < 5
     const remaining = questions.length - (currentIndex + 1);
     if (remaining < 5) {
       onNeedMore?.();
     }
   };
+
+  // Auto-pronounce English word when question is displayed
+  useEffect(() => {
+    if (currentQ && direction === 'en-ru' && !isFinished) {
+      const timer = setTimeout(() => {
+        soundEffects.speak(currentQ.targetWord.word);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, direction, isFinished, currentQ]);
 
   const handleNext = () => {
     if (currentIndex + 1 >= questions.length) {
@@ -346,14 +356,18 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
         {direction === 'en-ru' ? (
           <div>
             <div className={styles.targetWord}>
-              {currentQ.targetWord.word}
-              <Button
-                type="text"
-                shape="circle"
-                icon={<SoundOutlined className={styles.soundBtn} />}
-                onClick={() => soundEffects.speak(currentQ.targetWord.word)}
+              <span>{currentQ.targetWord.word}</span>
+              <button
+                type="button"
+                className={styles.soundBtnCircle}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundEffects.speak(currentQ.targetWord.word);
+                }}
                 title="Озвучить"
-              />
+              >
+                <SoundOutlined />
+              </button>
             </div>
             {currentQ.targetWord.transcription && (
               <div className={styles.phonetic}>
