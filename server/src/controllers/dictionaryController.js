@@ -26,7 +26,7 @@ async function getDictionary(req, res) {
       const pattern = `%${cleanTerm}%`;
 
       // Check if any words match word or translation directly
-      const wordMatchCheck = db.prepare(`
+      const wordMatchCheck = await db.prepare(`
         SELECT COUNT(*) as count 
         FROM dictionary d 
         WHERE LOWER(d.word) LIKE ? OR LOWER(d.translation) LIKE ?
@@ -102,7 +102,7 @@ async function getDictionary(req, res) {
 
     const countParams = [userId, ...params];
     const countStmt = db.prepare(`SELECT COUNT(*) as total FROM dictionary d ${joinSql} ${whereSql}`);
-    let countRow = countStmt.get(...countParams);
+    let countRow = await countStmt.get(...countParams);
     let total = countRow ? countRow.total : 0;
 
     // Smart Auto-Enrichment:
@@ -122,7 +122,7 @@ async function getDictionary(req, res) {
       console.log(`[Auto-Enrichment] Found only ${total} words eligible for practice in level "${targetLevel}". Requesting generation (+${countToGenerate})...`);
       try {
         await geminiService.generateVocabulary(targetLevel, targetSection, countToGenerate);
-        countRow = countStmt.get(...countParams);
+        countRow = await countStmt.get(...countParams);
         total = countRow ? countRow.total : 0;
         console.log(`[Auto-Enrichment] Database replenished! New total eligible words: ${total}`);
       } catch (genErr) {
@@ -140,7 +140,7 @@ async function getDictionary(req, res) {
       ${orderBySql}
       LIMIT ? OFFSET ?
     `);
-    const data = listStmt.all(...listParams);
+    const data = await listStmt.all(...listParams);
 
     // Total words matching filter in dictionary table (without practice due-date exclusion)
     let baseWhereClauses = [];
@@ -162,9 +162,9 @@ async function getDictionary(req, res) {
       baseWhereClauses.push('is_favorite = 1');
     }
     const baseWhereSql = baseWhereClauses.length > 0 ? `WHERE ${baseWhereClauses.join(' AND ')}` : '';
-    const baseCountRow = db.prepare(`SELECT COUNT(*) as count FROM dictionary ${baseWhereSql}`).get(...baseParams);
+    const baseCountRow = await db.prepare(`SELECT COUNT(*) as count FROM dictionary ${baseWhereSql}`).get(...baseParams);
     const totalInDb = baseCountRow ? baseCountRow.count : 0;
-    const totalOverallRow = db.prepare('SELECT COUNT(*) as count FROM dictionary').get();
+    const totalOverallRow = await db.prepare('SELECT COUNT(*) as count FROM dictionary').get();
     const totalOverall = totalOverallRow ? totalOverallRow.count : 0;
 
     res.json({
@@ -185,13 +185,13 @@ async function getDictionary(req, res) {
   }
 }
 
-function toggleFavorite(req, res) {
+async function toggleFavorite(req, res) {
   try {
     const { id } = req.params;
     const stmt = db.prepare('UPDATE dictionary SET is_favorite = (CASE WHEN is_favorite = 1 THEN 0 ELSE 1 END) WHERE id = ?');
-    stmt.run(id);
+    await stmt.run(id);
 
-    const updated = db.prepare('SELECT * FROM dictionary WHERE id = ?').get(id);
+    const updated = await db.prepare('SELECT * FROM dictionary WHERE id = ?').get(id);
     res.json({ success: true, data: updated });
   } catch (err) {
     console.error('Error toggling favorite:', err);
@@ -207,7 +207,8 @@ async function generateDictionaryWords(req, res) {
     const geminiService = require('../services/geminiService');
     const newWords = await geminiService.generateVocabulary(level, sectionId, countNum);
 
-    const totalCount = db.prepare('SELECT COUNT(*) as count FROM dictionary').get().count;
+    const countRes = await db.prepare('SELECT COUNT(*) as count FROM dictionary').get();
+    const totalCount = countRes ? countRes.count : 0;
 
     res.json({
       success: true,
@@ -224,7 +225,7 @@ async function generateDictionaryWords(req, res) {
   }
 }
 
-function recordSrsReview(req, res) {
+async function recordSrsReview(req, res) {
   try {
     const userId = req.headers['x-user-id'] || req.body.userId || 'user_default';
     const { wordId, grade } = req.body;
@@ -235,16 +236,16 @@ function recordSrsReview(req, res) {
     }
 
     // Ensure user exists in users table to satisfy FOREIGN KEY constraint
-    const userRow = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+    const userRow = await db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
     if (!userRow) {
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO users (id, username, xp, streak, last_active_date)
         VALUES (?, 'Learner', 0, 1, date('now'))
       `).run(userId);
     }
 
     // SM-2 Algorithm computation
-    const existing = db.prepare('SELECT * FROM srs_reviews WHERE user_id = ? AND word_id = ?').get(userId, wordId);
+    const existing = await db.prepare('SELECT * FROM srs_reviews WHERE user_id = ? AND word_id = ?').get(userId, wordId);
     let reps = existing ? existing.reps : 0;
     let ef = existing ? existing.ef : 2.5;
     let interval = existing ? existing.interval : 0;
@@ -281,7 +282,7 @@ function recordSrsReview(req, res) {
     }
     const formattedDueDate = dueDate.toISOString().replace('T', ' ').substring(0, 19);
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO srs_reviews (user_id, word_id, grade, reps, interval, ef, due_date, reviewed_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(user_id, word_id) DO UPDATE SET
@@ -295,8 +296,8 @@ function recordSrsReview(req, res) {
 
     // Award XP immediately
     const xpReward = gradeNum === 4 ? 25 : gradeNum === 3 ? 15 : gradeNum === 2 ? 10 : 5;
-    db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`).run(xpReward, userId);
-    const updatedUser = db.prepare('SELECT xp, streak FROM users WHERE id = ?').get(userId);
+    await db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`).run(xpReward, userId);
+    const updatedUser = await db.prepare('SELECT xp, streak FROM users WHERE id = ?').get(userId);
 
     res.json({
       success: true,

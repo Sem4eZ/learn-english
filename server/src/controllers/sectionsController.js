@@ -1,8 +1,8 @@
 const db = require('../db/schema');
 
-function getSections(req, res) {
+async function getSections(req, res) {
   try {
-    const sections = db.prepare(`
+    const sections = await db.prepare(`
       SELECT 
         s.*, 
         COUNT(q.id) as question_count

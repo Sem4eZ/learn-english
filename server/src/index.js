@@ -82,12 +82,15 @@ if (fs.existsSync(clientDist)) {
   });
 }
 
+const db = require('./db/schema');
+
 // Start server if run directly
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\n======================================================`);
     console.log(`  🚀 Fluentiq API Server active on http://localhost:${PORT}`);
-    console.log(`  📚 Native SQLite WAL & Spaced Repetition (SRS) Ready`);
+    console.log(`  💾 Database: ${db.isTurso ? '🌐 Turso Cloud libSQL (Persistent)' : '📁 Local SQLite WAL (node:sqlite)'}`);
+    console.log(`  🧠 AI Engine: Google Gemini Flash-Lite & Fallback Pipeline`);
     console.log(`======================================================\n`);
   });
 }

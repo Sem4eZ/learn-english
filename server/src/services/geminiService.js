@@ -1,20 +1,28 @@
 /**
  * Gemini AI Generation Service
  * High-speed, resilient multi-model pipeline:
- * 1. gemini-flash-lite-latest (Primary: ultra-fast, high quota)
- * 2. gemini-3.5-flash-lite (Secondary fallback: fast, stable)
- * 3. gemini-3.8-flash (Tertiary fallback)
+ * 1. gemini-flash-lite-latest (Primary: ultra-fast, high free-tier quota & RPM)
+ * 2. gemini-2.5-flash-lite (Direct pinned lightweight model)
+ * 3. gemini-flash-latest (Secondary fallback: standard flash)
+ * 4. gemini-2.5-flash (Tertiary fallback)
  * With in-flight deduplication and auto-failover on 429/502/503.
+ * Models can also be overridden via process.env.GEMINI_MODELS.
  */
 
 const db = require('../db/schema');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const CANDIDATE_MODELS = [
+
+const DEFAULT_MODELS = [
   'gemini-flash-lite-latest',
-  'gemini-3.5-flash-lite',
-  'gemini-flash-latest'
+  'gemini-2.5-flash-lite',
+  'gemini-flash-latest',
+  'gemini-2.5-flash'
 ];
+
+const CANDIDATE_MODELS = process.env.GEMINI_MODELS
+  ? process.env.GEMINI_MODELS.split(',').map(m => m.trim()).filter(Boolean)
+  : DEFAULT_MODELS;
 
 class GeminiService {
   constructor() {
@@ -44,7 +52,7 @@ class GeminiService {
   }
 
   async _executeGeneration(sectionId, level, count, customTopic) {
-    const sectionRow = db.prepare('SELECT * FROM sections WHERE id = ?').get(sectionId);
+    const sectionRow = await db.prepare('SELECT * FROM sections WHERE id = ?').get(sectionId);
     const focus = sectionRow ? sectionRow.prompt_focus : 'General English and vocabulary';
     const sectionTitle = sectionRow ? sectionRow.title : sectionId;
 
@@ -87,7 +95,7 @@ Pedagogical Quality Guidelines:
 
     let lastError = null;
 
-    // Try candidate models in order: gemini-flash-lite-latest -> gemini-3.5-flash-lite -> gemini-3.8-flash
+    // Try candidate models in order: lite -> flash -> fallbacks
     for (const model of CANDIDATE_MODELS) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
       console.log(`[Model Dispatch] Requesting generation from ${model}...`);
@@ -143,7 +151,7 @@ Pedagogical Quality Guidelines:
           continue;
         }
 
-        // Insert into SQLite
+        // Insert into database
         const insertStmt = db.prepare(`
           INSERT INTO questions (
             section_id, level, question_text, context_text, options_json,
@@ -157,7 +165,7 @@ Pedagogical Quality Guidelines:
           if (!q.questionText || !Array.isArray(q.options) || q.options.length < 2) continue;
 
           const correctIdx = typeof q.correctIndex === 'number' ? q.correctIndex : 0;
-          const info = insertStmt.run(
+          const info = await insertStmt.run(
             sectionId,
             level,
             q.questionText,
@@ -174,9 +182,9 @@ Pedagogical Quality Guidelines:
           if (q.vocabularyWord && q.vocabularyTranslation) {
             try {
               const wordClean = q.vocabularyWord.trim();
-              const existingWord = db.prepare('SELECT id FROM dictionary WHERE LOWER(word) = LOWER(?)').get(wordClean);
+              const existingWord = await db.prepare('SELECT id FROM dictionary WHERE LOWER(word) = LOWER(?)').get(wordClean);
               if (!existingWord) {
-                db.prepare(`
+                await db.prepare(`
                   INSERT INTO dictionary (
                     word, transcription, part_of_speech, translation, definition,
                     example_sentence, example_translation, level, section_id
@@ -249,7 +257,7 @@ Pedagogical Quality Guidelines:
   async _executeVocabGeneration(level = 'B1', sectionId = 'general', count = 10) {
     let topicFocus = 'general everyday English vocabulary, real-life communication, common verbs and nouns';
     if (sectionId && sectionId !== 'general' && sectionId !== 'all') {
-      const sectionRow = db.prepare('SELECT * FROM sections WHERE id = ?').get(sectionId);
+      const sectionRow = await db.prepare('SELECT * FROM sections WHERE id = ?').get(sectionId);
       if (sectionRow) {
         topicFocus = `${sectionRow.title} (${sectionRow.prompt_focus})`;
       }
@@ -258,7 +266,7 @@ Pedagogical Quality Guidelines:
     // Retrieve recent words already in the database for this level to avoid duplicates
     let existingWordsList = '';
     try {
-      const existingRows = db.prepare('SELECT word FROM dictionary WHERE level = ? ORDER BY id DESC LIMIT 150').all(level);
+      const existingRows = await db.prepare('SELECT word FROM dictionary WHERE level = ? ORDER BY id DESC LIMIT 150').all(level);
       if (existingRows.length > 0) {
         existingWordsList = existingRows.map(r => r.word).join(', ');
       }
@@ -333,10 +341,10 @@ All translations and definitions must be precise, natural, and suited for ${leve
         for (const item of parsed) {
           if (!item.word || !item.translation) continue;
           const wordClean = item.word.trim();
-          const existing = db.prepare('SELECT id FROM dictionary WHERE LOWER(word) = LOWER(?)').get(wordClean);
+          const existing = await db.prepare('SELECT id FROM dictionary WHERE LOWER(word) = LOWER(?)').get(wordClean);
           if (existing) continue;
 
-          const info = insertStmt.run(
+          const info = await insertStmt.run(
             wordClean,
             item.transcription || '',
             item.partOfSpeech || 'word',
@@ -387,8 +395,8 @@ All translations and definitions must be precise, natural, and suited for ${leve
       throw new Error('Search term cannot be empty');
     }
 
-    // 1. Check if word already exists in SQLite dictionary
-    const existing = db.prepare(`
+    // 1. Check if word already exists in dictionary
+    const existing = await db.prepare(`
       SELECT * FROM dictionary 
       WHERE LOWER(word) = LOWER(?) OR LOWER(translation) = LOWER(?)
       ORDER BY id DESC
@@ -460,7 +468,7 @@ Requirements:
         const targetWord = parsed.word.trim();
 
         // Check if word was inserted concurrently
-        const doubleCheck = db.prepare('SELECT * FROM dictionary WHERE LOWER(word) = LOWER(?)').get(targetWord);
+        const doubleCheck = await db.prepare('SELECT * FROM dictionary WHERE LOWER(word) = LOWER(?)').get(targetWord);
         if (doubleCheck) {
           return { item: doubleCheck, isNew: false };
         }
@@ -472,7 +480,7 @@ Requirements:
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
-        const info = insertStmt.run(
+        const info = await insertStmt.run(
           targetWord,
           parsed.transcription || '',
           parsed.partOfSpeech || 'noun',
@@ -484,7 +492,7 @@ Requirements:
           parsed.sectionId || 'general'
         );
 
-        const newRow = db.prepare('SELECT * FROM dictionary WHERE id = ?').get(info.lastInsertRowid);
+        const newRow = await db.prepare('SELECT * FROM dictionary WHERE id = ?').get(info.lastInsertRowid);
         console.log(`[Word Lookup Success] Added "${targetWord}" (id ${newRow.id}) to dictionary!`);
 
         return {
@@ -502,4 +510,3 @@ Requirements:
 }
 
 module.exports = new GeminiService();
-

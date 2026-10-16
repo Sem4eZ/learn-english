@@ -15,7 +15,8 @@ async function getQuestions(req, res) {
 
     if (!isAll) {
       let countQuery = db.prepare('SELECT COUNT(*) as count FROM questions WHERE section_id = ? AND level = ?');
-      totalInDb = countQuery.get(sectionId, level).count;
+      const countRes = await countQuery.get(sectionId, level);
+      totalInDb = countRes ? countRes.count : 0;
 
       if (totalInDb < offset + limitNum) {
         const needed = Math.max(limitNum, 5);
@@ -24,7 +25,8 @@ async function getQuestions(req, res) {
         } catch (genErr) {
           console.warn('AI Generation warning:', genErr.message);
         }
-        totalInDb = countQuery.get(sectionId, level).count;
+        const updatedCountRes = await countQuery.get(sectionId, level);
+        totalInDb = updatedCountRes ? updatedCountRes.count : totalInDb;
       }
 
       const query = db.prepare(`
@@ -36,10 +38,11 @@ async function getQuestions(req, res) {
         ORDER BY id ASC
         LIMIT ? OFFSET ?
       `);
-      rows = query.all(sectionId, level, limitNum, offset);
+      rows = await query.all(sectionId, level, limitNum, offset);
     } else {
       let countQuery = db.prepare('SELECT COUNT(*) as count FROM questions WHERE level = ?');
-      totalInDb = countQuery.get(level).count;
+      const countRes = await countQuery.get(level);
+      totalInDb = countRes ? countRes.count : 0;
 
       if (totalInDb < offset + limitNum) {
         try {
@@ -47,7 +50,8 @@ async function getQuestions(req, res) {
         } catch (genErr) {
           console.warn('AI Generation warning:', genErr.message);
         }
-        totalInDb = countQuery.get(level).count;
+        const updatedCountRes = await countQuery.get(level);
+        totalInDb = updatedCountRes ? updatedCountRes.count : totalInDb;
       }
 
       const query = db.prepare(`
@@ -59,7 +63,7 @@ async function getQuestions(req, res) {
         ORDER BY id ASC
         LIMIT ? OFFSET ?
       `);
-      rows = query.all(level, limitNum, offset);
+      rows = await query.all(level, limitNum, offset);
     }
 
     const questions = rows.map(r => ({

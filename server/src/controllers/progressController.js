@@ -1,6 +1,6 @@
 const db = require('../db/schema');
 
-function recordAnswer(req, res) {
+async function recordAnswer(req, res) {
   try {
     const userId = req.headers['x-user-id'] || req.body.userId || 'user_default';
     const { questionId, selectedIndex } = req.body;
@@ -10,7 +10,7 @@ function recordAnswer(req, res) {
     }
 
     // Fetch question to check correctness
-    const question = db.prepare('SELECT * FROM questions WHERE id = ?').get(questionId);
+    const question = await db.prepare('SELECT * FROM questions WHERE id = ?').get(questionId);
     if (!question) {
       return res.status(404).json({ success: false, error: 'Question not found' });
     }
@@ -20,7 +20,7 @@ function recordAnswer(req, res) {
 
     // Update user stats and ensure user exists
     const todayStr = new Date().toISOString().slice(0, 10);
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
 
     let streak = 1;
     let xp = xpReward;
@@ -41,13 +41,13 @@ function recordAnswer(req, res) {
         }
       }
 
-      db.prepare(`
+      await db.prepare(`
         UPDATE users 
         SET xp = ?, streak = ?, last_active_date = ?
         WHERE id = ?
       `).run(xp, streak, todayStr, userId);
     } else {
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO users (id, username, xp, streak, last_active_date)
         VALUES (?, 'Learner', ?, 1, ?)
       `).run(userId, xp, todayStr);
@@ -58,7 +58,7 @@ function recordAnswer(req, res) {
       INSERT INTO user_answers (user_id, question_id, selected_index, is_correct)
       VALUES (?, ?, ?, ?)
     `);
-    insertAnswer.run(userId, questionId, selectedIndex, isCorrect ? 1 : 0);
+    await insertAnswer.run(userId, questionId, selectedIndex, isCorrect ? 1 : 0);
 
     res.json({
       success: true,
@@ -79,10 +79,10 @@ function recordAnswer(req, res) {
   }
 }
 
-function getStats(req, res) {
+async function getStats(req, res) {
   try {
     const userId = req.headers['x-user-id'] || req.query.userId || 'user_default';
-    let user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    let user = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
     if (!user) {
       user = {
         id: userId,
@@ -93,26 +93,26 @@ function getStats(req, res) {
     }
 
     // 1. Grammar answers stats
-    const answerStats = db.prepare(`
+    const answerStats = (await db.prepare(`
       SELECT 
         COUNT(*) as total_answers,
         SUM(is_correct) as correct_answers
       FROM user_answers
       WHERE user_id = ?
-    `).get(userId);
+    `).get(userId)) || {};
 
     const grammarTotal = answerStats.total_answers || 0;
     const grammarCorrect = answerStats.correct_answers || 0;
     const grammarAccuracy = grammarTotal > 0 ? Math.round((grammarCorrect / grammarTotal) * 100) : 0;
 
     // 2. Vocabulary SRS reviews stats
-    const srsStats = db.prepare(`
+    const srsStats = (await db.prepare(`
       SELECT 
         COUNT(*) as total_reviews,
         SUM(CASE WHEN grade >= 3 THEN 1 ELSE 0 END) as successful_reviews
       FROM srs_reviews
       WHERE user_id = ?
-    `).get(userId);
+    `).get(userId)) || {};
 
     const vocabTotal = srsStats.total_reviews || 0;
     const vocabCorrect = srsStats.successful_reviews || 0;
@@ -126,40 +126,46 @@ function getStats(req, res) {
       : (grammarAccuracy || vocabAccuracy || 100);
 
     // 3. Learned words dynamics (today, week, month)
-    const wordsToday = db.prepare(`
+    const todayRow = await db.prepare(`
       SELECT COUNT(DISTINCT word_id) as c 
       FROM srs_reviews 
       WHERE user_id = ? AND date(reviewed_at) = date('now')
-    `).get(userId)?.c || 0;
+    `).get(userId);
+    const wordsToday = todayRow?.c || 0;
 
-    const wordsThisWeek = db.prepare(`
+    const weekRow = await db.prepare(`
       SELECT COUNT(DISTINCT word_id) as c 
       FROM srs_reviews 
       WHERE user_id = ? AND date(reviewed_at) >= date('now', '-7 days')
-    `).get(userId)?.c || 0;
+    `).get(userId);
+    const wordsThisWeek = weekRow?.c || 0;
 
-    const wordsThisMonth = db.prepare(`
+    const monthRow = await db.prepare(`
       SELECT COUNT(DISTINCT word_id) as c 
       FROM srs_reviews 
       WHERE user_id = ? AND date(reviewed_at) >= date('now', '-30 days')
-    `).get(userId)?.c || 0;
+    `).get(userId);
+    const wordsThisMonth = monthRow?.c || 0;
 
-    const totalDictWords = db.prepare('SELECT COUNT(*) as c FROM dictionary').get()?.c || 0;
-    const totalWordsLearned = db.prepare(`
+    const totalDictRow = await db.prepare('SELECT COUNT(*) as c FROM dictionary').get();
+    const totalDictWords = totalDictRow?.c || 0;
+
+    const learnedRow = await db.prepare(`
       SELECT COUNT(DISTINCT word_id) as c 
       FROM srs_reviews 
       WHERE user_id = ?
-    `).get(userId)?.c || 0;
+    `).get(userId);
+    const totalWordsLearned = learnedRow?.c || 0;
 
     // 4. Memory stages (SRS distribution)
-    const stages = db.prepare(`
+    const stages = (await db.prepare(`
       SELECT 
         SUM(CASE WHEN interval >= 21 THEN 1 ELSE 0 END) as mastered,
         SUM(CASE WHEN interval BETWEEN 3 AND 20 THEN 1 ELSE 0 END) as review,
         SUM(CASE WHEN interval < 3 THEN 1 ELSE 0 END) as learning
       FROM srs_reviews 
       WHERE user_id = ?
-    `).get(userId) || {};
+    `).get(userId)) || {};
 
     const masteredWords = stages.mastered || 0;
     const reviewWords = stages.review || 0;
@@ -167,7 +173,7 @@ function getStats(req, res) {
     const newWords = Math.max(0, totalDictWords - totalWordsLearned);
 
     // 5. CEFR level mastery breakdown
-    const cefrRows = db.prepare(`
+    const cefrRows = await db.prepare(`
       SELECT 
         d.level, 
         COUNT(DISTINCT d.id) as total,
@@ -203,17 +209,19 @@ function getStats(req, res) {
       const dateStr = d.toISOString().slice(0, 10);
       const dayName = dayNames[d.getDay()];
 
-      const wCount = db.prepare(`
+      const wRow = await db.prepare(`
         SELECT COUNT(DISTINCT word_id) as c 
         FROM srs_reviews 
         WHERE user_id = ? AND date(reviewed_at) = ?
-      `).get(userId, dateStr)?.c || 0;
+      `).get(userId, dateStr);
+      const wCount = wRow?.c || 0;
 
-      const aCount = db.prepare(`
+      const aRow = await db.prepare(`
         SELECT COUNT(*) as c 
         FROM user_answers 
         WHERE user_id = ? AND date(answered_at) = ?
-      `).get(userId, dateStr)?.c || 0;
+      `).get(userId, dateStr);
+      const aCount = aRow?.c || 0;
 
       const count = wCount + aCount;
       const dayXp = count * 15;
@@ -249,7 +257,7 @@ function getStats(req, res) {
     ];
 
     // 8. Section breakdown
-    const sectionBreakdown = db.prepare(`
+    const sectionBreakdown = await db.prepare(`
       SELECT 
         s.id,
         s.title,
@@ -331,7 +339,7 @@ function getStats(req, res) {
   }
 }
 
-function getHistory(req, res) {
+async function getHistory(req, res) {
   try {
     const userId = req.headers['x-user-id'] || req.query.userId || 'user_default';
     const mistakesOnly = req.query.mistakesOnly === 'true';
@@ -373,8 +381,8 @@ function getHistory(req, res) {
       vocabSql += ' AND s.grade <= 2 ';
     }
 
-    const grammarRows = db.prepare(grammarSql).all(userId);
-    const vocabRows = db.prepare(vocabSql).all(userId);
+    const grammarRows = await db.prepare(grammarSql).all(userId);
+    const vocabRows = await db.prepare(vocabSql).all(userId);
 
     // Merge and sort chronologically descending
     const merged = [...grammarRows, ...vocabRows].sort((a, b) => {
