@@ -20,7 +20,7 @@
   width: 100%;
 
   @media (max-width: 768px) {
-    padding: 16px 14px;
+    padding: 14px 12px 84px 12px;
   }
 }
 
@@ -29,4 +29,10 @@
   background: transparent;
   opacity: 0.6;
   font-size: 0.85rem;
+  padding: 16px 12px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 60px;
+    font-size: 0.78rem;
+  }
 }

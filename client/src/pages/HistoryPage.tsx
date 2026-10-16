@@ -251,6 +251,7 @@ export const HistoryPage: React.FC = () => {
             columns={columns}
             rowKey="id"
             pagination={{ pageSize: 10, showSizeChanger: true }}
+            scroll={{ x: 720 }}
           />
         )}
       </Card>

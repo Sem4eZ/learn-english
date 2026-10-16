@@ -1,5 +1,5 @@
-import React from 'react';
-import { Layout, Space, Button, Tag, Dropdown, MenuProps, Avatar } from 'antd';
+import React, { useState } from 'react';
+import { Layout, Space, Button, Tag, Dropdown, MenuProps, Avatar, Drawer, Divider } from 'antd';
 import { 
   FireFilled, 
   ThunderboltFilled, 
@@ -10,7 +10,10 @@ import {
   UserOutlined,
   LogoutOutlined,
   SwapOutlined,
-  ApiOutlined
+  ApiOutlined,
+  MenuOutlined,
+  SettingOutlined,
+  RightOutlined
 } from '@ant-design/icons';
 import { UserStats } from '@/entities/user/model/types';
 import { AuthUser } from '@/features/auth/ui/AuthModal';
@@ -42,12 +45,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onLogout,
   onOpenBackendConfig
 }) => {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const isOffline = apiClient.isOfflineMode();
   const xp = stats?.xp ?? currentUser?.xp ?? 0;
   const streak = stats?.streak ?? currentUser?.streak ?? 1;
   const level = stats?.level ?? currentUser?.level ?? 1;
 
   const isGuest = !currentUser || currentUser.isGuest;
+
+  const handleTabClick = (tab: string) => {
+    onTabChange(tab);
+    setDrawerOpen(false);
+  };
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -79,118 +89,373 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   ];
 
   return (
-    <Header className={`${styles.header} ${isDark ? styles.dark : styles.light}`}>
-      <div className={styles.headerInner}>
-        {/* Brand */}
-        <div 
-          className={styles.brand}
-          onClick={() => onTabChange('arcade')}
-        >
-          <div className={styles.brandIcon}>
-            FQ
+    <>
+      <Header className={`${styles.header} ${isDark ? styles.dark : styles.light}`}>
+        <div className={styles.headerInner}>
+          {/* Brand */}
+          <div 
+            className={styles.brand}
+            onClick={() => handleTabClick('arcade')}
+            role="button"
+            tabIndex={0}
+          >
+            <div className={styles.brandIcon}>
+              FQ
+            </div>
+            <div className={styles.brandText}>
+              <div className={`${styles.brandTitle} ${isDark ? styles.dark : styles.light}`}>
+                Fluentiq
+              </div>
+              <div className={styles.brandSubtitle}>
+                English Mastery
+              </div>
+            </div>
           </div>
-          <div className={styles.brandText}>
-            <div className={`${styles.brandTitle} ${isDark ? styles.dark : styles.light}`}>
-              Fluentiq
+
+          {/* Desktop Navigation Links (Hidden on tablet/mobile < 992px) */}
+          <div className={styles.desktopNav}>
+            <Space size="middle">
+              <Button
+                type={activeTab === 'arcade' ? 'primary' : 'text'}
+                icon={<ThunderboltFilled />}
+                onClick={() => handleTabClick('arcade')}
+              >
+                🎮 Тренажеры
+              </Button>
+              <Button
+                type={activeTab === 'dictionary' ? 'primary' : 'text'}
+                icon={<BookOutlined />}
+                onClick={() => handleTabClick('dictionary')}
+              >
+                Словарь
+              </Button>
+              <Button
+                type={activeTab === 'stats' ? 'primary' : 'text'}
+                icon={<TrophyOutlined />}
+                onClick={() => handleTabClick('stats')}
+              >
+                Дашборд
+              </Button>
+              <Button
+                type={activeTab === 'history' ? 'primary' : 'text'}
+                icon={<HistoryOutlined />}
+                onClick={() => handleTabClick('history')}
+              >
+                История
+              </Button>
+            </Space>
+          </div>
+
+          {/* Desktop Stats & User Widgets (Hidden on mobile < 768px) */}
+          <div className={styles.desktopControls}>
+            <Space size="small">
+              <Tag color="warning" className={styles.statTag}>
+                <FireFilled className={styles.statIconAmber} />
+                {streak} дн.
+              </Tag>
+
+              <Tag color="cyan" className={styles.statTag}>
+                <ThunderboltFilled className={styles.statIconCyan} />
+                {xp} XP
+              </Tag>
+
+              <Tag color="purple" className={styles.statTag}>
+                Lvl {level}
+              </Tag>
+
+              {/* User Auth Profile */}
+              {isGuest ? (
+                <Button
+                  type="primary"
+                  ghost
+                  size="middle"
+                  icon={<UserOutlined />}
+                  onClick={onOpenAuth}
+                  className={styles.userBtn}
+                >
+                  Войти
+                </Button>
+              ) : (
+                <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+                  <Button type="text" className={`${styles.userBtn} ${styles.userProfileBtn}`}>
+                    <Avatar size="small" className={styles.userAvatar}>
+                      {currentUser?.username?.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <span className={styles.userName}>{currentUser?.username}</span>
+                  </Button>
+                </Dropdown>
+              )}
+
+              {/* Backend API Configuration Button */}
+              <Button
+                type={isOffline ? 'default' : 'text'}
+                icon={<ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a' }} />}
+                onClick={onOpenBackendConfig}
+                title={isOffline ? 'Бэкенд: Офлайн / Демо (Нажмите для настройки)' : `Бэкенд: Подключен (${apiClient.getApiUrl()})`}
+                size="middle"
+                className={isOffline ? styles.apiBtnWarning : styles.apiBtnSuccess}
+              >
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: isOffline ? '#faad14' : '#52c41a' }}>
+                  {isOffline ? 'Демо' : 'API'}
+                </span>
+              </Button>
+
+              <Button
+                type="text"
+                shape="circle"
+                icon={<BulbOutlined />}
+                onClick={onToggleTheme}
+                title="Сменить тему"
+              />
+            </Space>
+          </div>
+
+          {/* Mobile Quick Controls (< 768px) */}
+          <div className={styles.mobileControls}>
+            {/* Directly clickable API button on mobile - NEVER hidden */}
+            <Button
+              type={isOffline ? 'dashed' : 'text'}
+              size="small"
+              icon={<ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a' }} />}
+              onClick={onOpenBackendConfig}
+              className={styles.mobileApiBtn}
+              title={isOffline ? 'Настроить API сервер' : 'API подключен'}
+            >
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: isOffline ? '#faad14' : '#52c41a' }}>
+                {isOffline ? '⚠️ Демо' : '🟢 API'}
+              </span>
+            </Button>
+
+            {/* Quick XP Tag on mobile */}
+            <Tag color="cyan" className={styles.mobileStatPill}>
+              ⚡ {xp}
+            </Tag>
+
+            {/* Theme Toggle */}
+            <Button
+              type="text"
+              shape="circle"
+              size="middle"
+              icon={<BulbOutlined />}
+              onClick={onToggleTheme}
+              title="Тема"
+            />
+
+            {/* Mobile Hamburger Drawer Menu */}
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              size="middle"
+              onClick={() => setDrawerOpen(true)}
+              className={styles.hamburgerBtn}
+              aria-label="Меню приложения"
+            />
+          </div>
+        </div>
+      </Header>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        title={
+          <div className={styles.drawerTitle}>
+            <div className={styles.brandIconSmall}>FQ</div>
+            <span>Fluentiq Меню</span>
+          </div>
+        }
+        placement="right"
+        onClose={() => setDrawerOpen(false)}
+        open={drawerOpen}
+        styles={{ 
+          wrapper: { maxWidth: '85vw', width: 320 },
+          body: { padding: '16px' } 
+        }}
+      >
+        {/* User Profile Card */}
+        <div className={styles.drawerUserCard}>
+          <div className={styles.drawerUserHeader}>
+            <Avatar size={48} className={styles.userAvatarLarge}>
+              {isGuest ? '?' : currentUser?.username?.charAt(0).toUpperCase()}
+            </Avatar>
+            <div className={styles.drawerUserInfo}>
+              <div className={styles.drawerUsername}>
+                {isGuest ? 'Гостевой режим' : currentUser?.username}
+              </div>
+              <div className={styles.drawerUserStats}>
+                Уровень {level} • {xp} XP • {streak} дн.🔥
+              </div>
             </div>
-            <div className={styles.brandSubtitle}>
-              English Mastery Platform
-            </div>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            {isGuest ? (
+              <Button
+                type="primary"
+                block
+                icon={<UserOutlined />}
+                onClick={() => {
+                  setDrawerOpen(false);
+                  onOpenAuth?.();
+                }}
+              >
+                Войти / Регистрация
+              </Button>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                <Button
+                  block
+                  icon={<SwapOutlined />}
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    onOpenAuth?.();
+                  }}
+                >
+                  Сменить аккаунт
+                </Button>
+                <Button
+                  block
+                  danger
+                  icon={<LogoutOutlined />}
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    onLogout?.();
+                  }}
+                >
+                  Выйти
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Navigation Links */}
-        <Space size="middle" className="header-nav">
+        <Divider style={{ margin: '14px 0' }} />
+
+        {/* Backend API Configuration Card */}
+        <div className={styles.drawerApiCard}>
+          <div className={styles.drawerApiHeader}>
+            <div className={styles.drawerApiTitle}>
+              <ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a', marginRight: 6 }} />
+              Подключение к бэкенду
+            </div>
+            <Tag color={isOffline ? 'orange' : 'green'}>
+              {isOffline ? 'Офлайн' : 'Онлайн'}
+            </Tag>
+          </div>
+          <div className={styles.drawerApiDesc}>
+            {isOffline 
+              ? 'Используется демо-база. Подключите Render для облачной БД Turso и AI!'
+              : `Сервер: ${apiClient.getApiUrl()}`
+            }
+          </div>
+          <Button
+            type="primary"
+            ghost
+            block
+            size="middle"
+            icon={<SettingOutlined />}
+            onClick={() => {
+              setDrawerOpen(false);
+              onOpenBackendConfig?.();
+            }}
+            style={{ marginTop: 8 }}
+          >
+            Настроить адрес API
+          </Button>
+        </div>
+
+        <Divider style={{ margin: '14px 0' }} />
+
+        {/* Navigation list in Drawer */}
+        <div className={styles.drawerNavList}>
+          <div className={styles.drawerNavTitle}>Разделы приложения</div>
           <Button
             type={activeTab === 'arcade' ? 'primary' : 'text'}
+            block
+            size="large"
             icon={<ThunderboltFilled />}
-            onClick={() => onTabChange('arcade')}
+            className={styles.drawerNavBtn}
+            onClick={() => handleTabClick('arcade')}
           >
             🎮 Тренажеры
+            <RightOutlined className={styles.drawerArrow} />
           </Button>
           <Button
             type={activeTab === 'dictionary' ? 'primary' : 'text'}
+            block
+            size="large"
             icon={<BookOutlined />}
-            onClick={() => onTabChange('dictionary')}
+            className={styles.drawerNavBtn}
+            onClick={() => handleTabClick('dictionary')}
           >
-            Словарь
+            📖 Словарь ({stats?.totalAnswered ? `${stats.totalAnswered} слов` : 'Каталог'})
+            <RightOutlined className={styles.drawerArrow} />
           </Button>
           <Button
             type={activeTab === 'stats' ? 'primary' : 'text'}
+            block
+            size="large"
             icon={<TrophyOutlined />}
-            onClick={() => onTabChange('stats')}
+            className={styles.drawerNavBtn}
+            onClick={() => handleTabClick('stats')}
           >
-            Дашборд
+            🏆 Дашборд прогресса
+            <RightOutlined className={styles.drawerArrow} />
           </Button>
           <Button
             type={activeTab === 'history' ? 'primary' : 'text'}
+            block
+            size="large"
             icon={<HistoryOutlined />}
-            onClick={() => onTabChange('history')}
+            className={styles.drawerNavBtn}
+            onClick={() => handleTabClick('history')}
           >
-            История и ошибки
+            📜 История и ошибки
+            <RightOutlined className={styles.drawerArrow} />
           </Button>
-        </Space>
+        </div>
+      </Drawer>
 
-        {/* Stats & User Widgets */}
-        <Space size="small">
-          <Tag color="warning" className={styles.statTag}>
-            <FireFilled className={styles.statIconAmber} />
-            {streak} дн.
-          </Tag>
+      {/* Mobile Bottom Navigation Bar (< 768px) */}
+      <nav className={styles.bottomNav} aria-label="Мобильная навигация">
+        <button
+          type="button"
+          className={`${styles.bottomNavItem} ${activeTab === 'arcade' ? styles.active : ''}`}
+          onClick={() => onTabChange('arcade')}
+          aria-label="Тренажеры"
+        >
+          <ThunderboltFilled className={styles.bottomNavIcon} />
+          <span className={styles.bottomNavLabel}>Тренажеры</span>
+        </button>
 
-          <Tag color="cyan" className={styles.statTag}>
-            <ThunderboltFilled className={styles.statIconCyan} />
-            {xp} XP
-          </Tag>
+        <button
+          type="button"
+          className={`${styles.bottomNavItem} ${activeTab === 'dictionary' ? styles.active : ''}`}
+          onClick={() => onTabChange('dictionary')}
+          aria-label="Словарь"
+        >
+          <BookOutlined className={styles.bottomNavIcon} />
+          <span className={styles.bottomNavLabel}>Словарь</span>
+        </button>
 
-          <Tag color="purple" className={styles.statTag}>
-            Lvl {level}
-          </Tag>
+        <button
+          type="button"
+          className={`${styles.bottomNavItem} ${activeTab === 'stats' ? styles.active : ''}`}
+          onClick={() => onTabChange('stats')}
+          aria-label="Дашборд"
+        >
+          <TrophyOutlined className={styles.bottomNavIcon} />
+          <span className={styles.bottomNavLabel}>Дашборд</span>
+        </button>
 
-          {/* User Auth Profile */}
-          {isGuest ? (
-            <Button
-              type="primary"
-              ghost
-              size="middle"
-              icon={<UserOutlined />}
-              onClick={onOpenAuth}
-              className={styles.userBtn}
-            >
-              Войти
-            </Button>
-          ) : (
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <Button type="text" className={`${styles.userBtn} ${styles.userProfileBtn}`}>
-                <Avatar size="small" className={styles.userAvatar}>
-                  {currentUser?.username?.charAt(0).toUpperCase()}
-                </Avatar>
-                <span className={styles.userName}>{currentUser?.username}</span>
-              </Button>
-            </Dropdown>
-          )}
-
-          <Button
-            type="text"
-            icon={<ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a' }} />}
-            onClick={onOpenBackendConfig}
-            title={isOffline ? 'Бэкенд: Офлайн / Демо (Нажмите для настройки)' : 'Бэкенд: Подключен'}
-            size="small"
-          >
-            <span style={{ fontSize: '0.8rem', color: isOffline ? '#faad14' : '#52c41a' }}>
-              {isOffline ? 'Демо' : 'API'}
-            </span>
-          </Button>
-
-          <Button
-            type="text"
-            shape="circle"
-            icon={<BulbOutlined />}
-            onClick={onToggleTheme}
-            title="Сменить тему"
-          />
-        </Space>
-      </div>
-    </Header>
+        <button
+          type="button"
+          className={`${styles.bottomNavItem} ${activeTab === 'history' ? styles.active : ''}`}
+          onClick={() => onTabChange('history')}
+          aria-label="История"
+        >
+          <HistoryOutlined className={styles.bottomNavIcon} />
+          <span className={styles.bottomNavLabel}>История</span>
+        </button>
+      </nav>
+    </>
   );
 };

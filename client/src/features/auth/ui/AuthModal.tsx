@@ -80,9 +80,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }
       open={open}
       onCancel={onClose}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
       centered
       width={420}
+      style={{ maxWidth: '94vw', margin: '0 auto' }}
     >
       <div className={styles.modalHeader}>
         <div className={styles.modalIcon}>✨</div>

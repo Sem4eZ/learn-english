@@ -29,13 +29,24 @@
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 }
 
 .wordsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
 }
 
 .wordCard {
@@ -127,10 +138,20 @@
 
 .sectionSelect {
   min-width: 180px;
+
+  @media (max-width: 640px) {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .levelSelect {
   min-width: 140px;
+
+  @media (max-width: 640px) {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .favIconActive {

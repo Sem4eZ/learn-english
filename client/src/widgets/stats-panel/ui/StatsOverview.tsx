@@ -58,8 +58,12 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
   const wLearning = Math.round((learning / totalSRS) * 1000);
   const wNew = Math.max(0, 1000 - (wMastered + wReview + wLearning));
 
-  // Weekly activity
-  const weeklyActivity = stats.weeklyActivity || [];
+  // Safe arrays for resilient rendering
+  const cefrItems = Array.isArray(stats.cefrBreakdown) ? stats.cefrBreakdown : [];
+  const trainerItems = Array.isArray(stats.trainerBreakdown) ? stats.trainerBreakdown : [];
+  const badgeItems = Array.isArray(stats.badges) ? stats.badges : [];
+  const sectionItems = Array.isArray(stats.sectionBreakdown) ? stats.sectionBreakdown : [];
+  const weeklyActivity = Array.isArray(stats.weeklyActivity) ? stats.weeklyActivity : [];
   const maxWeeklyCount = Math.max(...weeklyActivity.map(d => d.count || 0), 10);
 
   // Badges icon mapper
@@ -418,7 +422,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
         }
       >
         <div className={styles.cefrGrid}>
-          {(stats.cefrBreakdown || []).map((c) => {
+          {cefrItems.map((c) => {
             let levelTitle = 'Начальный';
             let tagColor = 'blue';
             if (c.level === 'A1') { levelTitle = 'Beginner'; tagColor = 'blue'; }
@@ -461,7 +465,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
           }
         >
           <div className={styles.trainerList}>
-            {(stats.trainerBreakdown || []).map((t) => (
+            {trainerItems.map((t) => (
               <div key={t.id} className={styles.trainerItem}>
                 <div className={styles.trainerTop}>
                   <span className={styles.trainerName}>
@@ -493,7 +497,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
           }
         >
           <div className={styles.badgesGrid}>
-            {(stats.badges || []).map((b) => (
+            {badgeItems.map((b) => (
               <div
                 key={b.id}
                 className={`${styles.badgeCard} ${b.unlocked ? styles.badgeUnlocked : styles.badgeLocked}`}
@@ -532,10 +536,11 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
         }
       >
         <Table
-          dataSource={stats.sectionBreakdown}
+          dataSource={sectionItems}
           columns={columns}
           rowKey="id"
           pagination={false}
+          scroll={{ x: 600 }}
         />
       </Card>
     </div>

@@ -560,6 +560,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
         onCancel={() => setDeckModalOpen(false)}
         footer={null}
         width={920}
+        style={{ maxWidth: '96vw', margin: '0 auto' }}
         destroyOnHidden
       >
         <div className={styles.modalBody}>
@@ -585,6 +586,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
         }}
         footer={null}
         width={760}
+        style={{ maxWidth: '96vw', margin: '0 auto' }}
         destroyOnHidden
       >
         <div className={styles.modalBody}>
@@ -614,6 +616,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
         }}
         footer={null}
         width={720}
+        style={{ maxWidth: '96vw', margin: '0 auto' }}
         destroyOnHidden
       >
         <div className={styles.modalBody}>
@@ -640,6 +643,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
         onCancel={() => setBuilderModalOpen(false)}
         footer={null}
         width={760}
+        style={{ maxWidth: '96vw', margin: '0 auto' }}
         destroyOnHidden
       >
         <div className={styles.modalBody}>
