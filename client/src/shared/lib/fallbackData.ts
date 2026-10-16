@@ -1,6 +1,7 @@
 import { Section } from '@/entities/section/model/types';
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { UserStats } from '@/entities/user/model/types';
+import { Question } from '@/entities/question/model/types';
 
 export const FALLBACK_SECTIONS: Section[] = [
   {
@@ -394,3 +395,66 @@ export const FALLBACK_USER_STATS: UserStats = {
     { id: 'streak_master', title: 'Огонь', desc: 'Серия 3 дня подряд', unlocked: false, icon: '🔥' }
   ]
 };
+
+export const FALLBACK_QUESTIONS: Question[] = [
+  {
+    id: 1,
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'If I _____ more free time, I would travel around Europe.',
+    context_text: 'Second Conditional (гипотетическая ситуация в настоящем/будущем).',
+    options: ['have', 'had', 'would have', 'will have'],
+    correct_index: 1,
+    explanation: 'В придаточной части Second Conditional (после if) используется Past Simple (had), а в главной части — would + глагол.',
+    grammar_rule: 'If + Past Simple, would + infinitive (Second Conditional)',
+    pronunciation_tip: 'Обратите внимание на связку "If I had" -> /ɪf aɪ hæd/'
+  },
+  {
+    id: 2,
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'She has been working here _____ 2018.',
+    context_text: 'Present Perfect Continuous (действие началось в прошлом и длится до сих пор).',
+    options: ['for', 'since', 'during', 'from'],
+    correct_index: 1,
+    explanation: 'С точной точкой отсчета во времени (год, дата, событие) используется предлог "since". Предлог "for" используется с периодами времени (for 5 years).',
+    grammar_rule: 'since + точка времени (since 2018), for + период времени (for 5 years)',
+    pronunciation_tip: '"since" произносится как /sɪns/, не путать с "science"'
+  },
+  {
+    id: 3,
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'Hardly _____ the office when the client called with an urgent issue.',
+    context_text: 'Inversion with negative adverbs (инверсия для усиления выразительности).',
+    options: ['I had left', 'had I left', 'did I leave', 'I left'],
+    correct_index: 1,
+    explanation: 'Когда предложение начинается с отрицательного наречия (Hardly, Scarcely, Barely), используется обратный порядок слов (инверсия): Hardly had + subject + V3.',
+    grammar_rule: 'Hardly had + S + V3 ... when + Past Simple',
+    pronunciation_tip: 'Ударение падает на вспомогательный глагол: "Hardly HAD I left"'
+  },
+  {
+    id: 4,
+    section_id: 'tech_it',
+    level: 'B2',
+    question_text: 'The pull request was approved after all comments _____ addressed.',
+    context_text: 'Passive Voice in Past Perfect.',
+    options: ['had been', 'have been', 'were being', 'would be'],
+    correct_index: 0,
+    explanation: 'Действие (исправление замечаний) произошло раньше другого действия в прошлом (аппрув PR), поэтому требуется Past Perfect Passive (had been + V3).',
+    grammar_rule: 'Past Perfect Passive: had been + Past Participle',
+    pronunciation_tip: '"addressed" оканчивается на глухой звук /t/: /əˈdrest/'
+  },
+  {
+    id: 5,
+    section_id: 'business',
+    level: 'B2',
+    question_text: 'We look forward to _____ mutually beneficial partnership with your firm.',
+    context_text: 'Phrasal verb with gerund: to look forward to + V-ing.',
+    options: ['establish', 'establishing', 'established', 'be established'],
+    correct_index: 1,
+    explanation: 'В устойчивом выражении "look forward to" частица "to" является предлогом, поэтому за ней следует герундий (глагол с окончанием -ing) или существительное.',
+    grammar_rule: 'look forward to + Gerund (-ing) / Noun',
+    pronunciation_tip: 'Связывание звуков: "forward to" -> /ˈfɔːwəd tuː/'
+  }
+];

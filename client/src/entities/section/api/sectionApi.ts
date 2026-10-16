@@ -4,13 +4,15 @@ import { FALLBACK_SECTIONS } from '@/shared/lib/fallbackData';
 
 export const sectionApi = {
   async getSections(): Promise<Section[]> {
-    try {
-      const res = await apiClient.get<{ success: boolean; data: Section[] }>('/sections');
-      if (res && res.data && res.data.length > 0) {
-        return res.data;
+    if (!apiClient.isOfflineMode()) {
+      try {
+        const res = await apiClient.get<{ success: boolean; data: Section[] }>('/sections');
+        if (res && res.data && res.data.length > 0) {
+          return res.data;
+        }
+      } catch (err) {
+        console.warn('Backend unavailable, using fallback sections:', err);
       }
-    } catch (err) {
-      console.warn('Backend unavailable, using fallback sections:', err);
     }
     return FALLBACK_SECTIONS;
   },

@@ -36,14 +36,16 @@ export const dictionaryApi = {
     if (params.page) queryParams.page = params.page;
     if (params.limit) queryParams.limit = params.limit;
 
-    try {
-      const res = await apiClient.get<DictionaryResponse>('/dictionary', queryParams);
-      if (res && res.data && res.data.length > 0) {
-        saveOfflineWords(res.data);
-        return res;
+    if (!apiClient.isOfflineMode()) {
+      try {
+        const res = await apiClient.get<DictionaryResponse>('/dictionary', queryParams);
+        if (res && res.data && res.data.length > 0) {
+          saveOfflineWords(res.data);
+          return res;
+        }
+      } catch (err) {
+        console.warn('Backend unavailable, using resilient offline dictionary:', err);
       }
-    } catch (err) {
-      console.warn('Backend unavailable, using resilient offline dictionary:', err);
     }
 
     // Resilient offline fallback for GitHub Pages
@@ -86,59 +88,65 @@ export const dictionaryApi = {
   },
 
   async toggleFavorite(id: number): Promise<DictionaryItem> {
-    try {
-      const res = await apiClient.post<{ success: boolean; data: DictionaryItem }>(`/dictionary/${id}/favorite`);
-      return res.data;
-    } catch (err) {
-      console.warn('Backend unavailable, toggling favorite locally:', err);
-      const words = getOfflineWords();
-      const item = words.find(w => w.id === id);
-      if (item) {
-        item.is_favorite = item.is_favorite ? 0 : 1;
-        saveOfflineWords(words);
-        return item;
+    if (!apiClient.isOfflineMode()) {
+      try {
+        const res = await apiClient.post<{ success: boolean; data: DictionaryItem }>(`/dictionary/${id}/favorite`);
+        return res.data;
+      } catch (err) {
+        console.warn('Backend unavailable, toggling favorite locally:', err);
       }
-      throw err;
     }
+    const words = getOfflineWords();
+    const item = words.find(w => w.id === id);
+    if (item) {
+      item.is_favorite = item.is_favorite ? 0 : 1;
+      saveOfflineWords(words);
+      return item;
+    }
+    throw new Error('Слово не найдено');
   },
 
   async generateWords(level = 'A1', sectionId = 'general', count = 35): Promise<{ success: boolean; message: string; data: DictionaryItem[]; totalCount: number }> {
-    try {
-      return await apiClient.post('/dictionary/generate', { level, sectionId, count });
-    } catch (err) {
-      console.warn('Backend generator unavailable, returning cached words:', err);
-      const words = getOfflineWords();
-      return {
-        success: true,
-        message: 'Используются встроенные слова',
-        data: words,
-        totalCount: words.length
-      };
+    if (!apiClient.isOfflineMode()) {
+      try {
+        return await apiClient.post('/dictionary/generate', { level, sectionId, count });
+      } catch (err) {
+        console.warn('Backend generator unavailable, returning cached words:', err);
+      }
     }
+    const words = getOfflineWords();
+    return {
+      success: true,
+      message: 'Используются встроенные слова (офлайн-режим)',
+      data: words,
+      totalCount: words.length
+    };
   },
 
   async lookupWord(word: string): Promise<{ success: boolean; data: DictionaryItem; isNew: boolean; message: string; error?: string }> {
-    try {
-      return await apiClient.post('/dictionary/lookup', { word });
-    } catch (err: any) {
-      console.warn('Backend lookup unavailable, searching local dictionary:', err);
-      const words = getOfflineWords();
-      const existing = words.find(w => w.word.toLowerCase() === word.toLowerCase().trim());
-      if (existing) {
-        return {
-          success: true,
-          data: existing,
-          isNew: false,
-          message: `Слово «${existing.word}» найдено в словаре!`
-        };
+    if (!apiClient.isOfflineMode()) {
+      try {
+        return await apiClient.post('/dictionary/lookup', { word });
+      } catch (err: any) {
+        console.warn('Backend lookup unavailable, searching local dictionary:', err);
       }
+    }
+    const words = getOfflineWords();
+    const existing = words.find(w => w.word.toLowerCase() === word.toLowerCase().trim());
+    if (existing) {
       return {
-        success: false,
-        data: null as any,
+        success: true,
+        data: existing,
         isNew: false,
-        message: 'Для поиска новых редких слов через Gemini подключите бэкенд-сервер',
-        error: 'Бэкенд недоступен в автономном режиме'
+        message: `Слово «${existing.word}» найдено в словаре!`
       };
     }
+    return {
+      success: false,
+      data: null as any,
+      isNew: false,
+      message: 'Для поиска новых редких слов через Gemini подключите бэкенд-сервер',
+      error: 'Бэкенд недоступен в автономном режиме'
+    };
   }
 };

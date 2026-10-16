@@ -9,10 +9,12 @@ import {
   BookOutlined,
   UserOutlined,
   LogoutOutlined,
-  SwapOutlined
+  SwapOutlined,
+  ApiOutlined
 } from '@ant-design/icons';
 import { UserStats } from '@/entities/user/model/types';
 import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { apiClient } from '@/shared/api/client';
 import styles from './AppHeader.module.scss';
 
 const { Header } = Layout;
@@ -26,6 +28,7 @@ interface AppHeaderProps {
   currentUser?: AuthUser | null;
   onOpenAuth?: () => void;
   onLogout?: () => void;
+  onOpenBackendConfig?: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -36,8 +39,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onToggleTheme,
   currentUser,
   onOpenAuth,
-  onLogout
+  onLogout,
+  onOpenBackendConfig
 }) => {
+  const isOffline = apiClient.isOfflineMode();
   const xp = stats?.xp ?? currentUser?.xp ?? 0;
   const streak = stats?.streak ?? currentUser?.streak ?? 1;
   const level = stats?.level ?? currentUser?.level ?? 1;
@@ -164,6 +169,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               </Button>
             </Dropdown>
           )}
+
+          <Button
+            type="text"
+            icon={<ApiOutlined style={{ color: isOffline ? '#faad14' : '#52c41a' }} />}
+            onClick={onOpenBackendConfig}
+            title={isOffline ? 'Бэкенд: Офлайн / Демо (Нажмите для настройки)' : 'Бэкенд: Подключен'}
+            size="small"
+          >
+            <span style={{ fontSize: '0.8rem', color: isOffline ? '#faad14' : '#52c41a' }}>
+              {isOffline ? 'Демо' : 'API'}
+            </span>
+          </Button>
 
           <Button
             type="text"

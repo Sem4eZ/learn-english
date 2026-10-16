@@ -12,6 +12,7 @@ import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { Section } from '@/entities/section/model/types';
 import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
 import { sectionApi } from '@/entities/section/api/sectionApi';
+import { apiClient } from '@/shared/api/client';
 import { VocabQuiz } from '@/widgets/vocab-quiz/ui/VocabQuiz';
 import { SpeedSprint } from '@/widgets/speed-sprint/ui/SpeedSprint';
 import { WordBuilder } from '@/widgets/word-builder/ui/WordBuilder';
@@ -56,7 +57,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   }, [propSections]);
 
   const handleNeedMoreWords = useCallback(async (count = 35): Promise<DictionaryItem[]> => {
-    if (isReplenishingRef.current) return [];
+    if (isReplenishingRef.current || apiClient.isOfflineMode()) return [];
     const targetLevel = selectedLevel !== 'all' ? selectedLevel : 'A1';
     const targetSection = selectedSection !== 'all' ? selectedSection : 'general';
     isReplenishingRef.current = true;

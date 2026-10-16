@@ -123,6 +123,13 @@ export class SRSEngine {
   }
 
   static async syncReviewWithServer(wordId: number | string, grade: SrsGrade): Promise<any> {
+    if (apiClient.isOfflineMode()) {
+      xpEventBus.emit({
+        xpReward: 10,
+        source: 'srs_review'
+      });
+      return null;
+    }
     try {
       const res: any = await apiClient.post('/dictionary/review', { wordId, grade });
       if (res?.success && res?.data) {

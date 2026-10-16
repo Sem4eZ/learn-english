@@ -25,6 +25,16 @@ class ApiClient {
     return this.getBaseUrl();
   }
 
+  isOfflineMode(): boolean {
+    if (localStorage.getItem('fluentiq_api_url')) return false;
+    if (import.meta.env.VITE_API_URL) return false;
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host.endsWith('github.io')) return true;
+    }
+    return false;
+  }
+
   private getUserId(): string {
     return localStorage.getItem('fluentiq_user_id') || localStorage.getItem('lexiflow_user_id') || DEFAULT_USER_ID;
   }

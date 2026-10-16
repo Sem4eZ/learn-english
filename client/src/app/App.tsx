@@ -8,6 +8,7 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { GenerateBatchModal } from '@/features/generate-ai-batch/ui/GenerateBatchModal';
 import { AuthModal, AuthUser } from '@/features/auth/ui/AuthModal';
+import { BackendConfigModal } from '@/features/backend-config/ui/BackendConfigModal';
 import { Section } from '@/entities/section/model/types';
 import { UserStats } from '@/entities/user/model/types';
 import { sectionApi } from '@/entities/section/api/sectionApi';
@@ -31,6 +32,7 @@ export const App: React.FC = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [backendModalOpen, setBackendModalOpen] = useState<boolean>(false);
 
   const [generateModalOpen, setGenerateModalOpen] = useState<boolean>(false);
   const [targetSectionForGen, setTargetSectionForGen] = useState<string>('grammar');
@@ -68,6 +70,7 @@ export const App: React.FC = () => {
 
   // Fetch current user auth info
   const loadUser = async () => {
+    if (apiClient.isOfflineMode()) return;
     try {
       const res: any = await apiClient.get('/auth/me');
       if (res.success && res.user) {
@@ -164,6 +167,7 @@ export const App: React.FC = () => {
           currentUser={currentUser}
           onOpenAuth={() => setAuthModalOpen(true)}
           onLogout={handleLogout}
+          onOpenBackendConfig={() => setBackendModalOpen(true)}
         />
 
         <Content className={styles.content}>
@@ -208,6 +212,16 @@ export const App: React.FC = () => {
           open={authModalOpen}
           onClose={() => setAuthModalOpen(false)}
           onSuccess={handleAuthSuccess}
+        />
+
+        {/* Backend Configuration Modal */}
+        <BackendConfigModal
+          open={backendModalOpen}
+          onClose={() => setBackendModalOpen(false)}
+          onConnected={() => {
+            loadSections();
+            loadStats();
+          }}
         />
       </Layout>
     </AntdConfigProvider>
