@@ -1,6 +1,7 @@
 const db = require('../db/schema');
+const geminiService = require('../services/geminiService');
 
-function getDictionary(req, res) {
+async function getDictionary(req, res) {
   try {
     const { 
       search = '', 
@@ -12,7 +13,7 @@ function getDictionary(req, res) {
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 30));
+    const limitNum = Math.max(1, Math.min(200, parseInt(limit, 10) || 30));
     const offset = (pageNum - 1) * limitNum;
 
     let whereClauses = [];
@@ -41,8 +42,29 @@ function getDictionary(req, res) {
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
     const countStmt = db.prepare(`SELECT COUNT(*) as total FROM dictionary ${whereSql}`);
-    const countRow = countStmt.get(...params);
-    const total = countRow ? countRow.total : 0;
+    let countRow = countStmt.get(...params);
+    let total = countRow ? countRow.total : 0;
+
+    // Smart Auto-Enrichment:
+    // If user is not performing a text search and not filtering favorites,
+    // and the available words in DB for this level/category are fewer than 40:
+    // automatically generate and persist a fresh batch of 35 words!
+    const isFilteredSearch = Boolean(search.trim()) || favoritesOnly === 'true' || favoritesOnly === '1';
+    if (!isFilteredSearch && total < 40) {
+      const targetLevel = (level && level !== 'all') ? level : 'A1';
+      const targetSection = (sectionId && sectionId !== 'all') ? sectionId : 'general';
+      const countToGenerate = 35;
+
+      console.log(`[Auto-Enrichment] Found only ${total} words for level "${targetLevel}" (category: "${targetSection}"). Requesting generation to replenish DB (+${countToGenerate})...`);
+      try {
+        await geminiService.generateVocabulary(targetLevel, targetSection, countToGenerate);
+        countRow = countStmt.get(...params);
+        total = countRow ? countRow.total : 0;
+        console.log(`[Auto-Enrichment] Database replenished! New total words for criteria: ${total}`);
+      } catch (genErr) {
+        console.warn('[Auto-Enrichment] Warning during background word generation:', genErr.message);
+      }
+    }
 
     const listStmt = db.prepare(`
       SELECT * FROM dictionary
@@ -84,8 +106,8 @@ function toggleFavorite(req, res) {
 
 async function generateDictionaryWords(req, res) {
   try {
-    const { level = 'B1', sectionId = 'general', count = 10 } = req.body;
-    const countNum = Math.max(1, Math.min(20, parseInt(count, 10) || 10));
+    const { level = 'A1', sectionId = 'general', count = 35 } = req.body;
+    const countNum = Math.max(1, Math.min(50, parseInt(count, 10) || 35));
     
     const geminiService = require('../services/geminiService');
     const newWords = await geminiService.generateVocabulary(level, sectionId, countNum);

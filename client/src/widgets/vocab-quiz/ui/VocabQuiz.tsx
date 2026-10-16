@@ -23,6 +23,7 @@ export interface VocabQuizProps {
   initialDirection?: 'en-ru' | 'ru-en';
   onComplete?: (score: number, total: number, xpEarned: number) => void;
   onClose?: () => void;
+  onNeedMore?: () => void;
 }
 
 interface QuestionItem {
@@ -38,7 +39,8 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   words,
   initialDirection = 'en-ru',
   onComplete,
-  onClose
+  onClose,
+  onNeedMore
 }) => {
   const [direction, setDirection] = useState<'en-ru' | 'ru-en'>(initialDirection);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
@@ -49,17 +51,31 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   const [combo, setCombo] = useState<number>(0);
   const [maxCombo, setMaxCombo] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const usedWordIdsRef = React.useRef<Set<number>>(new Set());
 
   // Build questions
-  const generateQuestions = (wordList: DictionaryItem[], dir: 'en-ru' | 'ru-en') => {
+  const generateQuestions = (wordList: DictionaryItem[], dir: 'en-ru' | 'ru-en', preferUnused = true) => {
     if (wordList.length === 0) return [];
 
-    const shuffledWords = [...wordList].sort(() => 0.5 - Math.random());
-    const count = Math.min(shuffledWords.length, 12);
+    let availableWords = preferUnused
+      ? wordList.filter(w => !usedWordIdsRef.current.has(w.id))
+      : wordList;
+
+    if (availableWords.length < 15) {
+      onNeedMore?.();
+      if (availableWords.length < 4) {
+        usedWordIdsRef.current.clear();
+        availableWords = wordList;
+      }
+    }
+
+    const shuffledWords = [...availableWords].sort(() => 0.5 - Math.random());
+    const count = Math.min(shuffledWords.length, 15);
     const selectedTargets = shuffledWords.slice(0, count);
 
+    selectedTargets.forEach(t => usedWordIdsRef.current.add(t.id));
+
     return selectedTargets.map(target => {
-      // Pick 3 distractors from wordList (or fallback if small pool)
       const distractors = wordList
         .filter(w => w.id !== target.id)
         .sort(() => 0.5 - Math.random())
@@ -82,15 +98,17 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   };
 
   useEffect(() => {
-    const qs = generateQuestions(words, direction);
-    setQuestions(qs);
-    setCurrentIndex(0);
-    setSelectedOptionId(null);
-    setIsAnswered(false);
-    setScore(0);
-    setCombo(0);
-    setMaxCombo(0);
-    setIsFinished(false);
+    if (questions.length === 0 && words.length > 0) {
+      const qs = generateQuestions(words, direction);
+      setQuestions(qs);
+      setCurrentIndex(0);
+      setSelectedOptionId(null);
+      setIsAnswered(false);
+      setScore(0);
+      setCombo(0);
+      setMaxCombo(0);
+      setIsFinished(false);
+    }
   }, [words, direction]);
 
   const currentQ = questions[currentIndex];
@@ -115,6 +133,11 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     // Pronounce English word automatically
     if (currentQ) {
       soundEffects.speak(currentQ.targetWord.word);
+    }
+
+    const remaining = questions.length - (currentIndex + 1);
+    if (remaining < 5) {
+      onNeedMore?.();
     }
   };
 
@@ -168,9 +191,9 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
           <Button
             type="primary"
             size="large"
-            icon={<RedoOutlined />}
+            icon={<ArrowRightOutlined />}
             onClick={() => {
-              const qs = generateQuestions(words, direction);
+              const qs = generateQuestions(words, direction, true);
               setQuestions(qs);
               setCurrentIndex(0);
               setSelectedOptionId(null);
@@ -180,7 +203,24 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
               setIsFinished(false);
             }}
           >
-            Пройти снова
+            Следующие 15 заданий
+          </Button>
+
+          <Button
+            size="large"
+            icon={<RedoOutlined />}
+            onClick={() => {
+              const qs = generateQuestions(words, direction, false);
+              setQuestions(qs);
+              setCurrentIndex(0);
+              setSelectedOptionId(null);
+              setIsAnswered(false);
+              setScore(0);
+              setCombo(0);
+              setIsFinished(false);
+            }}
+          >
+            Повторить
           </Button>
 
           {onClose && (

@@ -13,12 +13,13 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const CANDIDATE_MODELS = [
   'gemini-flash-lite-latest',
   'gemini-3.5-flash-lite',
-  'gemini-3.8-flash'
+  'gemini-flash-latest'
 ];
 
 class GeminiService {
   constructor() {
     this.inFlightRequests = new Map();
+    this.inFlightVocab = new Map();
   }
 
   /**
@@ -225,14 +226,52 @@ Pedagogical Quality Guidelines:
 
   /**
    * Generates a batch of rich vocabulary words for the dictionary on demand
+   * with in-flight deduplication and duplicate-prevention
    */
   async generateVocabulary(level = 'B1', sectionId = 'general', count = 10) {
+    const cacheKey = `vocab_${level}_${sectionId}`;
+
+    if (this.inFlightVocab.has(cacheKey)) {
+      console.log(`[Vocab Deduplication] Awaiting in-flight vocabulary generation for ${cacheKey}...`);
+      return await this.inFlightVocab.get(cacheKey);
+    }
+
+    const taskPromise = this._executeVocabGeneration(level, sectionId, count);
+    this.inFlightVocab.set(cacheKey, taskPromise);
+
+    try {
+      return await taskPromise;
+    } finally {
+      this.inFlightVocab.delete(cacheKey);
+    }
+  }
+
+  async _executeVocabGeneration(level = 'B1', sectionId = 'general', count = 10) {
+    let topicFocus = 'general everyday English vocabulary, real-life communication, common verbs and nouns';
+    if (sectionId && sectionId !== 'general' && sectionId !== 'all') {
+      const sectionRow = db.prepare('SELECT * FROM sections WHERE id = ?').get(sectionId);
+      if (sectionRow) {
+        topicFocus = `${sectionRow.title} (${sectionRow.prompt_focus})`;
+      }
+    }
+
+    // Retrieve recent words already in the database for this level to avoid duplicates
+    let existingWordsList = '';
+    try {
+      const existingRows = db.prepare('SELECT word FROM dictionary WHERE level = ? ORDER BY id DESC LIMIT 150').all(level);
+      if (existingRows.length > 0) {
+        existingWordsList = existingRows.map(r => r.word).join(', ');
+      }
+    } catch (_) {}
+
     const systemPrompt = `
 You are an expert Cambridge/Oxford lexicographer and English tutor.
-Generate ${count} essential, high-yield English vocabulary words or phrasal verbs for level ${level} in topic category "${sectionId}".
+Generate ${count} essential, high-yield English vocabulary words or phrasal verbs for CEFR level ${level}.
+Topic Category: "${topicFocus}".
 
 Strict Output Requirements:
-Return ONLY a valid JSON array of ${count} objects, with this exact structure:
+1. Return ONLY a valid JSON array of ${count} objects.
+2. Each object MUST match this exact structure:
 [
   {
     "word": "English word or phrasal verb",
@@ -245,13 +284,16 @@ Return ONLY a valid JSON array of ${count} objects, with this exact structure:
     "ruleTip": "Полезный совет по употреблению, предлогу или типичной ошибке"
   }
 ]
+
+${existingWordsList ? `IMPORTANT: Do NOT generate any of the following already known words: ${existingWordsList}. Generate fresh, different words!` : ''}
+All translations and definitions must be precise, natural, and suited for ${level} students.
 `;
 
     let lastError = null;
 
     for (const model of CANDIDATE_MODELS) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
-      console.log(`[Vocab Dispatch] Requesting vocabulary generation from ${model}...`);
+      console.log(`[Vocab Dispatch] Requesting vocabulary generation from ${model} (level: ${level}, topic: ${sectionId})...`);
 
       try {
         const response = await fetch(endpoint, {
@@ -320,9 +362,10 @@ Return ONLY a valid JSON array of ${count} objects, with this exact structure:
           });
         }
 
-        console.log(`[Vocab Success] Generated and saved ${savedWords.length} new words.`);
+        console.log(`[Vocab Success] Generated and saved ${savedWords.length} new words (level ${level}, section ${sectionId}).`);
         return savedWords;
       } catch (err) {
+        console.warn(`[Vocab Exception] Error with ${model}:`, err.message);
         lastError = err;
       }
     }

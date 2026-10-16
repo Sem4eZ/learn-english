@@ -29,12 +29,14 @@ interface FlashcardDeckProps {
   items: FlashcardItem[];
   onFinish?: (knownCount: number, total: number) => void;
   onRefresh?: () => void;
+  onNeedMore?: () => void;
 }
 
 export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
   items,
   onFinish,
   onRefresh,
+  onNeedMore,
 }) => {
   const [deck, setDeck] = useState<FlashcardItem[]>(items);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -44,12 +46,15 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
   const [isFinished, setIsFinished] = useState(false);
 
   useEffect(() => {
-    setDeck(items);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-    setKnownCount(0);
-    setTotalXpEarned(0);
-    setIsFinished(false);
+    setDeck(prevDeck => {
+      if (prevDeck.length === 0) {
+        return items;
+      }
+      const existingIds = new Set(prevDeck.map(x => x.id));
+      const newItems = items.filter(x => !existingIds.has(x.id));
+      if (newItems.length === 0) return prevDeck;
+      return [...prevDeck, ...newItems];
+    });
   }, [items]);
 
   const currentItem = deck[currentIndex];
@@ -86,6 +91,11 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
 
     setTotalXpEarned(prev => prev + xpReward);
 
+    const remainingCards = deck.length - (currentIndex + 1);
+    if (remainingCards < 15) {
+      onNeedMore?.();
+    }
+
     if (currentIndex + 1 >= deck.length) {
       fireCelebration();
       setIsFinished(true);
@@ -94,7 +104,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
       setIsFlipped(false);
       setCurrentIndex(prev => prev + 1);
     }
-  }, [currentItem, currentIndex, deck.length, knownCount, items.length, onFinish]);
+  }, [currentItem, currentIndex, deck.length, knownCount, items.length, onFinish, onNeedMore]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -162,11 +172,22 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
           >
             Повторить колоду
           </Button>
-          {onRefresh && (
-            <Button size="large" onClick={onRefresh} className={styles.btnAction}>
-              Загрузить новые
-            </Button>
-          )}
+          <Button
+            size="large"
+            onClick={() => {
+              onNeedMore?.();
+              onRefresh?.();
+              setDeck(items);
+              setCurrentIndex(0);
+              setIsFlipped(false);
+              setKnownCount(0);
+              setTotalXpEarned(0);
+              setIsFinished(false);
+            }}
+            className={styles.btnAction}
+          >
+            Следующие карточки
+          </Button>
         </Space>
       </Card>
     );

@@ -27,6 +27,7 @@ interface AudioChallengeProps {
   items: AudioItem[];
   onComplete?: (score: number) => void;
   onRefresh?: () => void;
+  onNeedMore?: () => void;
 }
 
 // Clean punctuation and split into tokens
@@ -115,6 +116,11 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
   };
 
   const handleNext = () => {
+    const remaining = items.length - (currentIndex + 1);
+    if (remaining < 4) {
+      onNeedMore?.();
+    }
+
     if (currentIndex + 1 >= items.length) {
       fireCelebration();
       setIsFinished(true);
@@ -145,6 +151,19 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
           <Button
             type="primary"
             size="large"
+            icon={<ArrowRightOutlined />}
+            onClick={() => {
+              onNeedMore?.();
+              onRefresh?.();
+              setCurrentIndex(0);
+              setScore(0);
+              setIsFinished(false);
+            }}
+          >
+            Следующие задания
+          </Button>
+          <Button
+            size="large"
             icon={<ReloadOutlined />}
             onClick={() => {
               setCurrentIndex(0);
@@ -154,11 +173,6 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
           >
             Начать заново
           </Button>
-          {onRefresh && (
-            <Button size="large" onClick={onRefresh}>
-              Новые задания
-            </Button>
-          )}
         </Space>
       </Card>
     );

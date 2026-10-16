@@ -21,6 +21,7 @@ export interface WordBuilderProps {
   words: DictionaryItem[];
   onComplete?: (score: number, total: number, xpEarned: number) => void;
   onClose?: () => void;
+  onNeedMore?: () => void;
 }
 
 interface LetterTile {
@@ -32,7 +33,8 @@ interface LetterTile {
 export const WordBuilder: React.FC<WordBuilderProps> = ({
   words,
   onComplete,
-  onClose
+  onClose,
+  onNeedMore
 }) => {
   const [exerciseWords, setExerciseWords] = useState<DictionaryItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -42,22 +44,38 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const [score, setScore] = useState<number>(0);
   const [hintsUsed, setHintsUsed] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const usedWordIdsRef = React.useRef<Set<number>>(new Set());
+
+  const pickBatchWords = (wordList: DictionaryItem[], preferUnused = true) => {
+    let suitable = wordList.filter(w => !w.word.includes(' ') && w.word.length <= 14);
+    if (preferUnused) {
+      const unused = suitable.filter(w => !usedWordIdsRef.current.has(w.id));
+      if (unused.length >= 5) {
+        suitable = unused;
+      } else {
+        usedWordIdsRef.current.clear();
+      }
+    }
+
+    if (suitable.length < 15) {
+      onNeedMore?.();
+    }
+
+    const shuffled = [...suitable].sort(() => 0.5 - Math.random());
+    const finalWords = shuffled.slice(0, 10);
+    finalWords.forEach(w => usedWordIdsRef.current.add(w.id));
+    return finalWords.length >= 3 ? finalWords : wordList.slice(0, 8);
+  };
 
   // Initialize
   useEffect(() => {
-    if (words.length > 0) {
-      // Pick up to 10 words that have simple english word characters
-      const suitable = words
-        .filter(w => !w.word.includes(' ') && w.word.length <= 14)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 10);
-
-      const finalWords = suitable.length >= 3 ? suitable : words.slice(0, 8);
-      setExerciseWords(finalWords);
+    if (words.length > 0 && exerciseWords.length === 0) {
+      const batch = pickBatchWords(words, true);
+      setExerciseWords(batch);
       setCurrentIndex(0);
       setScore(0);
       setIsFinished(false);
-      setupWord(finalWords[0]);
+      setupWord(batch[0]);
     }
   }, [words]);
 
@@ -174,6 +192,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   }, [scrambledLetters, assembledLetters, isCorrect, isFinished, currentWord]);
 
   const handleNextWord = () => {
+    const remaining = exerciseWords.length - (currentIndex + 1);
+    if (remaining < 4) {
+      onNeedMore?.();
+    }
+
     if (currentIndex + 1 >= exerciseWords.length) {
       fireCelebration();
       setIsFinished(true);
@@ -217,6 +240,22 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         <Space size="middle" style={{ marginTop: 24 }}>
           <Button
             type="primary"
+            size="large"
+            icon={<ArrowRightOutlined />}
+            onClick={() => {
+              const batch = pickBatchWords(words, true);
+              setExerciseWords(batch);
+              setCurrentIndex(0);
+              setScore(0);
+              setHintsUsed(0);
+              setIsFinished(false);
+              setupWord(batch[0]);
+            }}
+          >
+            Следующие 10 слов
+          </Button>
+
+          <Button
             size="large"
             icon={<RedoOutlined />}
             onClick={() => {

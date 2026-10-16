@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Typography, Button, Space, Select, Tag, Spin } from 'antd';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Card, Typography, Button, Space, Select, Tag, Spin, message, Alert } from 'antd';
 import { 
   ArrowLeftOutlined, 
   ThunderboltFilled, 
@@ -43,6 +43,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedSection, setSelectedSection] = useState<string>(initialCategory || 'all');
+  const isReplenishingRef = useRef<boolean>(false);
 
   // Load sections if not passed via props
   useEffect(() => {
@@ -53,17 +54,43 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
     }
   }, [propSections]);
 
+  const handleNeedMoreWords = useCallback(async (count = 35) => {
+    if (isReplenishingRef.current) return;
+    const targetLevel = selectedLevel !== 'all' ? selectedLevel : 'A1';
+    const targetSection = selectedSection !== 'all' ? selectedSection : 'general';
+    isReplenishingRef.current = true;
+    try {
+      const res = await dictionaryApi.generateWords(targetLevel, targetSection, count);
+      if (res.success && res.data?.length > 0) {
+        setWords(prev => {
+          const existingIds = new Set(prev.map(w => w.id));
+          const fresh = res.data.filter(w => !existingIds.has(w.id));
+          return [...prev, ...fresh];
+        });
+      }
+    } catch (err) {
+      console.warn('Silent auto-replenishment note:', err);
+    } finally {
+      isReplenishingRef.current = false;
+    }
+  }, [selectedLevel, selectedSection]);
+
   const fetchWords = async () => {
     setLoading(true);
     try {
       const res = await dictionaryApi.getDictionary({
         level: selectedLevel,
         sectionId: selectedSection,
-        limit: 100
+        limit: 150
       });
       setWords(res.data);
+      if (res.data.length < 30) {
+        handleNeedMoreWords(35);
+      }
+      return res.data;
     } catch (err) {
       console.error('Failed to load arcade words:', err);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -72,6 +99,42 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   useEffect(() => {
     fetchWords();
   }, [selectedLevel, selectedSection]);
+
+  const handleStartMode = async (modeId: ArcadeMode) => {
+    if (modeId === 'grammar') {
+      setSelectedMode('grammar');
+      return;
+    }
+
+    if (words.length >= 2) {
+      setSelectedMode(modeId);
+      return;
+    }
+
+    // If words are still generating/loading or empty, trigger on-demand preparation
+    const targetLevel = selectedLevel !== 'all' ? selectedLevel : 'A1';
+    const targetSection = selectedSection !== 'all' ? selectedSection : 'general';
+    message.loading({
+      content: `Подготовка слов для уровня ${targetLevel}...`,
+      key: 'start-mode-loading',
+      duration: 10
+    });
+    setLoading(true);
+    try {
+      await dictionaryApi.generateWords(targetLevel, targetSection, 35);
+      const freshWords = await fetchWords();
+      if (freshWords.length > 0) {
+        message.success({ content: 'Слова готовы! Запуск тренажера...', key: 'start-mode-loading', duration: 1.5 });
+        setSelectedMode(modeId);
+      } else {
+        message.error({ content: 'Не удалось подготовить слова. Попробуйте еще раз.', key: 'start-mode-loading' });
+      }
+    } catch (err) {
+      message.error({ content: 'Ошибка при подготовке слов к игре.', key: 'start-mode-loading' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGameComplete = async (xpEarned: number) => {
     try {
@@ -197,14 +260,19 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
               </Space>
             </Space>
 
-            <Tag color="purple" style={{ fontSize: '0.95rem', padding: '4px 12px' }}>
-              Доступно слов в базе: {words.length}
-            </Tag>
+            <Space wrap align="center">
+              <Tag color="purple" style={{ fontSize: '0.95rem', padding: '4px 12px' }}>
+                Доступно слов в базе: {words.length}
+              </Tag>
+            </Space>
           </div>
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <Spin size="large" />
+              <div style={{ marginTop: 16, color: 'rgba(255, 255, 255, 0.75)', fontSize: '1rem' }}>
+                ⚡ Загрузка слов для уровня <b>{selectedLevel === 'all' ? 'Все уровни' : selectedLevel}</b>...
+              </div>
             </div>
           ) : (
             <div className={styles.cardsGrid}>
@@ -238,8 +306,8 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                     <Button
                       type="primary"
                       icon={m.id === 'grammar' ? <BookOutlined /> : <PlayCircleFilled />}
-                      onClick={() => setSelectedMode(m.id)}
-                      disabled={m.id !== 'grammar' && words.length < 2}
+                      onClick={() => handleStartMode(m.id)}
+                      loading={loading && selectedMode === m.id}
                     >
                       {m.id === 'grammar' ? 'Тренировать' : 'Играть'}
                     </Button>
@@ -276,6 +344,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                   words={words}
                   onComplete={(score, total, xp) => handleGameComplete(xp)}
                   onClose={() => setSelectedMode('idle')}
+                  onNeedMore={() => handleNeedMoreWords(35)}
                 />
               )}
 
@@ -284,6 +353,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                   words={words}
                   onComplete={(score, combo, xp) => handleGameComplete(xp)}
                   onClose={() => setSelectedMode('idle')}
+                  onNeedMore={() => handleNeedMoreWords(35)}
                 />
               )}
 
@@ -292,6 +362,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                   words={words}
                   onComplete={(score, total, xp) => handleGameComplete(xp)}
                   onClose={() => setSelectedMode('idle')}
+                  onNeedMore={() => handleNeedMoreWords(35)}
                 />
               )}
 
@@ -309,6 +380,8 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                     category: w.section_id
                   }))}
                   onFinish={() => handleGameComplete(50)}
+                  onRefresh={fetchWords}
+                  onNeedMore={() => handleNeedMoreWords(35)}
                 />
               )}
 
@@ -322,6 +395,8 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                     level: w.level
                   }))}
                   onComplete={(score) => handleGameComplete(score)}
+                  onRefresh={fetchWords}
+                  onNeedMore={() => handleNeedMoreWords(35)}
                 />
               )}
             </>

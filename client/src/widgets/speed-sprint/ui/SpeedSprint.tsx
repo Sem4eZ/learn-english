@@ -20,6 +20,7 @@ export interface SpeedSprintProps {
   words: DictionaryItem[];
   onComplete?: (score: number, maxCombo: number, xpEarned: number) => void;
   onClose?: () => void;
+  onNeedMore?: () => void;
 }
 
 interface SprintPair {
@@ -32,7 +33,8 @@ interface SprintPair {
 export const SpeedSprint: React.FC<SpeedSprintProps> = ({
   words,
   onComplete,
-  onClose
+  onClose,
+  onNeedMore
 }) => {
   const [timeLeft, setTimeLeft] = useState<number>(60);
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -44,6 +46,12 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
   const [isFinished, setIsFinished] = useState<boolean>(false);
 
   const timerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (words.length < 25) {
+      onNeedMore?.();
+    }
+  }, [words.length]);
 
   // Generate pair
   const pickNextPair = (wordList: DictionaryItem[], curCombo: number) => {

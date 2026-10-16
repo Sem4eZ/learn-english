@@ -163,7 +163,7 @@ export const PracticePage: React.FC<PracticePageProps> = ({
         <div className={styles.loadingContainer}>
           <Spin size="large" />
           <div className={styles.loadingText}>
-            <Title level={4}>Генерируется ответ...</Title>
+            <Title level={4}>Загрузка заданий...</Title>
             <Text type="secondary">
               Подготавливаем практические задания и разбор
             </Text>

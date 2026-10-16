@@ -23,5 +23,15 @@ export const dictionaryApi = {
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const data = await res.json();
     return data.data;
+  },
+
+  async generateWords(level = 'A1', sectionId = 'general', count = 35): Promise<{ success: boolean; message: string; data: DictionaryItem[]; totalCount: number }> {
+    const res = await fetch('/api/dictionary/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ level, sectionId, count })
+    });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    return await res.json();
   }
 };

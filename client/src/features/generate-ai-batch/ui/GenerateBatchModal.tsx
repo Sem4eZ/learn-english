@@ -65,7 +65,7 @@ export const GenerateBatchModal: React.FC<GenerateBatchModalProps> = ({
       onCancel={onClose}
       onOk={handleSubmit}
       confirmLoading={loading}
-      okText={loading ? 'Генерируется ответ...' : 'Сформировать'}
+      okText={loading ? 'Подготовка...' : 'Добавить задания'}
       cancelText="Отмена"
       destroyOnHidden
     >

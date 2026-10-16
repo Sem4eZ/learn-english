@@ -8,7 +8,9 @@ const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
 
-const dbPath = process.env.DATABASE_PATH || './data/english_mastery.db';
+const dbPath = process.env.DATABASE_PATH 
+  ? path.resolve(__dirname, '../../', process.env.DATABASE_PATH)
+  : path.resolve(__dirname, '../../data/english_mastery.db');
 const dbDir = path.dirname(dbPath);
 
 if (!fs.existsSync(dbDir)) {
