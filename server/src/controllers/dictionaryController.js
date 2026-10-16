@@ -43,8 +43,30 @@ async function getDictionary(req, res) {
 
     let joinSql = 'LEFT JOIN srs_reviews s ON s.word_id = d.id AND s.user_id = ?';
     let orderBySql = 'ORDER BY d.id DESC';
+    let orderParams = [];
 
-    if (mode === 'practice') {
+    if (search.trim()) {
+      const cleanTerm = search.trim().toLowerCase();
+      orderBySql = `
+        ORDER BY 
+          CASE 
+            WHEN LOWER(d.word) = ? THEN 1
+            WHEN LOWER(d.word) LIKE ? THEN 2
+            WHEN LOWER(d.word) LIKE ? THEN 3
+            WHEN LOWER(d.translation) LIKE ? THEN 4
+            WHEN LOWER(d.translation) LIKE ? THEN 5
+            ELSE 6
+          END ASC,
+          d.id DESC
+      `;
+      orderParams = [
+        cleanTerm,
+        `${cleanTerm}%`,
+        `%${cleanTerm}%`,
+        `${cleanTerm}%`,
+        `%${cleanTerm}%`
+      ];
+    } else if (mode === 'practice') {
       // A word is eligible for practice if:
       // 1. It is brand new (never reviewed, s.id IS NULL)
       // 2. OR its repetition interval has elapsed (due_date <= now)
@@ -84,7 +106,7 @@ async function getDictionary(req, res) {
       }
     }
 
-    const listParams = [userId, ...params, limitNum, offset];
+    const listParams = [userId, ...params, ...orderParams, limitNum, offset];
 
     const listStmt = db.prepare(`
       SELECT d.*, s.grade as srs_grade, s.reps as srs_reps, s.due_date as srs_due_date, s.interval as srs_interval

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Input, 
   Button, 
@@ -24,7 +24,6 @@ import {
   ReloadOutlined,
   FireFilled,
   BookOutlined,
-  PlayCircleFilled,
   PlusCircleOutlined
 } from '@ant-design/icons';
 import { DictionaryItem } from '@/entities/dictionary/model/types';
@@ -37,7 +36,7 @@ import { SpeedSprint } from '@/widgets/speed-sprint/ui/SpeedSprint';
 import { WordBuilder } from '@/widgets/word-builder/ui/WordBuilder';
 import styles from './DictionaryPage.module.scss';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 export const DictionaryPage: React.FC = () => {
   const [items, setItems] = useState<DictionaryItem[]>([]);
@@ -60,23 +59,40 @@ export const DictionaryPage: React.FC = () => {
   const [builderModalOpen, setBuilderModalOpen] = useState<boolean>(false);
   const [generating, setGenerating] = useState<boolean>(false);
 
-  const fetchWords = async (targetPage = page, targetPageSize = pageSize) => {
+  // Ref to track the active query sequence and eliminate race conditions
+  const activeRequestIdRef = useRef<number>(0);
+
+  const fetchWords = async (
+    searchTerm: string = search,
+    targetPage: number = page,
+    targetPageSize: number = pageSize
+  ) => {
+    const requestId = ++activeRequestIdRef.current;
     setLoading(true);
     try {
       const res = await dictionaryApi.getDictionary({
-        search,
+        search: searchTerm,
         sectionId: selectedSection,
         level: selectedLevel,
         favoritesOnly,
         page: targetPage,
         limit: targetPageSize
       });
-      setItems(res.data);
-      setTotal(res.pagination?.total || 0);
+      // Only apply state if this is still the most recent request
+      if (requestId === activeRequestIdRef.current) {
+        setItems(res.data || []);
+        setTotal(res.pagination?.total || 0);
+      }
     } catch (err) {
       console.error('Failed to load dictionary:', err);
+      if (requestId === activeRequestIdRef.current) {
+        setItems([]);
+        setTotal(0);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === activeRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -91,7 +107,7 @@ export const DictionaryPage: React.FC = () => {
       if (res.success) {
         message.success(res.message || 'Словарь пополнен новыми словами!');
         setPage(1);
-        fetchWords(1, pageSize);
+        fetchWords(search, 1, pageSize);
       } else {
         message.error(res.error || 'Не удалось пополнить словарь');
       }
@@ -105,6 +121,18 @@ export const DictionaryPage: React.FC = () => {
   const handleLookupWord = async (wordToLookup: string) => {
     const term = wordToLookup.trim();
     if (!term) return;
+
+    // Check if word is already present in current items list
+    const alreadyPresent = items.find(
+      w => w.word.toLowerCase() === term.toLowerCase() ||
+           w.translation.toLowerCase() === term.toLowerCase()
+    );
+    if (alreadyPresent) {
+      soundEffects.speak(alreadyPresent.word);
+      message.info(`Слово «${alreadyPresent.word}» уже отображается в словаре`);
+      return;
+    }
+
     setIsLookingUp(true);
     try {
       const res = await dictionaryApi.lookupWord(term);
@@ -132,15 +160,15 @@ export const DictionaryPage: React.FC = () => {
   const handlePageChange = (newPage: number, newPageSize: number) => {
     setPage(newPage);
     setPageSize(newPageSize);
-    fetchWords(newPage, newPageSize);
+    fetchWords(search, newPage, newPageSize);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   useEffect(() => {
     setPage(1);
     const timer = setTimeout(() => {
-      fetchWords(1, pageSize);
-    }, 250);
+      fetchWords(search, 1, pageSize);
+    }, 200);
     return () => clearTimeout(timer);
   }, [search, selectedSection, selectedLevel, favoritesOnly]);
 
@@ -232,7 +260,7 @@ export const DictionaryPage: React.FC = () => {
           <Button
             icon={<ReloadOutlined />}
             size="large"
-            onClick={() => fetchWords(page, pageSize)}
+            onClick={() => fetchWords(search, page, pageSize)}
             title="Обновить"
           />
         </Space>
@@ -325,7 +353,7 @@ export const DictionaryPage: React.FC = () => {
       ) : isLookingUp ? (
         <Card className={styles.emptyCard}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, color: '#e2e8f0', fontSize: '1.05rem', fontWeight: 600 }}>
+          <div style={{ marginTop: 16, color: 'var(--ant-color-text)', fontSize: '1.05rem', fontWeight: 600 }}>
             Ищем слово «{search.trim()}», готовим перевод, транскрипцию и примеры...
           </div>
         </Card>

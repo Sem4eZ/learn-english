@@ -64,11 +64,15 @@ app.post('/api/progress/answer', recordAnswer);
 app.get('/api/progress/stats', getStats);
 app.get('/api/progress/history', getHistory);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n======================================================`);
-  console.log(`  🚀 Fluentiq API Server active on http://localhost:${PORT}`);
-  console.log(`  📚 Native SQLite WAL & Spaced Repetition (SRS) Ready`);
-  console.log(`======================================================\n`);
-});
+// Start server if run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n======================================================`);
+    console.log(`  🚀 Fluentiq API Server active on http://localhost:${PORT}`);
+    console.log(`  📚 Native SQLite WAL & Spaced Repetition (SRS) Ready`);
+    console.log(`======================================================\n`);
+  });
+}
+
+module.exports = app;
 
