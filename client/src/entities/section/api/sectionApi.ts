@@ -1,6 +1,5 @@
 import { baseApi } from '@/shared/api/baseApi';
 import { Section } from '../model/types';
-import { FALLBACK_SECTIONS } from '@/shared/lib/fallbackData';
 import { store } from '@/app/store';
 
 export const sectionApiSlice = baseApi.injectEndpoints({
@@ -22,10 +21,10 @@ export const sectionApi = {
       const res = await store.dispatch(
         sectionApiSlice.endpoints.getSections.initiate(undefined)
       ).unwrap();
-      if (res && res.length > 0) return res;
+      return res || [];
     } catch (err) {
-      console.warn('[sectionApi] Backend unavailable, using fallback sections:', err);
+      console.error('[sectionApi] Backend failed to load sections:', err);
+      return [];
     }
-    return FALLBACK_SECTIONS;
   },
 };

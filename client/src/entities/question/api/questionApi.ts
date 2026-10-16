@@ -1,6 +1,5 @@
 import { baseApi } from '@/shared/api/baseApi';
 import { Question, QuestionsResponse, AnswerResult } from '../model/types';
-import { FALLBACK_QUESTIONS } from '@/shared/lib/fallbackData';
 import { store } from '@/app/store';
 
 export const questionApiSlice = baseApi.injectEndpoints({
@@ -67,43 +66,9 @@ export const questionApi = {
     page?: number;
     limit?: number;
   }): Promise<QuestionsResponse> {
-    try {
-      const res = await store.dispatch(
-        questionApiSlice.endpoints.getQuestions.initiate(params, { forceRefetch: true })
-      ).unwrap();
-      if (res && res.data && (res.data.length > 0 || (res.pagination && res.pagination.total === 0))) {
-        return res;
-      }
-    } catch (err) {
-      console.warn('[questionApi] Backend query failed, using fallback questions:', err);
-    }
-
-    // Fallback if backend is unavailable or level has no backend entries
-    let filtered = [...FALLBACK_QUESTIONS];
-    if (params.sectionId && params.sectionId !== 'all') {
-      const match = filtered.filter(q => q.section_id === params.sectionId);
-      if (match.length > 0) {
-        filtered = match;
-      }
-    }
-    if (params.level && params.level !== 'all') {
-      filtered = filtered.filter(q => q.level === params.level);
-    }
-
-    const page = params.page || 1;
-    const limit = params.limit || 5;
-    const startIndex = (page - 1) * limit;
-    const pageItems = filtered.slice(startIndex, startIndex + limit);
-
-    return {
-      data: pageItems,
-      pagination: {
-        page,
-        limit,
-        total: filtered.length,
-        hasMore: startIndex + limit < filtered.length,
-      },
-    };
+    return await store.dispatch(
+      questionApiSlice.endpoints.getQuestions.initiate(params, { forceRefetch: true })
+    ).unwrap();
   },
 
   async generateBatch(params: {
@@ -112,41 +77,17 @@ export const questionApi = {
     count?: number;
     customTopic?: string;
   }): Promise<Question[]> {
-    try {
-      const res = await store.dispatch(
-        questionApiSlice.endpoints.generateBatch.initiate(params)
-      ).unwrap();
-      if (res && res.length > 0) return res;
-    } catch (err) {
-      console.warn('[questionApi] Generate failed, using fallback questions:', err);
-    }
-    return FALLBACK_QUESTIONS;
+    return await store.dispatch(
+      questionApiSlice.endpoints.generateBatch.initiate(params)
+    ).unwrap();
   },
 
   async submitAnswer(params: {
     questionId: number;
     selectedIndex: number;
   }): Promise<AnswerResult> {
-    try {
-      const res = await store.dispatch(
-        questionApiSlice.endpoints.submitAnswer.initiate(params)
-      ).unwrap();
-      if (res) return res;
-    } catch (err) {
-      console.warn('[questionApi] Submit answer backend error:', err);
-    }
-
-    const q = FALLBACK_QUESTIONS.find(item => item.id === params.questionId) || FALLBACK_QUESTIONS[0];
-    const isCorrect = q.correct_index === params.selectedIndex;
-    return {
-      isCorrect,
-      correctIndex: q.correct_index ?? 0,
-      explanation: q.explanation || (isCorrect ? 'Верно!' : 'Неверно, попробуйте еще раз.'),
-      grammarRule: q.grammar_rule,
-      pronunciationTip: q.pronunciation_tip,
-      xpEarned: isCorrect ? 15 : 0,
-      totalXp: 0,
-      streak: 1,
-    };
+    return await store.dispatch(
+      questionApiSlice.endpoints.submitAnswer.initiate(params)
+    ).unwrap();
   },
 };
