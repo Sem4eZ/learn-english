@@ -11,6 +11,7 @@ import {
   Spin, 
   Empty, 
   Modal,
+  Pagination,
   message
 } from 'antd';
 import { 
@@ -19,7 +20,7 @@ import {
   StarFilled, 
   StarOutlined, 
   AppstoreOutlined, 
-  ThunderboltFilled,
+  ThunderboltFilled, 
   ReloadOutlined,
   FireFilled,
   BookOutlined,
@@ -46,6 +47,12 @@ export const DictionaryPage: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
 
+  // Pagination states
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(24);
+  const [total, setTotal] = useState<number>(0);
+  const [isLookingUp, setIsLookingUp] = useState<boolean>(false);
+
   // Modals for all interactive training modes
   const [deckModalOpen, setDeckModalOpen] = useState<boolean>(false);
   const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
@@ -53,17 +60,38 @@ export const DictionaryPage: React.FC = () => {
   const [builderModalOpen, setBuilderModalOpen] = useState<boolean>(false);
   const [generating, setGenerating] = useState<boolean>(false);
 
+  const fetchWords = async (targetPage = page, targetPageSize = pageSize) => {
+    setLoading(true);
+    try {
+      const res = await dictionaryApi.getDictionary({
+        search,
+        sectionId: selectedSection,
+        level: selectedLevel,
+        favoritesOnly,
+        page: targetPage,
+        limit: targetPageSize
+      });
+      setItems(res.data);
+      setTotal(res.pagination?.total || 0);
+    } catch (err) {
+      console.error('Failed to load dictionary:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGenerateWords = async () => {
     setGenerating(true);
     try {
       const res: any = await apiClient.post('/dictionary/generate', {
         level: selectedLevel !== 'all' ? selectedLevel : 'B1',
         sectionId: selectedSection !== 'all' ? selectedSection : 'general',
-        count: 10
+        count: 25
       });
       if (res.success) {
         message.success(res.message || 'Словарь пополнен новыми словами!');
-        fetchWords();
+        setPage(1);
+        fetchWords(1, pageSize);
       } else {
         message.error(res.error || 'Не удалось пополнить словарь');
       }
@@ -74,27 +102,44 @@ export const DictionaryPage: React.FC = () => {
     }
   };
 
-  const fetchWords = async () => {
-    setLoading(true);
+  const handleLookupWord = async (wordToLookup: string) => {
+    const term = wordToLookup.trim();
+    if (!term) return;
+    setIsLookingUp(true);
     try {
-      const res = await dictionaryApi.getDictionary({
-        search,
-        sectionId: selectedSection,
-        level: selectedLevel,
-        favoritesOnly,
-        limit: 50
-      });
-      setItems(res.data);
-    } catch (err) {
-      console.error('Failed to load dictionary:', err);
+      const res = await dictionaryApi.lookupWord(term);
+      if (res.success && res.data) {
+        message.success(res.message || `Слово «${res.data.word}» добавлено в словарь!`);
+        setItems(prev => {
+          const exists = prev.some(w => w.id === res.data.id);
+          if (exists) return prev;
+          return [res.data, ...prev];
+        });
+        if (res.isNew) {
+          setTotal(prev => prev + 1);
+        }
+        soundEffects.speak(res.data.word);
+      } else {
+        message.error(res.error || 'Не удалось найти слово');
+      }
+    } catch (err: any) {
+      message.error(err.message || 'Ошибка поиска слова');
     } finally {
-      setLoading(false);
+      setIsLookingUp(false);
     }
   };
 
+  const handlePageChange = (newPage: number, newPageSize: number) => {
+    setPage(newPage);
+    setPageSize(newPageSize);
+    fetchWords(newPage, newPageSize);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
+    setPage(1);
     const timer = setTimeout(() => {
-      fetchWords();
+      fetchWords(1, pageSize);
     }, 250);
     return () => clearTimeout(timer);
   }, [search, selectedSection, selectedLevel, favoritesOnly]);
@@ -143,7 +188,7 @@ export const DictionaryPage: React.FC = () => {
             disabled={items.length < 2}
             className={styles.quizBtn}
           >
-            🎯 Квиз 1 из 4 ({items.length})
+            🎯 Квиз 1 из 4 ({total || items.length})
           </Button>
 
           <Button
@@ -187,7 +232,7 @@ export const DictionaryPage: React.FC = () => {
           <Button
             icon={<ReloadOutlined />}
             size="large"
-            onClick={fetchWords}
+            onClick={() => fetchWords(page, pageSize)}
             title="Обновить"
           />
         </Space>
@@ -197,12 +242,31 @@ export const DictionaryPage: React.FC = () => {
       <div className={styles.searchBar}>
         <Input
           size="large"
-          placeholder="Поиск по слову, переводу или определению (например, bottleneck, touch base, компромисс)..."
+          placeholder="Поиск по слову, переводу или определению (нажмите Enter для поиска и добавления)..."
           prefix={<SearchOutlined className={styles.searchIcon} />}
           allowClear
           value={search}
           onChange={e => setSearch(e.target.value)}
+          onPressEnter={() => {
+            if (search.trim()) {
+              handleLookupWord(search.trim());
+            }
+          }}
           className={styles.searchInput}
+          suffix={
+            search.trim() ? (
+              <Button
+                type="primary"
+                size="small"
+                loading={isLookingUp}
+                icon={<SearchOutlined />}
+                onClick={() => handleLookupWord(search.trim())}
+                style={{ borderRadius: 6 }}
+              >
+                Найти / Добавить
+              </Button>
+            ) : null
+          }
         />
       </div>
 
@@ -249,93 +313,140 @@ export const DictionaryPage: React.FC = () => {
         </Space>
 
         <Text type="secondary" strong>
-          Найдено слов: {items.length}
+          Найдено слов: {total}
         </Text>
       </div>
 
-      {/* Words Grid */}
+      {/* Words Grid & On-demand Lookup */}
       {loading ? (
         <div className={styles.loadingWrapper}>
           <Spin size="large" />
         </div>
+      ) : isLookingUp ? (
+        <Card className={styles.emptyCard}>
+          <Spin size="large" />
+          <div style={{ marginTop: 16, color: '#e2e8f0', fontSize: '1.05rem', fontWeight: 600 }}>
+            Ищем слово «{search.trim()}», готовим перевод, транскрипцию и примеры...
+          </div>
+        </Card>
       ) : items.length === 0 ? (
         <Card className={styles.emptyCard}>
-          <Empty description="Слов по вашему запросу не найдено" />
+          {search.trim() ? (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <Empty description={<span>Слово <b>«{search.trim()}»</b> пока отсутствует в словаре</span>} />
+              <div style={{ marginTop: 20 }}>
+                <Button
+                  type="primary"
+                  size="large"
+                  loading={isLookingUp}
+                  icon={<SearchOutlined />}
+                  onClick={() => handleLookupWord(search.trim())}
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                    borderColor: '#6366f1',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+                  }}
+                >
+                  Найти перевод и добавить «{search.trim()}» в словарь
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Empty description="Слов по вашему запросу не найдено" />
+          )}
         </Card>
       ) : (
-        <div className={styles.wordsGrid}>
-          {items.map(item => (
-            <Card key={item.id} className={styles.wordCard} bordered>
-              <div>
-                <div className={styles.cardTop}>
-                  <Space align="center">
-                    <span className={styles.wordHeading}>
-                      {item.word}
-                    </span>
-                    {item.transcription && (
-                      <span className={styles.phonetic}>
-                        {item.transcription}
+        <>
+          <div className={styles.wordsGrid}>
+            {items.map(item => (
+              <Card key={item.id} className={styles.wordCard} bordered>
+                <div>
+                  <div className={styles.cardTop}>
+                    <Space align="center">
+                      <span className={styles.wordHeading}>
+                        {item.word}
                       </span>
-                    )}
-                  </Space>
+                      {item.transcription && (
+                        <span className={styles.phonetic}>
+                          {item.transcription}
+                        </span>
+                      )}
+                    </Space>
 
-                  <Space size="small">
-                    <Button
-                      type="text"
-                      shape="circle"
-                      icon={<SoundOutlined className={styles.soundIcon} />}
-                      onClick={() => soundEffects.speak(item.word)}
-                      title="Прослушать произношение"
-                    />
+                    <Space size="small">
+                      <Button
+                        type="text"
+                        shape="circle"
+                        icon={<SoundOutlined className={styles.soundIcon} />}
+                        onClick={() => soundEffects.speak(item.word)}
+                        title="Прослушать произношение"
+                      />
 
-                    <Button
-                      type="text"
-                      shape="circle"
-                      icon={
-                        item.is_favorite ? (
-                          <StarFilled className={styles.favIconActive} />
-                        ) : (
-                          <StarOutlined className={styles.favIconInactive} />
-                        )
-                      }
-                      onClick={() => handleToggleFav(item.id)}
-                      title={item.is_favorite ? 'В избранном' : 'Добавить в избранное'}
-                    />
-                  </Space>
-                </div>
-
-                <Space size="small" className={styles.badgeRow}>
-                  <Tag color="purple">{item.level}</Tag>
-                  {item.part_of_speech && <Tag color="blue">{item.part_of_speech}</Tag>}
-                  {item.section_id && <Tag color="cyan">{item.section_id}</Tag>}
-                </Space>
-
-                <div className={styles.translation}>
-                  {item.translation}
-                </div>
-
-                {item.definition && (
-                  <div className={styles.definition}>
-                    {item.definition}
+                      <Button
+                        type="text"
+                        shape="circle"
+                        icon={
+                          item.is_favorite ? (
+                            <StarFilled className={styles.favIconActive} />
+                          ) : (
+                            <StarOutlined className={styles.favIconInactive} />
+                          )
+                        }
+                        onClick={() => handleToggleFav(item.id)}
+                        title={item.is_favorite ? 'В избранном' : 'Добавить в избранное'}
+                      />
+                    </Space>
                   </div>
-                )}
 
-                {item.example_sentence && (
-                  <div className={styles.exampleBox}>
-                    <div className={styles.exampleEn}>
-                      "{item.example_sentence}"
+                  <Space size="small" className={styles.badgeRow}>
+                    <Tag color="purple">{item.level}</Tag>
+                    {item.part_of_speech && <Tag color="blue">{item.part_of_speech}</Tag>}
+                    {item.section_id && <Tag color="cyan">{item.section_id}</Tag>}
+                  </Space>
+
+                  <div className={styles.translation}>
+                    {item.translation}
+                  </div>
+
+                  {item.definition && (
+                    <div className={styles.definition}>
+                      {item.definition}
                     </div>
-                    {item.example_translation && (
-                      <div className={styles.exampleRu}>
-                        {item.example_translation}
+                  )}
+
+                  {item.example_sentence && (
+                    <div className={styles.exampleBox}>
+                      <div className={styles.exampleEn}>
+                        "{item.example_sentence}"
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
+                      {item.example_translation && (
+                        <div className={styles.exampleRu}>
+                          {item.example_translation}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {total > pageSize && (
+            <div className={styles.paginationRow}>
+              <Pagination
+                current={page}
+                pageSize={pageSize}
+                total={total}
+                showSizeChanger
+                pageSizeOptions={['24', '48', '96']}
+                onChange={handlePageChange}
+                showTotal={(all, range) => `${range[0]}-${range[1]} из ${all} слов`}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* Flashcards Deck Modal */}

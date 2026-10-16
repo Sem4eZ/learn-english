@@ -34,5 +34,15 @@ export const dictionaryApi = {
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     return await res.json();
+  },
+
+  async lookupWord(word: string): Promise<{ success: boolean; data: DictionaryItem; isNew: boolean; message: string }> {
+    const res = await fetch('/api/dictionary/lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word })
+    });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    return await res.json();
   }
 };

@@ -12,7 +12,13 @@ const { register, login, getMe } = require('./controllers/authController');
 const { getSections } = require('./controllers/sectionsController');
 const { getQuestions, generateBatch } = require('./controllers/questionsController');
 const { recordAnswer, getStats, getHistory } = require('./controllers/progressController');
-const { getDictionary, toggleFavorite, generateDictionaryWords, recordSrsReview } = require('./controllers/dictionaryController');
+const { 
+  getDictionary, 
+  toggleFavorite, 
+  generateDictionaryWords, 
+  recordSrsReview, 
+  lookupWord 
+} = require('./controllers/dictionaryController');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,6 +55,7 @@ app.post('/api/questions/generate', generateBatch);
 // Dictionary & SRS
 app.get('/api/dictionary', getDictionary);
 app.post('/api/dictionary/generate', generateDictionaryWords);
+app.post('/api/dictionary/lookup', lookupWord);
 app.post('/api/dictionary/review', recordSrsReview);
 app.post('/api/dictionary/:id/favorite', toggleFavorite);
 

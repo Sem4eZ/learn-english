@@ -372,6 +372,133 @@ All translations and definitions must be precise, natural, and suited for ${leve
 
     throw lastError || new Error('Failed to generate vocabulary');
   }
+
+  /**
+   * Looks up a specific word (English or Russian).
+   * Checks database first. If not found, requests Gemini to construct
+   * a comprehensive dictionary card, persists it into SQLite, and returns it.
+   */
+  async lookupAndDefineWord(searchTerm) {
+    if (!searchTerm || typeof searchTerm !== 'string') {
+      throw new Error('Search term is required');
+    }
+    const cleanTerm = searchTerm.trim();
+    if (cleanTerm.length === 0) {
+      throw new Error('Search term cannot be empty');
+    }
+
+    // 1. Check if word already exists in SQLite dictionary
+    const existing = db.prepare(`
+      SELECT * FROM dictionary 
+      WHERE LOWER(word) = LOWER(?) OR LOWER(translation) = LOWER(?)
+      ORDER BY id DESC
+      LIMIT 1
+    `).get(cleanTerm, cleanTerm);
+
+    if (existing) {
+      return {
+        item: existing,
+        isNew: false
+      };
+    }
+
+    // 2. Query Gemini to generate full lexicographical card
+    const systemPrompt = `
+You are an expert Oxford/Cambridge lexicographer.
+The user wants to look up the word or phrase: "${cleanTerm}".
+
+Requirements:
+1. If the input is in Russian (e.g. "курица"), translate it to the most common, authentic English word/phrase (e.g. "chicken").
+2. If the input is in English (e.g. "chicken"), provide its exact dictionary details.
+3. Return ONLY a valid JSON object matching this exact structure:
+{
+  "word": "English word in lower case (or appropriate casing)",
+  "transcription": "/IPA phonetics/",
+  "partOfSpeech": "noun, verb, adjective, adverb, or phrasal verb",
+  "translation": "Точный русский перевод (1-3 основных значения через запятую)",
+  "definition": "Clear concise English definition in simple English",
+  "exampleSentence": "Natural, modern everyday example sentence using this word",
+  "exampleTranslation": "Русский перевод примера",
+  "level": "A1, A2, B1, B2, or C1 (appropriate CEFR level for this word)",
+  "sectionId": "general (or tech_it, business, travel, conversational if strongly themed)"
+}
+`;
+
+    let lastError = null;
+
+    for (const model of CANDIDATE_MODELS) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+      console.log(`[Word Lookup Dispatch] Looking up "${cleanTerm}" with ${model}...`);
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.3
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          console.warn(`[Word Lookup Fallback] ${model} returned ${response.status}: ${errText}`);
+          continue;
+        }
+
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) continue;
+
+        let parsed = JSON.parse(rawText);
+        if (Array.isArray(parsed)) parsed = parsed[0];
+        if (!parsed.word || !parsed.translation) continue;
+
+        const targetWord = parsed.word.trim();
+
+        // Check if word was inserted concurrently
+        const doubleCheck = db.prepare('SELECT * FROM dictionary WHERE LOWER(word) = LOWER(?)').get(targetWord);
+        if (doubleCheck) {
+          return { item: doubleCheck, isNew: false };
+        }
+
+        const insertStmt = db.prepare(`
+          INSERT INTO dictionary (
+            word, transcription, part_of_speech, translation, definition,
+            example_sentence, example_translation, level, section_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const info = insertStmt.run(
+          targetWord,
+          parsed.transcription || '',
+          parsed.partOfSpeech || 'noun',
+          parsed.translation.trim(),
+          parsed.definition || '',
+          parsed.exampleSentence || '',
+          parsed.exampleTranslation || '',
+          parsed.level || 'B1',
+          parsed.sectionId || 'general'
+        );
+
+        const newRow = db.prepare('SELECT * FROM dictionary WHERE id = ?').get(info.lastInsertRowid);
+        console.log(`[Word Lookup Success] Added "${targetWord}" (id ${newRow.id}) to dictionary!`);
+
+        return {
+          item: newRow,
+          isNew: true
+        };
+      } catch (err) {
+        console.warn(`[Word Lookup Exception] with ${model}:`, err.message);
+        lastError = err;
+      }
+    }
+
+    throw lastError || new Error(`Failed to lookup word: ${cleanTerm}`);
+  }
 }
 
 module.exports = new GeminiService();

@@ -41,11 +41,10 @@ async function getDictionary(req, res) {
       whereClauses.push('d.is_favorite = 1');
     }
 
-    let joinSql = '';
+    let joinSql = 'LEFT JOIN srs_reviews s ON s.word_id = d.id AND s.user_id = ?';
     let orderBySql = 'ORDER BY d.id DESC';
 
     if (mode === 'practice') {
-      joinSql = 'LEFT JOIN srs_reviews s ON s.word_id = d.id AND s.user_id = ?';
       // A word is eligible for practice if:
       // 1. It is brand new (never reviewed, s.id IS NULL)
       // 2. OR its repetition interval has elapsed (due_date <= now)
@@ -60,7 +59,7 @@ async function getDictionary(req, res) {
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-    const countParams = mode === 'practice' ? [userId, ...params] : [...params];
+    const countParams = [userId, ...params];
     const countStmt = db.prepare(`SELECT COUNT(*) as total FROM dictionary d ${joinSql} ${whereSql}`);
     let countRow = countStmt.get(...countParams);
     let total = countRow ? countRow.total : 0;
@@ -85,9 +84,7 @@ async function getDictionary(req, res) {
       }
     }
 
-    const listParams = mode === 'practice' 
-      ? [userId, ...params, limitNum, offset] 
-      : [...params, limitNum, offset];
+    const listParams = [userId, ...params, limitNum, offset];
 
     const listStmt = db.prepare(`
       SELECT d.*, s.grade as srs_grade, s.reps as srs_reps, s.due_date as srs_due_date, s.interval as srs_interval
@@ -242,9 +239,37 @@ function recordSrsReview(req, res) {
   }
 }
 
+async function lookupWord(req, res) {
+  try {
+    const { word } = req.body;
+    if (!word || !word.trim()) {
+      return res.status(400).json({ success: false, error: 'Слово для поиска обязательно' });
+    }
+
+    const geminiService = require('../services/geminiService');
+    const result = await geminiService.lookupAndDefineWord(word.trim());
+
+    res.json({
+      success: true,
+      data: result.item,
+      isNew: result.isNew,
+      message: result.isNew 
+        ? `Слово «${result.item.word}» найдено и добавлено в ваш словарь!`
+        : `Слово «${result.item.word}» уже есть в вашем словаре`
+    });
+  } catch (err) {
+    console.error('Error looking up word:', err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Не удалось найти слово. Проверьте правильность написания или повторите через пару секунд.'
+    });
+  }
+}
+
 module.exports = {
   getDictionary,
   toggleFavorite,
   generateDictionaryWords,
-  recordSrsReview
+  recordSrsReview,
+  lookupWord
 };
