@@ -40,13 +40,19 @@ async function getUserFromReq(req) {
     const token = authHeader.substring(7).trim();
     const verified = verifyToken(token);
     if (verified) {
-      return await db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(verified.userId);
+      const user = await db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(verified.userId);
+      if (user) return user;
     }
   }
 
-  // Fallback to x-user-id header or user_default
-  const customId = req.headers['x-user-id'] || 'user_default';
-  return await db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(customId);
+  // Accept valid registered user ID from header, body, or query params (if user actually exists in DB)
+  const customId = req.headers['x-user-id'] || req.body?.userId || req.query?.userId;
+  if (customId && customId !== 'user_default' && customId !== 'guest_user') {
+    const user = await db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(customId);
+    if (user) return user;
+  }
+
+  return null;
 }
 
 async function register(req, res) {
@@ -138,29 +144,17 @@ async function getMe(req, res) {
   try {
     const user = await getUserFromReq(req);
     if (!user) {
-      // Default guest user
-      const guestRow = await db.prepare("SELECT * FROM users WHERE id = 'guest_user'").get();
-      if (!guestRow) {
-        await db.prepare(`
-          INSERT INTO users (id, username, xp, streak) VALUES ('guest_user', 'Гость', 0, 1)
-        `).run();
-      }
       return res.json({
         success: true,
-        user: {
-          id: 'guest_user',
-          username: 'Гость',
-          xp: guestRow ? guestRow.xp : 0,
-          streak: guestRow ? guestRow.streak : 1,
-          level: guestRow ? Math.floor(guestRow.xp / 50) + 1 : 1,
-          isGuest: true
-        }
+        authenticated: false,
+        user: null
       });
     }
 
     const level = Math.floor(user.xp / 50) + 1;
     res.json({
       success: true,
+      authenticated: true,
       user: {
         id: user.id,
         username: user.username,

@@ -1,13 +1,22 @@
 const db = require('../db/schema');
+const { getUserFromReq } = require('./authController');
 
 async function recordAnswer(req, res) {
   try {
-    const userId = req.headers['x-user-id'] || req.body.userId || 'user_default';
-    const { questionId, selectedIndex } = req.body;
+    const { questionId, selectedIndex } = req.body || {};
 
     if (!questionId || selectedIndex === undefined) {
       return res.status(400).json({ success: false, error: 'questionId and selectedIndex are required' });
     }
+
+    const user = await getUserFromReq(req);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Для выполнения заданий и сохранения прогресса необходимо войти в аккаунт'
+      });
+    }
+    const userId = user.id;
 
     // Fetch question to check correctness
     const question = await db.prepare('SELECT * FROM questions WHERE id = ?').get(questionId);
@@ -18,40 +27,28 @@ async function recordAnswer(req, res) {
     const isCorrect = question.correct_index === Number(selectedIndex);
     const xpReward = isCorrect ? 15 : 5;
 
-    // Update user stats and ensure user exists
+    // Update user stats
     const todayStr = new Date().toISOString().slice(0, 10);
-    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    let streak = user.streak || 1;
+    let xp = user.xp + xpReward;
 
-    let streak = 1;
-    let xp = xpReward;
+    if (user.last_active_date) {
+      const last = new Date(user.last_active_date);
+      const today = new Date(todayStr);
+      const diffDays = Math.ceil(Math.abs(today - last) / (1000 * 60 * 60 * 24));
 
-    if (user) {
-      xp = user.xp + xpReward;
-      streak = user.streak || 1;
-
-      if (user.last_active_date) {
-        const last = new Date(user.last_active_date);
-        const today = new Date(todayStr);
-        const diffDays = Math.ceil(Math.abs(today - last) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-          streak += 1;
-        } else if (diffDays > 1) {
-          streak = 1;
-        }
+      if (diffDays === 1) {
+        streak += 1;
+      } else if (diffDays > 1) {
+        streak = 1;
       }
-
-      await db.prepare(`
-        UPDATE users 
-        SET xp = ?, streak = ?, last_active_date = ?
-        WHERE id = ?
-      `).run(xp, streak, todayStr, userId);
-    } else {
-      await db.prepare(`
-        INSERT INTO users (id, username, xp, streak, last_active_date)
-        VALUES (?, 'Learner', ?, 1, ?)
-      `).run(userId, xp, todayStr);
     }
+
+    await db.prepare(`
+      UPDATE users 
+      SET xp = ?, streak = ?, last_active_date = ?
+      WHERE id = ?
+    `).run(xp, streak, todayStr, userId);
 
     // Save user answer
     const insertAnswer = db.prepare(`
@@ -81,16 +78,35 @@ async function recordAnswer(req, res) {
 
 async function getStats(req, res) {
   try {
-    const userId = req.headers['x-user-id'] || req.query.userId || 'user_default';
-    let user = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    const user = await getUserFromReq(req);
     if (!user) {
-      user = {
-        id: userId,
-        username: 'Learner',
-        xp: 0,
-        streak: 1
-      };
+      return res.json({
+        success: true,
+        data: {
+          id: null,
+          username: 'Гость',
+          xp: 0,
+          streak: 0,
+          level: 1,
+          levelPercent: 0,
+          progressXP: 0,
+          neededXP: 50,
+          totalAnswered: 0,
+          correctAnswered: 0,
+          accuracy: 100,
+          wordsStudied: 0,
+          wordsDueForReview: 0,
+          streakStatus: 'idle',
+          streakDaysLeft: 0,
+          weeklyActivity: [],
+          trainerBreakdown: { grammar: 0, cards: 0, sprint: 0, quiz: 0, builder: 0, audio: 0 },
+          sectionBreakdown: [],
+          badges: []
+        }
+      });
     }
+
+    const userId = user.id;
 
     // 1. Grammar answers stats
     const answerStats = (await db.prepare(`
@@ -341,7 +357,11 @@ async function getStats(req, res) {
 
 async function getHistory(req, res) {
   try {
-    const userId = req.headers['x-user-id'] || req.query.userId || 'user_default';
+    const user = await getUserFromReq(req);
+    if (!user) {
+      return res.json({ success: true, data: [] });
+    }
+    const userId = user.id;
     const mistakesOnly = req.query.mistakesOnly === 'true';
 
     // 1. Fetch grammar answers

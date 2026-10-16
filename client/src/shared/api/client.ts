@@ -1,5 +1,3 @@
-import { DEFAULT_USER_ID } from '../config/constants';
-
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
 }
@@ -35,8 +33,8 @@ class ApiClient {
     return false;
   }
 
-  private getUserId(): string {
-    return localStorage.getItem('fluentiq_user_id') || localStorage.getItem('lexiflow_user_id') || DEFAULT_USER_ID;
+  private getUserId(): string | null {
+    return localStorage.getItem('fluentiq_user_id') || localStorage.getItem('lexiflow_user_id') || null;
   }
 
   private getToken(): string | null {
@@ -51,6 +49,7 @@ class ApiClient {
   clearAuth() {
     localStorage.removeItem('fluentiq_token');
     localStorage.removeItem('fluentiq_user_id');
+    localStorage.removeItem('lexiflow_user_id');
   }
 
   async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -71,11 +70,15 @@ class ApiClient {
     }
 
     const token = this.getToken();
+    const userId = this.getUserId();
     const reqHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
-      'x-user-id': this.getUserId(),
       ...(headers as Record<string, string> || {}),
     };
+
+    if (userId) {
+      reqHeaders['x-user-id'] = userId;
+    }
 
     if (token) {
       reqHeaders['Authorization'] = `Bearer ${token}`;

@@ -8,5 +8,3 @@ export const CEFR_LEVELS = [
 ] as const;
 
 export type CEFRLevel = typeof CEFR_LEVELS[number]['value'];
-
-export const DEFAULT_USER_ID = 'user_default';

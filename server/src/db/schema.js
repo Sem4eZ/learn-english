@@ -397,14 +397,7 @@ if (checkSections.get().count === 0) {
   }
 }
 
-// Seed default user locally if empty
-const checkUser = localDb.prepare('SELECT COUNT(*) as count FROM users');
-if (checkUser.get().count === 0) {
-  localDb.prepare(`
-    INSERT INTO users (id, username, email, xp, streak, last_active_date)
-    VALUES ('user_default', 'Learner', 'learner@example.com', 50, 1, ?)
-  `).run(new Date().toISOString().slice(0, 10));
-}
+// Users are not pre-seeded: every player must register their own unique account
 
 // Seed rich dictionary vocabulary locally if empty
 const checkDict = localDb.prepare('SELECT COUNT(*) as count FROM dictionary');

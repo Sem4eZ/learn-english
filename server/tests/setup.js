@@ -23,10 +23,12 @@ function checkPortOpen(port) {
   const isRunning = await checkPortOpen(PORT);
   if (!isRunning) {
     try {
-      const server = app.listen(PORT, () => {
-        // Keep server open for test execution
+      await new Promise((resolve) => {
+        const server = app.listen(PORT, () => {
+          server.unref();
+          resolve();
+        });
       });
-      server.unref(); // Allows node to exit when tests complete
     } catch (_) {}
   }
 })();

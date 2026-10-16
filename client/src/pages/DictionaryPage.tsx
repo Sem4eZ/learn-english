@@ -34,15 +34,22 @@ import { FlashcardDeck, FlashcardItem } from '@/widgets/flashcard-deck/ui/Flashc
 import { VocabQuiz } from '@/widgets/vocab-quiz/ui/VocabQuiz';
 import { SpeedSprint } from '@/widgets/speed-sprint/ui/SpeedSprint';
 import { WordBuilder } from '@/widgets/word-builder/ui/WordBuilder';
+import { AuthUser } from '@/features/auth/ui/AuthModal';
 import styles from './DictionaryPage.module.scss';
 
 const { Title, Text } = Typography;
 
 interface DictionaryPageProps {
   onRefreshStats?: () => void;
+  currentUser?: AuthUser | null;
+  onRequireAuth?: () => void;
 }
 
-export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }) => {
+export const DictionaryPage: React.FC<DictionaryPageProps> = ({ 
+  onRefreshStats,
+  currentUser,
+  onRequireAuth
+}) => {
   const [items, setItems] = useState<DictionaryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -103,6 +110,11 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
   };
 
   const handleGenerateWords = async () => {
+    if (!currentUser) {
+      message.warning('Для пополнения словаря войдите или зарегистрируйтесь');
+      onRequireAuth?.();
+      return;
+    }
     setGenerating(true);
     try {
       const res: any = await apiClient.post('/dictionary/generate', {
@@ -125,6 +137,11 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
   };
 
   const handleLookupWord = async (wordToLookup: string) => {
+    if (!currentUser) {
+      message.warning('Для поиска и добавления слов войдите или зарегистрируйтесь');
+      onRequireAuth?.();
+      return;
+    }
     const term = wordToLookup.trim();
     if (!term) return;
 
@@ -180,6 +197,11 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
   }, [search, selectedSection, selectedLevel, favoritesOnly]);
 
   const handleToggleFav = async (id: number) => {
+    if (!currentUser) {
+      message.warning('Для добавления в избранное войдите или зарегистрируйтесь');
+      onRequireAuth?.();
+      return;
+    }
     try {
       const updated = await dictionaryApi.toggleFavorite(id);
       setItems(prev => prev.map(item => item.id === id ? updated : item));
@@ -189,6 +211,11 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
   };
 
   const openTrainer = async (mode: 'quiz' | 'deck' | 'sprint' | 'builder') => {
+    if (!currentUser) {
+      message.warning('Для выполнения тренировок и сохранения прогресса войдите или зарегистрируйтесь');
+      onRequireAuth?.();
+      return;
+    }
     let wordsForTrainer = trainerWords;
     if (wordsForTrainer.length === 0) {
       if (total <= items.length && items.length > 0) {
