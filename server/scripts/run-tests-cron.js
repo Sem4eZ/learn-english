@@ -31,7 +31,7 @@ function runTestSuite() {
   console.log(`  🕒 [${startTime.toISOString()}] Starting Automated Test Suite`);
   console.log(`======================================================`);
 
-  exec('node --test tests/*.test.js', { cwd: path.join(__dirname, '..') }, (error, stdout, stderr) => {
+  exec('node --test --test-concurrency=1 tests/*.test.js', { cwd: path.join(__dirname, '..') }, (error, stdout, stderr) => {
     const endTime = new Date();
     const durationMs = endTime - startTime;
 

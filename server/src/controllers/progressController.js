@@ -18,14 +18,7 @@ function recordAnswer(req, res) {
     const isCorrect = question.correct_index === Number(selectedIndex);
     const xpReward = isCorrect ? 15 : 5;
 
-    // Save user answer
-    const insertAnswer = db.prepare(`
-      INSERT INTO user_answers (user_id, question_id, selected_index, is_correct)
-      VALUES (?, ?, ?, ?)
-    `);
-    insertAnswer.run(userId, questionId, selectedIndex, isCorrect ? 1 : 0);
-
-    // Update user stats
+    // Update user stats and ensure user exists
     const todayStr = new Date().toISOString().slice(0, 10);
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
 
@@ -59,6 +52,13 @@ function recordAnswer(req, res) {
         VALUES (?, 'Learner', ?, 1, ?)
       `).run(userId, xp, todayStr);
     }
+
+    // Save user answer
+    const insertAnswer = db.prepare(`
+      INSERT INTO user_answers (user_id, question_id, selected_index, is_correct)
+      VALUES (?, ?, ?, ?)
+    `);
+    insertAnswer.run(userId, questionId, selectedIndex, isCorrect ? 1 : 0);
 
     res.json({
       success: true,

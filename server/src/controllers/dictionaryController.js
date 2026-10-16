@@ -109,7 +109,12 @@ async function getDictionary(req, res) {
     // If available practice words in DB are fewer than 30:
     // automatically generate and persist a fresh batch of 35 words!
     const isFilteredSearch = Boolean(search.trim()) || favoritesOnly === 'true' || favoritesOnly === '1';
-    if (!isFilteredSearch && total < 30) {
+    const VALID_CEFR = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    const isLevelValid = !level || level === 'all' || VALID_CEFR.includes(level.toUpperCase());
+    const validSections = ['all', '', 'general', 'grammar', 'business', 'conversational', 'ielts_toefl', 'phrasal_idioms', 'tech_it', 'travel'];
+    const isSectionValid = !sectionId || validSections.includes(sectionId);
+
+    if (!isFilteredSearch && total < 30 && isLevelValid && isSectionValid) {
       const targetLevel = (level && level !== 'all') ? level : 'A1';
       const targetSection = (sectionId && sectionId !== 'all') ? sectionId : 'general';
       const countToGenerate = 35;
