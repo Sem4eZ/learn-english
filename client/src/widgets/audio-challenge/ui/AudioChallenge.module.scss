@@ -79,6 +79,8 @@
 .feedbackBox {
   margin-top: 12px;
   border-radius: $radius-md;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .controlsRow {
@@ -137,11 +139,15 @@
 
 .feedbackSentence {
   margin-top: 4px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .feedbackTranslation {
   margin-top: 2px;
   opacity: 0.85;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .verifyBtn {

@@ -8,7 +8,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-const { register, login, getMe } = require('./controllers/authController');
+const { register, login, getMe, refreshAuth } = require('./controllers/authController');
 const { getSections } = require('./controllers/sectionsController');
 const { getQuestions, generateBatch } = require('./controllers/questionsController');
 const { recordAnswer, getStats, getHistory } = require('./controllers/progressController');
@@ -50,6 +50,7 @@ app.get(['/api/health', '/healthz'], (req, res) => {
 // Auth Routes
 app.post('/api/auth/register', register);
 app.post('/api/auth/login', login);
+app.post('/api/auth/refresh', refreshAuth);
 app.get('/api/auth/me', getMe);
 
 // Sections & Questions

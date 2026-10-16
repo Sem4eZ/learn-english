@@ -39,7 +39,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }
       }).unwrap();
 
       if (res.success && res.token && res.user) {
-        authSession.setAuth(res.token, res.user.id);
+        authSession.setAuth(res.token, res.user.id, res.user, res.refreshToken);
         message.success(`С возвращением, ${res.user.username}!`);
         onSuccess(res.user);
         onClose();
@@ -63,7 +63,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess }
       }).unwrap();
 
       if (res.success && res.token && res.user) {
-        authSession.setAuth(res.token, res.user.id);
+        authSession.setAuth(res.token, res.user.id, res.user, res.refreshToken);
         message.success(`Добро пожаловать в Fluentiq, ${res.user.username}!`);
         onSuccess(res.user);
         onClose();

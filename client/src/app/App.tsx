@@ -16,6 +16,7 @@ import { authSession } from '@/features/auth/api/authApi';
 import { INITIAL_USER_STATS } from '@/shared/lib/fallbackData';
 import { xpEventBus } from '@/shared/lib/xpEvents';
 import '@/shared/styles/global.scss';
+import { API_BASE_URL } from '@/shared/config';
 import styles from './App.module.scss';
 
 const { Content, Footer } = Layout;
@@ -30,7 +31,7 @@ export const App: React.FC = () => {
 
   const [sections, setSections] = useState<Section[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => authSession.getSavedUser());
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
 
   const [generateModalOpen, setGenerateModalOpen] = useState<boolean>(false);
@@ -67,19 +68,58 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Fetch current authenticated user
+  // Fetch current authenticated user with resilient refresh flow
   const loadUser = React.useCallback(async () => {
+    const savedUser = authSession.getSavedUser();
+    const token = authSession.getToken();
+    const refreshToken = authSession.getRefreshToken();
+
+    if (!token && !refreshToken && !savedUser) {
+      setCurrentUser(null);
+      setAuthModalOpen(true);
+      return;
+    }
+
     try {
       const res: any = await userApi.getMe();
       if (res && res.success && res.authenticated && res.user) {
         setCurrentUser(res.user);
-      } else {
+        authSession.setAuth(
+          authSession.getToken() || '',
+          res.user.id,
+          res.user,
+          authSession.getRefreshToken() || undefined
+        );
+      } else if (res && res.authenticated === false) {
+        // Access token might be expired, attempt silent refresh
+        if (refreshToken) {
+          try {
+            const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refreshToken })
+            });
+            const data = await refreshRes.json();
+            if (data && data.success && data.token && data.user) {
+              authSession.setAuth(data.token, data.user.id, data.user, data.refreshToken);
+              setCurrentUser(data.user);
+              return;
+            }
+          } catch (refreshErr) {
+            console.warn('Failed to refresh auth token silently:', refreshErr);
+          }
+        }
+        // Explicitly unauthenticated and refresh token invalid
+        authSession.clearAuth();
         setCurrentUser(null);
         setAuthModalOpen(true);
       }
     } catch (err) {
-      setCurrentUser(null);
-      setAuthModalOpen(true);
+      // Backend cold-start or temporary network glitch: do not aggressively log out!
+      console.warn('Backend cold start / network delay, keeping saved user session:', err);
+      if (savedUser) {
+        setCurrentUser(savedUser);
+      }
     }
   }, []);
 
@@ -114,12 +154,14 @@ export const App: React.FC = () => {
 
         setCurrentUser(prevUser => {
           if (!prevUser) return prevUser;
-          return {
+          const updatedUser = {
             ...prevUser,
             xp: newXp,
             streak,
             level
           };
+          authSession.saveUser(updatedUser);
+          return updatedUser;
         });
 
         return {
@@ -154,8 +196,7 @@ export const App: React.FC = () => {
     setCurrentUser(null);
     setStats(INITIAL_USER_STATS);
     message.info('Вы вышли из аккаунта');
-    loadUser();
-    loadStats();
+    setAuthModalOpen(true);
   };
 
   return (
