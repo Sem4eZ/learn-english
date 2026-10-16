@@ -34,22 +34,22 @@ function verifyToken(token) {
   }
 }
 
-function getUserFromReq(req) {
+async function getUserFromReq(req) {
   const authHeader = req.headers.authorization || '';
   if (authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7).trim();
     const verified = verifyToken(token);
     if (verified) {
-      return db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(verified.userId);
+      return await db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(verified.userId);
     }
   }
 
   // Fallback to x-user-id header or user_default
   const customId = req.headers['x-user-id'] || 'user_default';
-  return db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(customId);
+  return await db.prepare('SELECT id, username, xp, streak, created_at FROM users WHERE id = ?').get(customId);
 }
 
-function register(req, res) {
+async function register(req, res) {
   try {
     const { username, password } = req.body;
     if (!username || typeof username !== 'string' || username.trim().length < 2) {
@@ -60,7 +60,7 @@ function register(req, res) {
     }
 
     const cleanUsername = username.trim();
-    const existing = db.prepare('SELECT id FROM users WHERE LOWER(username) = LOWER(?)').get(cleanUsername);
+    const existing = await db.prepare('SELECT id FROM users WHERE LOWER(username) = LOWER(?)').get(cleanUsername);
     if (existing) {
       return res.status(400).json({ success: false, error: 'Пользователь с таким именем уже зарегистрирован' });
     }
@@ -68,7 +68,7 @@ function register(req, res) {
     const userId = 'usr_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
     const passHash = hashPassword(password);
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO users (id, username, password_hash, xp, streak, last_active_date)
       VALUES (?, ?, ?, 0, 1, date('now'))
     `).run(userId, cleanUsername, passHash);
@@ -94,7 +94,7 @@ function register(req, res) {
   }
 }
 
-function login(req, res) {
+async function login(req, res) {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -102,7 +102,7 @@ function login(req, res) {
     }
 
     const cleanUsername = username.trim();
-    const userRow = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(cleanUsername);
+    const userRow = await db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(cleanUsername);
     if (!userRow) {
       return res.status(401).json({ success: false, error: 'Пользователь не найден' });
     }
@@ -134,14 +134,14 @@ function login(req, res) {
   }
 }
 
-function getMe(req, res) {
+async function getMe(req, res) {
   try {
-    const user = getUserFromReq(req);
+    const user = await getUserFromReq(req);
     if (!user) {
       // Default guest user
-      const guestRow = db.prepare("SELECT * FROM users WHERE id = 'guest_user'").get();
+      const guestRow = await db.prepare("SELECT * FROM users WHERE id = 'guest_user'").get();
       if (!guestRow) {
-        db.prepare(`
+        await db.prepare(`
           INSERT INTO users (id, username, xp, streak) VALUES ('guest_user', 'Гость', 0, 1)
         `).run();
       }
