@@ -36,7 +36,7 @@ export const dictionaryApi = {
     return await res.json();
   },
 
-  async lookupWord(word: string): Promise<{ success: boolean; data: DictionaryItem; isNew: boolean; message: string }> {
+  async lookupWord(word: string): Promise<{ success: boolean; data: DictionaryItem; isNew: boolean; message: string; error?: string }> {
     const res = await fetch('/api/dictionary/lookup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -53,6 +53,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
   items,
   onComplete,
   onRefresh,
+  onNeedMore,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
