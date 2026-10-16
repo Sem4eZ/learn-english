@@ -266,6 +266,293 @@ const seedWords = [
   }
 ];
 
+const seedQuestions = [
+  // --- A1 (Beginner) ---
+  {
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'She _____ a student at the local college.',
+    context_text: 'Present Simple: формы глагола to be (am/is/are).',
+    options_json: JSON.stringify(['is', 'are', 'am', 'be']),
+    correct_index: 0,
+    explanation: 'С местоимениями he, she, it в настоящем времени используется форма глагола to be — "is".',
+    grammar_rule: 'To be in Present Simple: He/She/It + is',
+    pronunciation_tip: 'Глагол "is" произносится со звонким звуком /ɪz/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'They _____ in a big house near the park.',
+    context_text: 'Present Simple: утвердительные предложения во множественном числе.',
+    options_json: JSON.stringify(['live', 'lives', 'living', 'are live']),
+    correct_index: 0,
+    explanation: 'С местоимениями they, we, you, I глагол в Present Simple используется в базовой форме без окончания -s.',
+    grammar_rule: 'Subject (I/You/We/They) + V1 (base form)',
+    pronunciation_tip: '"live" как глагол произносится с кратким гласным /lɪv/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'There _____ three books on the wooden table.',
+    context_text: 'Конструкция There is / There are для множественного числа.',
+    options_json: JSON.stringify(['are', 'is', 'be', 'have']),
+    correct_index: 0,
+    explanation: 'Для указания на несколько предметов (three books) используется конструкция "There are".',
+    grammar_rule: 'There are + plural noun',
+    pronunciation_tip: 'Связка "There are" произносится слитно: /ðeər ɑːr/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'He doesn\'t _____ coffee in the evening.',
+    context_text: 'Present Simple: отрицание с вспомогательным глаголом doesn\'t.',
+    options_json: JSON.stringify(['drink', 'drinks', 'drinking', 'drank']),
+    correct_index: 0,
+    explanation: 'После отрицательного вспомогательного глагола doesn\'t основной глагол всегда ставится в начальной форме (без -s).',
+    grammar_rule: 'doesn\'t + bare infinitive (drink)',
+    pronunciation_tip: 'В слове "doesn\'t" ударение на первый слог: /ˈdʌznt/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A1',
+    question_text: 'Where _____ your parents live?',
+    context_text: 'Present Simple: специальный вопрос с вспомогательным глаголом do.',
+    options_json: JSON.stringify(['do', 'does', 'are', 'is']),
+    correct_index: 0,
+    explanation: 'Подлежащее "your parents" во множественном числе (они / they), поэтому вспомогательный глагол — "do".',
+    grammar_rule: 'Question word + do + Subject (plural) + V1?',
+    pronunciation_tip: 'Вопросительное слово "Where" произносится как /weər/'
+  },
+
+  // --- A2 (Elementary) ---
+  {
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'Yesterday we _____ to a cozy Italian restaurant.',
+    context_text: 'Past Simple: неправильный глагол go (прошедшее время).',
+    options_json: JSON.stringify(['went', 'go', 'goed', 'have gone']),
+    correct_index: 0,
+    explanation: 'Глагол "go" — неправильный. Вторая форма (Past Simple) для завершенного действия в прошлом (yesterday) — "went".',
+    grammar_rule: 'Past Simple: irregular verb go -> went',
+    pronunciation_tip: 'Слово "went" произносится с четким звуком /w/: /went/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'While I was reading, my brother _____ dinner.',
+    context_text: 'Past Continuous & Past Simple: параллельные действия в прошлом.',
+    options_json: JSON.stringify(['was cooking', 'cooked', 'cooks', 'is cooking']),
+    correct_index: 0,
+    explanation: 'Для двух одновременных длительных процессов в прошлом используется Past Continuous в обеих частях (was reading / was cooking).',
+    grammar_rule: 'While + Past Continuous, Past Continuous (длительные одновременные действия)',
+    pronunciation_tip: '"was cooking" произносится с ударением на смысловой глагол: /wəz ˈkʊkɪŋ/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'This car is much _____ than my old one.',
+    context_text: 'Сравнительная степень коротких прилагательных (fast -> faster).',
+    options_json: JSON.stringify(['faster', 'more fast', 'fastest', 'most fast']),
+    correct_index: 0,
+    explanation: 'Односложные прилагательные образуют сравнительную степень путем добавления суффикса -er: fast -> faster.',
+    grammar_rule: 'One-syllable adjective + -er + than',
+    pronunciation_tip: 'Ударение на первый слог: /ˈfɑːstər/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'Have you ever _____ to London?',
+    context_text: 'Present Perfect: жизненный опыт с наречием "ever".',
+    options_json: JSON.stringify(['been', 'was', 'went', 'be']),
+    correct_index: 0,
+    explanation: 'Для выражения посещения места в качестве жизненного опыта в Present Perfect используется третья форма глагола to be — "been" (to).',
+    grammar_rule: 'Have/Has + Subject + ever + V3 (Past Participle)',
+    pronunciation_tip: '"been" в британском английском звучит как /biːn/ или /bɪn/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'A2',
+    question_text: 'You _____ wear a seatbelt while driving.',
+    context_text: 'Модальные глаголы обязательства и правил.',
+    options_json: JSON.stringify(['must', 'can', 'might', 'could']),
+    correct_index: 0,
+    explanation: 'Модальный глагол "must" выражает строгое обязательство, закон или необходимость.',
+    grammar_rule: 'Must + bare infinitive (без частицы to) для выражения обязательства',
+    pronunciation_tip: 'В слове "must" буква "t" перед согласными часто редуцируется: /məs/'
+  },
+
+  // --- B1 (Intermediate) ---
+  {
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'If I _____ more free time, I would travel around Europe.',
+    context_text: 'Second Conditional (гипотетическая ситуация в настоящем/будущем).',
+    options_json: JSON.stringify(['had', 'have', 'would have', 'will have']),
+    correct_index: 0,
+    explanation: 'В придаточной части Second Conditional (после if) используется Past Simple (had), а в главной части — would + глагол.',
+    grammar_rule: 'If + Past Simple, would + infinitive (Second Conditional)',
+    pronunciation_tip: 'Обратите внимание на связку "If I had" -> /ɪf aɪ hæd/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'She has been working here _____ 2018.',
+    context_text: 'Present Perfect Continuous (действие началось в прошлом и длится до сих пор).',
+    options_json: JSON.stringify(['since', 'for', 'during', 'from']),
+    correct_index: 0,
+    explanation: 'С точной точкой отсчета во времени (год, дата, событие) используется предлог "since". Предлог "for" используется с периодами времени (for 5 years).',
+    grammar_rule: 'since + точка времени (since 2018), for + период времени (for 5 years)',
+    pronunciation_tip: '"since" произносится как /sɪns/, не путать с "science"'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'The new bridge _____ by engineers last year.',
+    context_text: 'Past Simple Passive: страдательный залог в прошлом.',
+    options_json: JSON.stringify(['was built', 'built', 'was building', 'has been built']),
+    correct_index: 0,
+    explanation: 'Мост не сам строил, а был построен кем-то (Passive Voice). Для завершенного действия в прошлом (last year) используется was + V3 (was built).',
+    grammar_rule: 'Past Simple Passive: was/were + Past Participle (V3)',
+    pronunciation_tip: '"built" оканчивается на четкий глухой звук /t/: /bɪlt/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'He told me that he _____ the report earlier that morning.',
+    context_text: 'Reported Speech: согласование времен (Past Perfect для предшествующего действия).',
+    options_json: JSON.stringify(['had finished', 'finished', 'has finished', 'will finish']),
+    correct_index: 0,
+    explanation: 'В косвенной речи, когда главное предложение в прошедшем времени (told), действие, совершенное еще раньше, сдвигается в Past Perfect (had finished).',
+    grammar_rule: 'Reported Speech: Past Simple / Present Perfect -> Past Perfect (had + V3)',
+    pronunciation_tip: 'Связка "he had" сокращается до "he\'d" -> /hiːd/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B1',
+    question_text: 'I really enjoy _____ modern board games with colleagues.',
+    context_text: 'Герундий после определенных глаголов (enjoy + V-ing).',
+    options_json: JSON.stringify(['playing', 'to play', 'play', 'played']),
+    correct_index: 0,
+    explanation: 'После глаголов предпочтения (enjoy, fancy, avoid, consider) используется герундий (глагол с окончанием -ing), а не инфинитив.',
+    grammar_rule: 'enjoy + Verb-ing (Gerund)',
+    pronunciation_tip: 'Окончание "-ing" произносится с носовым звуком /ŋ/: /ˈpleɪɪŋ/'
+  },
+
+  // --- B2 (Upper-Intermediate) ---
+  {
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'Hardly _____ the office when the client called with an urgent issue.',
+    context_text: 'Inversion with negative adverbs (инверсия для усиления выразительности).',
+    options_json: JSON.stringify(['had I left', 'I had left', 'did I leave', 'I left']),
+    correct_index: 0,
+    explanation: 'После отрицательных наречий (Hardly, Barely, Scarcely, Seldom) в начале предложения используется обратный порядок слов (инверсия) с Past Perfect: Hardly had + subject + V3.',
+    grammar_rule: 'Hardly + had + Subject + V3 ... when ... (Negative Inversion)',
+    pronunciation_tip: 'Логическое ударение падает на слово "Hardly" /ˈhɑːdli/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'If you had followed the deployment checklist, the outage _____ avoided.',
+    context_text: 'Third Conditional (нереальное условие в прошлом и его последствия).',
+    options_json: JSON.stringify(['would have been', 'would be', 'had been', 'was']),
+    correct_index: 0,
+    explanation: 'В третьем типе условных предложений для выражения нереального действия в прошлом используется схема: If + had + V3, would have + been + V3 (пассивный залог).',
+    grammar_rule: 'If + Past Perfect, would have been + V3 (Third Conditional Passive)',
+    pronunciation_tip: 'Связка "would have been" редуцируется в беглой речи: /wʊdəv bɪn/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'The lead architect suggested that the migration _____ postponed until next quarter.',
+    context_text: 'Subjunctive Mood (сослагательное наклонение после suggest/recommend).',
+    options_json: JSON.stringify(['be', 'is', 'was', 'would be']),
+    correct_index: 0,
+    explanation: 'После глаголов волеизъявления (suggest, recommend, demand, insist) в придаточном предложении с that используется сослагательное наклонение (базовая форма глагола: be).',
+    grammar_rule: 'suggest that + subject + (should) bare infinitive (be)',
+    pronunciation_tip: '"suggested that" произносится связно: /səˈdʒestɪd ðæt/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'She is used to _____ in high-pressure startup environments.',
+    context_text: 'To be used to doing something (привычка к чему-либо).',
+    options_json: JSON.stringify(['working', 'work', 'worked', 'be worked']),
+    correct_index: 0,
+    explanation: 'Конструкция "be used to" означает "иметь привычку, быть привыкшим" и требует после себя герундия (V-ing) или существительного, в отличие от used to + bare infinitive (прошлые привычки).',
+    grammar_rule: 'be used to + Verb-ing / noun (привычка к процессу)',
+    pronunciation_tip: '"used to" произносится со звуком /s/: /ˈjuːs tu/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'B2',
+    question_text: 'I wish I _____ more attention during the database architecture workshop.',
+    context_text: 'Wish + Past Perfect: сожаление о совершенном или упущенном в прошлом.',
+    options_json: JSON.stringify(['had paid', 'paid', 'would pay', 'have paid']),
+    correct_index: 0,
+    explanation: 'Для выражения сожаления о событии в прошлом используется конструкция Wish + Past Perfect (had + V3).',
+    grammar_rule: 'Subject + wish + Subject + had + Past Participle (regret about the past)',
+    pronunciation_tip: 'Связка "wish I had" -> /wɪʃ aɪ hæd/'
+  },
+
+  // --- C1 (Advanced) ---
+  {
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: 'Under no circumstances _____ credentials in plain text in public repositories.',
+    context_text: 'Negative Inversion with modal verb (категорический запрет с инверсией).',
+    options_json: JSON.stringify(['should you commit', 'you should commit', 'you commit', 'do you commit']),
+    correct_index: 0,
+    explanation: 'Ограничительный оборот "Under no circumstances" в начале предложения требует обязательной инверсии: Under no circumstances + modal auxiliary + subject + main verb.',
+    grammar_rule: 'Under no circumstances + Auxiliary / Modal + Subject + Verb',
+    pronunciation_tip: 'Сильное фразовое ударение на "no circumstances" /ˌsɜːkəmstənsɪz/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: 'Were it not for your timely code review, we _____ a critical bug to production.',
+    context_text: 'Inversion in Conditionals (альтернатива "If it were not for").',
+    options_json: JSON.stringify(['would have pushed', 'had pushed', 'pushed', 'will push']),
+    correct_index: 0,
+    explanation: '"Were it not for" — формальная инвертированная форма для выражения условия ("Если бы не..."). В главной части смешанного/прошедшего условия используется would have + V3.',
+    grammar_rule: 'Were it not for + Noun, Subject + would have + V3',
+    pronunciation_tip: '"Were it not" произносится без паузы: /wɜːr ɪt nɒt/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: 'The higher the concurrency rate, _____ the memory overhead becomes.',
+    context_text: 'Double Comparative (параллельная пропорциональная зависимость The... the...).',
+    options_json: JSON.stringify(['the greater', 'greater', 'the greatest', 'more great']),
+    correct_index: 0,
+    explanation: 'Конструкция The + comparative ..., the + comparative ... выражает прямо пропорциональную зависимость: "Чем выше ..., тем больше ...".',
+    grammar_rule: 'The + comparative + subject + verb, the + comparative + subject + verb',
+    pronunciation_tip: 'Ритмичное повышение тона на первом "The higher" и спад на "the greater"'
+  },
+  {
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: '_____ all the microservices to Kubernetes, the operations team began stress testing.',
+    context_text: 'Perfect Participle Clause: предшествующее завершенное действие.',
+    options_json: JSON.stringify(['Having migrated', 'Migrating', 'Migrated', 'Being migrated']),
+    correct_index: 0,
+    explanation: 'Причастный оборот в форме Perfect Participle (Having + V3) подчеркивает, что действие миграции полностью завершилось до того, как началось стресс-тестирование.',
+    grammar_rule: 'Having + Past Participle (Perfect Participle Clause for completed prior action)',
+    pronunciation_tip: '"Having migrated" произносится с ударением на /ˈhævɪŋ maɪˈɡreɪtɪd/'
+  },
+  {
+    section_id: 'grammar',
+    level: 'C1',
+    question_text: 'Little _____ that the refactored caching layer would double the throughput.',
+    context_text: 'Negative Inversion with "Little" (никто и подумать не мог).',
+    options_json: JSON.stringify(['did we anticipate', 'we anticipated', 'we did anticipate', 'had we anticipated']),
+    correct_index: 0,
+    explanation: 'Отрицательное наречие "Little" в значении "совсем не / даже не подозревали" в начале предложения вызывает инверсию: Little + did + subject + bare infinitive.',
+    grammar_rule: 'Little + did + Subject + base verb (Negative Inversion with Little)',
+    pronunciation_tip: 'Интонационный подъем на слове "Little" /ˈlɪtl/'
+  }
+];
+
 const SCHEMA_DDL = `
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -417,6 +704,24 @@ if (checkDict.get().count === 0) {
   }
 }
 
+// Seed curriculum questions for all levels (A1-C1) locally if A1 is missing
+const checkQuestions = localDb.prepare("SELECT COUNT(*) as count FROM questions WHERE level = 'A1'");
+if (checkQuestions.get().count === 0) {
+  const insertQ = localDb.prepare(`
+    INSERT INTO questions (
+      section_id, level, question_text, context_text,
+      options_json, correct_index, explanation, grammar_rule, pronunciation_tip
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  for (const q of seedQuestions) {
+    insertQ.run(
+      q.section_id, q.level, q.question_text, q.context_text,
+      q.options_json, q.correct_index, q.explanation, q.grammar_rule, q.pronunciation_tip
+    );
+  }
+}
+
 // ----------------------------------------------------------------------------
 // Unified Database Wrapper
 // ----------------------------------------------------------------------------
@@ -466,6 +771,25 @@ if (shouldAttemptTurso) {
             await client.execute({
               sql: `INSERT INTO sections (id, title, description, icon, default_level, prompt_focus) VALUES (?, ?, ?, ?, ?, ?)`,
               args: [s.id, s.title, s.description, s.icon, s.default_level, s.prompt_focus]
+            });
+          }
+        }
+
+        // Seed curriculum questions for all levels on Turso if A1 is missing
+        const qCountRes = await client.execute("SELECT COUNT(*) as count FROM questions WHERE level = 'A1'");
+        const qCount = qCountRes.rows[0]?.count || 0;
+        if (qCount === 0) {
+          console.log('[Database] Seeding initial curriculum questions for all CEFR levels on Turso...');
+          for (const q of seedQuestions) {
+            await client.execute({
+              sql: `INSERT INTO questions (
+                section_id, level, question_text, context_text,
+                options_json, correct_index, explanation, grammar_rule, pronunciation_tip
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              args: [
+                q.section_id, q.level, q.question_text, q.context_text,
+                q.options_json, q.correct_index, q.explanation, q.grammar_rule, q.pronunciation_tip
+              ]
             });
           }
         }

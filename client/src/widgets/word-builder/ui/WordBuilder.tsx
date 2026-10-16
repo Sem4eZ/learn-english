@@ -367,11 +367,12 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
 
       {/* Action Controls */}
       <div className={styles.actionsRow}>
-        <Space>
+        <div className={styles.actionButtonsGroup}>
           <Button
             icon={<BulbOutlined />}
             onClick={handleHint}
             disabled={isCorrect === true}
+            className={styles.auxBtn}
           >
             Подсказка
           </Button>
@@ -380,10 +381,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             icon={<UndoOutlined />}
             onClick={handleReset}
             disabled={isCorrect === true || assembledLetters.length === 0}
+            className={styles.auxBtn}
           >
             Сбросить
           </Button>
-        </Space>
+        </div>
 
         {isCorrect === true && (
           <Button

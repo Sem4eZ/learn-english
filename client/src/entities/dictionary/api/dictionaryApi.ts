@@ -102,8 +102,10 @@ export const dictionaryApi = {
       const res = await store.dispatch(
         dictionaryApiSlice.endpoints.getDictionary.initiate(params, { forceRefetch: true })
       ).unwrap();
-      if (res && res.data && res.data.length > 0) {
-        saveOfflineWords(res.data);
+      if (res && res.success) {
+        if (res.data && res.data.length > 0) {
+          saveOfflineWords(res.data);
+        }
         return res;
       }
     } catch (err) {

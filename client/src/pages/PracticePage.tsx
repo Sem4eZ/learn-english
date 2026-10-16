@@ -71,25 +71,22 @@ export const PracticePage: React.FC<PracticePageProps> = ({
   };
 
   useEffect(() => {
-    fetchQuestions(1, level, currentSectionId);
-  }, [currentSectionId, level]);
+    fetchQuestions(page, level, currentSectionId);
+  }, [currentSectionId, level, page]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    fetchQuestions(newPage, level, currentSectionId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLevelChange = (newLevel: string) => {
     setLevel(newLevel);
     setPage(1);
-    fetchQuestions(1, newLevel, currentSectionId);
   };
 
   const handleTopicChange = (newTopic: string) => {
     setCurrentSectionId(newTopic);
     setPage(1);
-    fetchQuestions(1, level, newTopic);
   };
 
   const currentSection = allSections.find(s => s.id === currentSectionId) || section;
@@ -98,11 +95,11 @@ export const PracticePage: React.FC<PracticePageProps> = ({
     <div>
       {/* Top Toolbar */}
       <div className={styles.toolbar}>
-        <Space wrap>
-          <Button icon={<ArrowLeftOutlined />} size="large" onClick={onBack}>
-            Назад ко всем тренажерам
+        <div className={styles.toolbarHeader}>
+          <Button icon={<ArrowLeftOutlined />} size="middle" onClick={onBack} className={styles.backButton}>
+            Назад
           </Button>
-          <div>
+          <div className={styles.titleWrapper}>
             <Title level={3} className={styles.sectionTitle}>
               {currentSection ? currentSection.title : '📘 Грамматика и конструкции'}
             </Title>
@@ -110,11 +107,11 @@ export const PracticePage: React.FC<PracticePageProps> = ({
               Практические задания, вставка предлогов и пропущенных слов, разбор правил
             </Text>
           </div>
-        </Space>
+        </div>
 
-        <Space size="middle" wrap>
-          <Space>
-            <Text strong>Тема:</Text>
+        <div className={styles.filterControls}>
+          <div className={styles.filterGroup}>
+            <span className={styles.filterLabel}>Тема:</span>
             <Select
               value={currentSectionId}
               onChange={handleTopicChange}
@@ -134,28 +131,30 @@ export const PracticePage: React.FC<PracticePageProps> = ({
                     ])
               ]}
             />
-          </Space>
+          </div>
 
-          <Space>
-            <Text strong>Уровень:</Text>
-            <LevelSelect value={level} onChange={handleLevelChange} />
-          </Space>
+          <div className={styles.filterGroup}>
+            <span className={styles.filterLabel}>Уровень:</span>
+            <LevelSelect value={level} onChange={handleLevelChange} className={styles.levelDropdown} />
+          </div>
 
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setGenerateModalOpen(true)}
-            className={styles.addQuestionsBtn}
-          >
-            Добавить вопросы
-          </Button>
+          <div className={styles.actionGroup}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setGenerateModalOpen(true)}
+              className={styles.addQuestionsBtn}
+            >
+              Добавить
+            </Button>
 
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchQuestions(page, level, currentSectionId)}
-            title="Обновить"
-          />
-        </Space>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => fetchQuestions(page, level, currentSectionId)}
+              title="Обновить задания"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Main Questions Stream Area */}

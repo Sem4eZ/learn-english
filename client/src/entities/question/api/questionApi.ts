@@ -71,31 +71,32 @@ export const questionApi = {
       const res = await store.dispatch(
         questionApiSlice.endpoints.getQuestions.initiate(params, { forceRefetch: true })
       ).unwrap();
-      if (res && res.data && res.data.length > 0) {
+      if (res && res.data && (res.data.length > 0 || (res.pagination && res.pagination.total === 0))) {
         return res;
       }
     } catch (err) {
       console.warn('[questionApi] Backend query failed, using fallback questions:', err);
     }
 
-    // Fallback if backend is unavailable
+    // Fallback if backend is unavailable or level has no backend entries
     let filtered = [...FALLBACK_QUESTIONS];
     if (params.sectionId && params.sectionId !== 'all') {
       const match = filtered.filter(q => q.section_id === params.sectionId);
-      if (match.length > 0) filtered = match;
+      if (match.length > 0) {
+        filtered = match;
+      }
     }
     if (params.level && params.level !== 'all') {
-      const match = filtered.filter(q => q.level === params.level);
-      if (match.length > 0) filtered = match;
+      filtered = filtered.filter(q => q.level === params.level);
     }
 
     const page = params.page || 1;
-    const limit = params.limit || 10;
+    const limit = params.limit || 5;
     const startIndex = (page - 1) * limit;
     const pageItems = filtered.slice(startIndex, startIndex + limit);
 
     return {
-      data: pageItems.length > 0 ? pageItems : FALLBACK_QUESTIONS.slice(0, limit),
+      data: pageItems,
       pagination: {
         page,
         limit,
@@ -143,7 +144,7 @@ export const questionApi = {
       explanation: q.explanation || (isCorrect ? 'Верно!' : 'Неверно, попробуйте еще раз.'),
       grammarRule: q.grammar_rule,
       pronunciationTip: q.pronunciation_tip,
-      xpEarned: isCorrect ? 20 : 5,
+      xpEarned: isCorrect ? 15 : 0,
       totalXp: 0,
       streak: 1,
     };

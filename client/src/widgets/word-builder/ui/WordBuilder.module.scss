@@ -129,8 +129,40 @@
 }
 
 .actionsRow {
-  @include flex-between;
-  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  width: 100%;
+
+  @media (max-width: 600px) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.actionButtonsGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  @media (max-width: 600px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 8px;
+  }
+}
+
+.auxBtn {
+  height: 42px !important;
+  font-weight: 600 !important;
+  border-radius: $radius-md !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .summaryCard {
@@ -177,7 +209,17 @@
 }
 
 .successBtn {
+  height: 44px !important;
+  padding: 0 24px !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  border-radius: $radius-md !important;
   background: $color-success !important;
   border-color: $color-success !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 }
 

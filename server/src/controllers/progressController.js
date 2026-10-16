@@ -25,7 +25,7 @@ async function recordAnswer(req, res) {
     }
 
     const isCorrect = question.correct_index === Number(selectedIndex);
-    const xpReward = isCorrect ? 15 : 5;
+    const xpReward = isCorrect ? 15 : 0;
 
     // Update user stats
     const todayStr = new Date().toISOString().slice(0, 10);
