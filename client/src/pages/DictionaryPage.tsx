@@ -62,6 +62,8 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
   const [sprintModalOpen, setSprintModalOpen] = useState<boolean>(false);
   const [builderModalOpen, setBuilderModalOpen] = useState<boolean>(false);
   const [generating, setGenerating] = useState<boolean>(false);
+  const [trainerWords, setTrainerWords] = useState<DictionaryItem[]>([]);
+  const [trainerLoading, setTrainerLoading] = useState<'quiz' | 'deck' | 'sprint' | 'builder' | null>(null);
 
   // Ref to track the active query sequence and eliminate race conditions
   const activeRequestIdRef = useRef<number>(0);
@@ -170,6 +172,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
 
   useEffect(() => {
     setPage(1);
+    setTrainerWords([]);
     const timer = setTimeout(() => {
       fetchWords(search, 1, pageSize);
     }, 200);
@@ -185,8 +188,46 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
     }
   };
 
+  const openTrainer = async (mode: 'quiz' | 'deck' | 'sprint' | 'builder') => {
+    let wordsForTrainer = trainerWords;
+    if (wordsForTrainer.length === 0) {
+      if (total <= items.length && items.length > 0) {
+        wordsForTrainer = items;
+        setTrainerWords(items);
+      } else {
+        setTrainerLoading(mode);
+        try {
+          const res = await dictionaryApi.getDictionary({
+            search,
+            sectionId: selectedSection,
+            level: selectedLevel,
+            favoritesOnly,
+            page: 1,
+            limit: 1000
+          });
+          const loaded = res.data && res.data.length > 0 ? res.data : items;
+          wordsForTrainer = loaded;
+          setTrainerWords(loaded);
+        } catch (err) {
+          console.warn('Failed to load full trainer words, using page items:', err);
+          wordsForTrainer = items;
+          setTrainerWords(items);
+        } finally {
+          setTrainerLoading(null);
+        }
+      }
+    }
+
+    if (mode === 'quiz') setQuizModalOpen(true);
+    else if (mode === 'deck') setDeckModalOpen(true);
+    else if (mode === 'sprint') setSprintModalOpen(true);
+    else if (mode === 'builder') setBuilderModalOpen(true);
+  };
+
+  const activeTrainerWords = trainerWords.length > 0 ? trainerWords : items;
+
   // Convert dictionary items to flashcard items
-  const flashcardItems: FlashcardItem[] = items.map(item => ({
+  const trainerFlashcardItems: FlashcardItem[] = activeTrainerWords.map(item => ({
     id: item.id,
     frontMain: item.word,
     frontPhonetic: item.transcription,
@@ -216,8 +257,9 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
             type="primary"
             icon={<ThunderboltFilled />}
             size="large"
-            onClick={() => setQuizModalOpen(true)}
-            disabled={items.length < 2}
+            loading={trainerLoading === 'quiz'}
+            onClick={() => openTrainer('quiz')}
+            disabled={total < 2 && items.length < 2}
             className={styles.quizBtn}
           >
             🎯 Квиз 1 из 4 ({total || items.length})
@@ -226,8 +268,9 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
           <Button
             icon={<AppstoreOutlined />}
             size="large"
-            onClick={() => setDeckModalOpen(true)}
-            disabled={items.length === 0}
+            loading={trainerLoading === 'deck'}
+            onClick={() => openTrainer('deck')}
+            disabled={total === 0 && items.length === 0}
             className={styles.trainCardsBtn}
           >
             🗂️ 3D Карточки
@@ -236,8 +279,9 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
           <Button
             icon={<FireFilled className={styles.sprintBtnIcon} />}
             size="large"
-            onClick={() => setSprintModalOpen(true)}
-            disabled={items.length < 2}
+            loading={trainerLoading === 'sprint'}
+            onClick={() => openTrainer('sprint')}
+            disabled={total < 2 && items.length < 2}
           >
             ⚡ Спринт
           </Button>
@@ -245,8 +289,9 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
           <Button
             icon={<BookOutlined />}
             size="large"
-            onClick={() => setBuilderModalOpen(true)}
-            disabled={items.length === 0}
+            loading={trainerLoading === 'builder'}
+            onClick={() => openTrainer('builder')}
+            disabled={total === 0 && items.length === 0}
           >
             🧩 Спеллинг
           </Button>
@@ -492,7 +537,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
       >
         <div className={styles.modalBody}>
           <FlashcardDeck
-            items={flashcardItems}
+            items={trainerFlashcardItems}
             onFinish={() => onRefreshStats?.()}
           />
         </div>
@@ -517,7 +562,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
       >
         <div className={styles.modalBody}>
           <VocabQuiz
-            words={items}
+            words={activeTrainerWords}
             onClose={() => {
               setQuizModalOpen(false);
               onRefreshStats?.();
@@ -546,7 +591,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
       >
         <div className={styles.modalBody}>
           <SpeedSprint
-            words={items}
+            words={activeTrainerWords}
             onClose={() => {
               setSprintModalOpen(false);
               onRefreshStats?.();
@@ -572,7 +617,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({ onRefreshStats }
       >
         <div className={styles.modalBody}>
           <WordBuilder
-            words={items}
+            words={activeTrainerWords}
             onClose={() => setBuilderModalOpen(false)}
           />
         </div>

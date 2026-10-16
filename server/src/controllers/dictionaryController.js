@@ -15,7 +15,7 @@ async function getDictionary(req, res) {
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.max(1, Math.min(200, parseInt(limit, 10) || 30));
+    const limitNum = Math.max(1, Math.min(1000, parseInt(limit, 10) || 30));
     const offset = (pageNum - 1) * limitNum;
 
     let whereClauses = [];

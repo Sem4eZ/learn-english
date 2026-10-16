@@ -36,6 +36,8 @@ interface QuestionItem {
   }[];
 }
 
+export type RoundMode = '15' | '30' | '45' | '60' | 'all';
+
 export const VocabQuiz: React.FC<VocabQuizProps> = ({
   words,
   initialDirection = 'en-ru',
@@ -44,7 +46,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   onNeedMore
 }) => {
   const [direction, setDirection] = useState<'en-ru' | 'ru-en'>(initialDirection);
-  const [roundMode, setRoundMode] = useState<'15' | 'all'>('15');
+  const [roundMode, setRoundMode] = useState<RoundMode>('15');
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
@@ -61,7 +63,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     wordList: DictionaryItem[], 
     dir: 'en-ru' | 'ru-en', 
     preferUnused = true,
-    mode: '15' | 'all' = roundMode
+    mode: RoundMode = roundMode
   ) => {
     if (wordList.length === 0) return [];
 
@@ -69,7 +71,11 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
       ? wordList.filter(w => !usedWordIdsRef.current.has(w.id))
       : wordList;
 
-    if (availableWords.length < 15) {
+    const targetCount = mode === 'all' 
+      ? availableWords.length 
+      : parseInt(mode, 10) || 15;
+
+    if (availableWords.length < targetCount) {
       onNeedMore?.();
       if (availableWords.length < 4) {
         usedWordIdsRef.current.clear();
@@ -78,7 +84,9 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     }
 
     const shuffledWords = [...availableWords].sort(() => 0.5 - Math.random());
-    const count = mode === 'all' ? shuffledWords.length : Math.min(shuffledWords.length, 15);
+    const count = mode === 'all' 
+      ? shuffledWords.length 
+      : Math.min(shuffledWords.length, targetCount);
     const selectedTargets = shuffledWords.slice(0, count);
 
     selectedTargets.forEach(t => usedWordIdsRef.current.add(t.id));
@@ -120,7 +128,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   }, [words, direction]);
 
   const handleRoundModeChange = (modeVal: string | number) => {
-    const newMode = modeVal === 'all' ? 'all' : '15';
+    const newMode = modeVal as RoundMode;
     setRoundMode(newMode);
     const qs = generateQuestions(words, direction, true, newMode);
     setQuestions(qs);
@@ -266,7 +274,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
             onClick={handleLearnNewWords}
             className={styles.primaryActionBtn}
           >
-            Изучить следующие слова (+15)
+            {roundMode === 'all' ? 'Пройти новые слова' : `Изучить следующие слова (+${roundMode})`}
           </Button>
 
           <Button
@@ -324,7 +332,10 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
               onChange={handleRoundModeChange}
               disabled={isAnswered}
               options={[
-                { label: 'По 15 слов', value: '15' },
+                { label: '15', value: '15' },
+                { label: '30', value: '30' },
+                { label: '45', value: '45' },
+                { label: '60', value: '60' },
                 { label: `Все (${words.length})`, value: 'all' }
               ]}
             />

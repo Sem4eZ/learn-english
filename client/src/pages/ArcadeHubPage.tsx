@@ -86,7 +86,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
         level: selectedLevel,
         sectionId: selectedSection,
         mode: 'practice',
-        limit: 150
+        limit: 1000
       });
       setWords(res.data);
       const dbCount = res.pagination?.totalInDb ?? res.pagination?.total ?? res.data.length;

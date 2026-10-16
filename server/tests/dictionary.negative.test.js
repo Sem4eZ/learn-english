@@ -45,12 +45,12 @@ describe('Dictionary Boundary, Security & Negative Test Suite', () => {
     assert.strictEqual(body.data.length, 1);
   });
 
-  it('5. Pagination Boundary: Huge limit (?limit=999999) is clamped to maximum limit (200)', async () => {
+  it('5. Pagination Boundary: Huge limit (?limit=999999) is clamped to maximum limit (1000)', async () => {
     const res = await fetch(`${BASE_URL}/dictionary?page=1&limit=999999`);
     assert.strictEqual(res.status, 200);
     const body = await res.json();
-    assert.strictEqual(body.pagination.limit, 200);
-    assert.ok(body.data.length <= 200);
+    assert.strictEqual(body.pagination.limit, 1000);
+    assert.ok(body.data.length <= 1000);
   });
 
   // --------------------------------------------------------------------------

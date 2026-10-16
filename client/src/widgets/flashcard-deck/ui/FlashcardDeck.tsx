@@ -36,13 +36,15 @@ interface FlashcardDeckProps {
   onNeedMore?: () => void;
 }
 
+export type FlashcardRoundMode = '15' | '30' | '45' | '60' | 'all';
+
 export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
   items,
   onFinish,
   onRefresh,
   onNeedMore,
 }) => {
-  const [roundMode, setRoundMode] = useState<'15' | '25' | 'all'>('15');
+  const [roundMode, setRoundMode] = useState<FlashcardRoundMode>('15');
   const [roundCards, setRoundCards] = useState<FlashcardItem[]>([]);
   const [remainingPool, setRemainingPool] = useState<FlashcardItem[]>([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
@@ -61,7 +63,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
 
     if (roundCards.length === 0 && remainingPool.length === 0) {
       // First round initialization
-      const targetSize = roundMode === '15' ? 15 : roundMode === '25' ? 25 : items.length;
+      const targetSize = roundMode === 'all' ? items.length : (parseInt(roundMode, 10) || 15);
       const initialBatch = items.slice(0, targetSize);
       const leftover = items.slice(targetSize);
       setRoundCards(initialBatch);
@@ -140,7 +142,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
 
   // Round progression handlers
   const handleNextRound = useCallback(() => {
-    const targetSize = roundMode === '15' ? 15 : roundMode === '25' ? 25 : remainingPool.length;
+    const targetSize = roundMode === 'all' ? remainingPool.length : (parseInt(roundMode, 10) || 15);
     const nextBatch = remainingPool.slice(0, targetSize);
     const nextPool = remainingPool.slice(targetSize);
 
@@ -172,7 +174,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
     setIsFlipped(false);
   }, []);
 
-  const handleRoundModeChange = useCallback((newMode: '15' | '25' | 'all') => {
+  const handleRoundModeChange = useCallback((newMode: FlashcardRoundMode) => {
     setRoundMode(newMode);
     if (newMode === 'all' && remainingPool.length > 0) {
       setRoundCards(prev => [...prev, ...remainingPool]);
@@ -224,10 +226,8 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
     const roundTotal = roundCards.length;
     const accuracy = roundTotal > 0 ? Math.round((roundKnownCount / roundTotal) * 100) : 100;
     const hasMoreRounds = remainingPool.length > 0;
-    const nextRoundCount = Math.min(
-      roundMode === '15' ? 15 : roundMode === '25' ? 25 : remainingPool.length,
-      remainingPool.length
-    );
+    const targetBatchSize = roundMode === 'all' ? remainingPool.length : (parseInt(roundMode, 10) || 15);
+    const nextRoundCount = Math.min(targetBatchSize, remainingPool.length);
 
     return (
       <Card className={styles.roundCompletionCard}>
@@ -291,7 +291,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
               onClick={() => {
                 onNeedMore?.();
                 onRefresh?.();
-                const targetSize = roundMode === '15' ? 15 : roundMode === '25' ? 25 : items.length;
+                const targetSize = roundMode === 'all' ? items.length : (parseInt(roundMode, 10) || 15);
                 setRoundCards(items.slice(0, targetSize));
                 setRemainingPool(items.slice(targetSize));
                 setCurrentRoundIndex(0);
@@ -362,11 +362,13 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
             <Segmented
               className={styles.modeSegmented}
               value={roundMode}
-              onChange={(val) => handleRoundModeChange(val as '15' | '25' | 'all')}
+              onChange={(val) => handleRoundModeChange(val as FlashcardRoundMode)}
               options={[
-                { label: 'По 15', value: '15' },
-                { label: 'По 25', value: '25' },
-                { label: 'Все', value: 'all' },
+                { label: '15', value: '15' },
+                { label: '30', value: '30' },
+                { label: '45', value: '45' },
+                { label: '60', value: '60' },
+                { label: `Все (${items.length})`, value: 'all' },
               ]}
             />
           </div>
