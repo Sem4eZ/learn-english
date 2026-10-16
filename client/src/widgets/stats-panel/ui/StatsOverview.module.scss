@@ -1,0 +1,53 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.header {
+  margin-bottom: 24px;
+}
+
+.title {
+  margin-bottom: 6px !important;
+}
+
+.subtitle {
+  font-size: 1rem;
+}
+
+.statCard {
+  border-radius: $radius-lg !important;
+  height: 100%;
+  transition: $transition-smooth;
+}
+
+.statHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.statTitle {
+  margin: 0 !important;
+}
+
+.statFooter {
+  font-size: 0.8rem;
+  display: block;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.accuracyFooter {
+  font-size: 0.85rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.tableCard {
+  border-radius: $radius-lg !important;
+}

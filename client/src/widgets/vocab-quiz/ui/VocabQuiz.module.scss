@@ -1,0 +1,173 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.quizContainer {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.topBar {
+  @include flex-between;
+  margin-bottom: 8px;
+}
+
+.questionCard {
+  border-radius: $radius-xl !important;
+  padding: 32px 24px;
+  background: rgba(30, 27, 75, 0.6) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+}
+
+.directionTag {
+  margin-bottom: 12px;
+}
+
+.targetWord {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+
+.phonetic {
+  font-family: monospace;
+  font-size: 1.1rem;
+  color: $secondary-color;
+  margin-bottom: 12px;
+}
+
+.promptSub {
+  font-size: 0.95rem;
+  opacity: 0.75;
+}
+
+.soundBtn {
+  font-size: 20px;
+  color: $primary-color;
+  margin-left: 8px;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.optionButton {
+  height: auto !important;
+  min-height: 64px;
+  padding: 14px 18px !important;
+  border-radius: $radius-md !important;
+  font-size: 1.05rem !important;
+  font-weight: 600;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  color: #f8fafc !important;
+  transition: $transition-smooth;
+  white-space: normal !important;
+  line-height: 1.4;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: $primary-color !important;
+    background: rgba(99, 102, 241, 0.15) !important;
+  }
+
+  &.correctOption {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: $success-color !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+  }
+
+  &.wrongOption {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: $danger-color !important;
+    color: #f87171 !important;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+  }
+}
+
+.optionIndexBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: $radius-full;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.explanationBox {
+  border-radius: $radius-md;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 14px 18px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.exampleEn {
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+}
+
+.exampleRu {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.actionRow {
+  @include flex-between;
+  margin-top: 10px;
+}
+
+.nextBtn {
+  height: 48px;
+  padding: 0 28px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: $radius-md;
+  margin-left: auto;
+}
+
+.summaryCard {
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: $radius-xl !important;
+}
+
+.summaryTrophy {
+  font-size: 52px;
+  color: $warning-color;
+  margin-bottom: 16px;
+}
+
+.summaryScore {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: $primary-color;
+  margin: 12px 0;
+}

@@ -1,0 +1,45 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.toolbar {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  margin: 0 !important;
+}
+
+.sectionSubtitle {
+  font-size: 0.85rem;
+}
+
+.addQuestionsBtn {
+  border-radius: $radius-sm;
+}
+
+.loadingContainer {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.loadingText {
+  margin-top: 20px;
+}
+
+.errorAlert {
+  border-radius: $radius-md;
+  margin: 40px 0;
+}
+
+.emptyContainer {
+  padding: 60px 0;
+}
+
+.modeSwitcher {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}

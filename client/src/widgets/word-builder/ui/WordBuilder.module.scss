@@ -1,0 +1,146 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.builderContainer {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.topBar {
+  @include flex-between;
+  margin-bottom: 8px;
+}
+
+.targetCard {
+  border-radius: $radius-xl !important;
+  padding: 32px 24px;
+  background: rgba(30, 27, 75, 0.6) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  text-align: center;
+  box-shadow: $shadow-card;
+}
+
+.meaningText {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+
+.contextSub {
+  font-size: 0.95rem;
+  opacity: 0.8;
+  font-style: italic;
+  max-width: 520px;
+  margin: 0 auto 12px;
+}
+
+.assemblyArea {
+  min-height: 84px;
+  border: 2px dashed rgba(99, 102, 241, 0.4);
+  border-radius: $radius-lg;
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.5);
+  transition: $transition-smooth;
+
+  &.correct {
+    border-color: $success-color;
+    background: rgba(16, 185, 129, 0.12);
+  }
+
+  &.wrong {
+    border-color: $danger-color;
+    background: rgba(239, 68, 68, 0.12);
+    animation: shake 0.35s ease;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.emptySlotHint {
+  font-style: italic;
+  font-size: 0.95rem;
+  opacity: 0.5;
+}
+
+.letterTile {
+  width: 48px;
+  height: 52px;
+  border-radius: $radius-md !important;
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.assembledTile {
+  composes: letterTile;
+  background: $primary-color !important;
+  border-color: $primary-color !important;
+  color: #fff !important;
+}
+
+.scrambledPool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: $radius-lg;
+}
+
+.availableTile {
+  composes: letterTile;
+  background: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(99, 102, 241, 0.3) !important;
+  color: #f1f5f9 !important;
+
+  &:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.3) !important;
+    border-color: $primary-color !important;
+  }
+
+  &:disabled {
+    opacity: 0.25 !important;
+    cursor: not-allowed;
+  }
+}
+
+.actionsRow {
+  @include flex-between;
+  margin-top: 10px;
+}
+
+.summaryCard {
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: $radius-xl !important;
+}
+
+.summaryTrophy {
+  font-size: 52px;
+  color: $warning-color;
+  margin-bottom: 16px;
+}

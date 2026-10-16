@@ -1,0 +1,328 @@
+import React, { useState, useEffect } from 'react';
+import { Card, Button, Typography, Space, Tag, Progress, Alert } from 'antd';
+import { 
+  CustomerServiceOutlined, 
+  SoundOutlined, 
+  CheckOutlined, 
+  ReloadOutlined, 
+  ArrowRightOutlined,
+  ThunderboltFilled,
+  TrophyFilled
+} from '@ant-design/icons';
+import { soundEffects } from '@/shared/lib/audio';
+import { fireCelebration } from '@/shared/lib/confetti';
+import styles from './AudioChallenge.module.scss';
+
+const { Title, Text, Paragraph } = Typography;
+
+export interface AudioItem {
+  id: number | string;
+  sentence: string;
+  translation: string;
+  hint?: string;
+  level?: string;
+}
+
+interface AudioChallengeProps {
+  items: AudioItem[];
+  onComplete?: (score: number) => void;
+  onRefresh?: () => void;
+}
+
+// Clean punctuation and split into tokens
+function tokenizeSentence(sentence: string): string[] {
+  return sentence
+    .trim()
+    .split(/\s+/)
+    .map(w => w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, ''))
+    .filter(Boolean);
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const res = [...arr];
+  for (let i = res.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [res[i], res[j]] = [res[j], res[i]];
+  }
+  return res;
+}
+
+export const AudioChallenge: React.FC<AudioChallengeProps> = ({
+  items,
+  onComplete,
+  onRefresh,
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
+  const [availableTokens, setAvailableTokens] = useState<{ id: number; word: string }[]>([]);
+  const [speed, setSpeed] = useState<number>(0.95);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [score, setScore] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
+
+  const currentItem = items[currentIndex];
+
+  useEffect(() => {
+    if (!currentItem) return;
+    const tokens = tokenizeSentence(currentItem.sentence);
+    const shuffled = shuffle(tokens).map((word, idx) => ({ id: idx, word }));
+    setAvailableTokens(shuffled);
+    setSelectedTokens([]);
+    setIsVerified(false);
+    setIsCorrect(false);
+
+    // Auto-play audio on question load
+    const timer = setTimeout(() => {
+      soundEffects.speak(currentItem.sentence, { rate: speed });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [currentIndex, items]);
+
+  const handlePlayAudio = (rate = speed) => {
+    if (!currentItem) return;
+    soundEffects.speak(currentItem.sentence, { rate });
+  };
+
+  const handleSelectWord = (token: { id: number; word: string }) => {
+    if (isVerified) return;
+    setSelectedTokens(prev => [...prev, token.word]);
+    setAvailableTokens(prev => prev.filter(t => t.id !== token.id));
+  };
+
+  const handleRemoveWord = (word: string, index: number) => {
+    if (isVerified) return;
+    setSelectedTokens(prev => prev.filter((_, i) => i !== index));
+    setAvailableTokens(prev => [...prev, { id: Date.now() + Math.random(), word }]);
+  };
+
+  const handleVerify = () => {
+    if (!currentItem) return;
+    const targetTokens = tokenizeSentence(currentItem.sentence);
+    const userTokens = selectedTokens.map(w => w.toLowerCase());
+    const expectedTokens = targetTokens.map(w => w.toLowerCase());
+
+    const isMatch = userTokens.join(' ') === expectedTokens.join(' ');
+    setIsVerified(true);
+    setIsCorrect(isMatch);
+
+    if (isMatch) {
+      soundEffects.playCorrect();
+      setScore(prev => prev + 20);
+    } else {
+      soundEffects.playWrong();
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex + 1 >= items.length) {
+      fireCelebration();
+      setIsFinished(true);
+      onComplete?.(score + (isCorrect ? 20 : 0));
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  if (!items || items.length === 0) {
+    return (
+      <Card className={styles.emptyCard}>
+        <Title level={4}>Нет доступных заданий по аудированию</Title>
+        <Text type="secondary">Переключитесь на другой курс или выберите другие задания.</Text>
+      </Card>
+    );
+  }
+
+  if (isFinished) {
+    return (
+      <Card className={styles.finishCard}>
+        <TrophyFilled className={styles.finishTrophy} />
+        <Title level={2}>Аудиотренировка завершена!</Title>
+        <Paragraph type="secondary">
+          Заработано <Tag color="cyan">+{score} XP</Tag> за понимание на слух!
+        </Paragraph>
+        <Space size="middle">
+          <Button
+            type="primary"
+            size="large"
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              setCurrentIndex(0);
+              setScore(0);
+              setIsFinished(false);
+            }}
+          >
+            Начать заново
+          </Button>
+          {onRefresh && (
+            <Button size="large" onClick={onRefresh}>
+              Новые задания
+            </Button>
+          )}
+        </Space>
+      </Card>
+    );
+  }
+
+  return (
+    <div className={styles.challengeContainer}>
+      {/* Top Status */}
+      <div className={styles.controlsRow}>
+        <Text type="secondary" strong>
+          Аудиозадание {currentIndex + 1} из {items.length}
+        </Text>
+        <Space>
+          {currentItem.level && <Tag color="purple">{currentItem.level}</Tag>}
+          <Tag color="cyan">
+            <ThunderboltFilled style={{ marginRight: 4 }} />
+            +{score} XP
+          </Tag>
+        </Space>
+      </div>
+
+      <Progress
+        percent={Math.round(((currentIndex) / items.length) * 100)}
+        strokeColor="#06b6d4"
+        showInfo={false}
+      />
+
+      {/* Big Audio Player Card */}
+      <Card className={styles.audioPlayerCard}>
+        <Title level={4} style={{ marginBottom: 16 }}>
+          🎧 Послушайте фразу и соберите предложение
+        </Title>
+
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<CustomerServiceOutlined />}
+          onClick={() => handlePlayAudio(speed)}
+          className={styles.bigPlayButton}
+        />
+
+        <div>
+          <Space size="middle" className={styles.speedSelector}>
+            <Button
+              type={speed === 0.95 ? 'primary' : 'default'}
+              size="small"
+              onClick={() => {
+                setSpeed(0.95);
+                handlePlayAudio(0.95);
+              }}
+            >
+              ⚡ 1.0x (Нормально)
+            </Button>
+            <Button
+              type={speed === 0.72 ? 'primary' : 'default'}
+              size="small"
+              onClick={() => {
+                setSpeed(0.72);
+                handlePlayAudio(0.72);
+              }}
+            >
+              🐢 0.75x (Медленно)
+            </Button>
+          </Space>
+        </div>
+      </Card>
+
+      {/* Answer Drop Area */}
+      <div 
+        className={`${styles.answerArea} ${
+          isVerified ? (isCorrect ? styles.correct : styles.wrong) : ''
+        }`}
+      >
+        {selectedTokens.length === 0 ? (
+          <Text type="secondary" className={styles.emptyAnswerHint}>
+            Нажимайте на слова внизу, чтобы составить предложение...
+          </Text>
+        ) : (
+          selectedTokens.map((word, idx) => (
+            <Button
+              key={idx}
+              type="primary"
+              className={styles.selectedWordChip}
+              onClick={() => handleRemoveWord(word, idx)}
+            >
+              {word}
+            </Button>
+          ))
+        )}
+      </div>
+
+      {/* Available Word Chips Pool */}
+      <div className={styles.wordChipsPool}>
+        {availableTokens.map((token) => (
+          <Button
+            key={token.id}
+            className={styles.wordChip}
+            onClick={() => handleSelectWord(token)}
+            disabled={isVerified}
+          >
+            {token.word}
+          </Button>
+        ))}
+      </div>
+
+      {/* Verification Feedback */}
+      {isVerified && (
+        <Alert
+          type={isCorrect ? 'success' : 'error'}
+          showIcon
+          message={isCorrect ? 'Отлично! Вы верно собрали предложение (+20 XP)' : 'Не совсем точно'}
+          description={
+            <div>
+              <div style={{ marginTop: 4 }}>
+                <strong>Оригинал:</strong> {currentItem.sentence}
+              </div>
+              <div style={{ marginTop: 2, opacity: 0.85 }}>
+                <strong>Перевод:</strong> {currentItem.translation}
+              </div>
+            </div>
+          }
+          className={styles.feedbackBox}
+        />
+      )}
+
+      {/* Action Buttons */}
+      <div className={styles.controlsRow}>
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={() => {
+            const tokens = tokenizeSentence(currentItem.sentence);
+            const shuffled = shuffle(tokens).map((word, idx) => ({ id: idx, word }));
+            setAvailableTokens(shuffled);
+            setSelectedTokens([]);
+            setIsVerified(false);
+          }}
+          disabled={isVerified}
+        >
+          Сбросить
+        </Button>
+
+        {!isVerified ? (
+          <Button
+            type="primary"
+            size="large"
+            icon={<CheckOutlined />}
+            onClick={handleVerify}
+            disabled={selectedTokens.length === 0}
+            style={{ borderRadius: 12, padding: '0 32px' }}
+          >
+            Проверить
+          </Button>
+        ) : (
+          <Button
+            type="primary"
+            size="large"
+            icon={<ArrowRightOutlined />}
+            onClick={handleNext}
+            style={{ borderRadius: 12, padding: '0 32px', background: '#10b981', borderColor: '#10b981' }}
+          >
+            Следующее ➔
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};

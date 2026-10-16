@@ -1,0 +1,155 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.sprintContainer {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.topBar {
+  @include flex-between;
+  margin-bottom: 8px;
+}
+
+.timerPill {
+  font-size: 1.15rem;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: $radius-full;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &.urgent {
+    animation: pulseTimer 1s infinite alternate;
+  }
+}
+
+@keyframes pulseTimer {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+
+.sprintCard {
+  border-radius: $radius-xl !important;
+  padding: 40px 24px;
+  text-align: center;
+  background: rgba(30, 27, 75, 0.65) !important;
+  border: 2px solid rgba(99, 102, 241, 0.3) !important;
+  box-shadow: $shadow-card;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  &.feedbackCorrect {
+    border-color: $success-color !important;
+    background: rgba(16, 185, 129, 0.15) !important;
+  }
+
+  &.feedbackWrong {
+    border-color: $danger-color !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+  }
+}
+
+.comboBadge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: $radius-full;
+}
+
+.wordDisplay {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.translationDisplay {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 8px;
+}
+
+.pairHint {
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.controlsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.btnAction {
+  height: 64px !important;
+  border-radius: $radius-md !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.1s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.btnFalse {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: $danger-color !important;
+  color: #f87171 !important;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.3) !important;
+  }
+}
+
+.btnTrue {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: $success-color !important;
+  color: #34d399 !important;
+
+  &:hover {
+    background: rgba(16, 185, 129, 0.3) !important;
+  }
+}
+
+.keyHint {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  text-transform: uppercase;
+  margin-left: 6px;
+}
+
+.summaryCard {
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: $radius-xl !important;
+}
+
+.summaryTrophy {
+  font-size: 52px;
+  color: $warning-color;
+  margin-bottom: 16px;
+}
+
+.summaryScore {
+  font-size: 3rem;
+  font-weight: 900;
+  color: $primary-color;
+  margin: 12px 0;
+}

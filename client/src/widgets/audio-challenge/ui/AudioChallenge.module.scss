@@ -1,0 +1,120 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.challengeContainer {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.audioPlayerCard {
+  border-radius: $radius-xl !important;
+  text-align: center;
+  padding: 32px 24px;
+  background: rgba(30, 27, 75, 0.5) !important;
+  border: 1px solid rgba(99, 102, 241, 0.25) !important;
+  @include glassmorphism(16px);
+}
+
+.bigPlayButton {
+  width: 80px;
+  height: 80px;
+  border-radius: $radius-full;
+  font-size: 32px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+}
+
+.speedSelector {
+  margin-top: 12px;
+}
+
+.answerArea {
+  min-height: 80px;
+  border: 2px dashed rgba(99, 102, 241, 0.3);
+  border-radius: $radius-md;
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.15);
+  transition: $transition-smooth;
+
+  &.correct {
+    border-color: $success-color;
+    background: rgba(16, 185, 129, 0.08);
+  }
+
+  &.wrong {
+    border-color: $danger-color;
+    background: rgba(239, 68, 68, 0.08);
+  }
+}
+
+.wordChipsPool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding: 16px;
+}
+
+.wordChip {
+  height: 42px;
+  padding: 0 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.feedbackBox {
+  margin-top: 12px;
+  border-radius: $radius-md;
+}
+
+.controlsRow {
+  @include flex-between;
+  margin-top: 8px;
+}
+
+.selectedWordChip {
+  height: 42px;
+  padding: 0 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: $radius-md;
+  cursor: pointer;
+  background: $primary-color !important;
+  border-color: $primary-color !important;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.emptyAnswerHint {
+  font-style: italic;
+  margin: auto;
+}
+
+.emptyCard, .finishCard {
+  text-align: center;
+  padding: 50px 24px;
+  border-radius: $radius-xl !important;
+}
+
+.finishTrophy {
+  font-size: 48px;
+  color: $warning-color;
+  margin-bottom: 16px;
+}

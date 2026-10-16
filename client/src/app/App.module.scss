@@ -1,0 +1,32 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.layoutDark {
+  min-height: 100vh;
+  background: $bg-dark-radial;
+  background-attachment: fixed;
+}
+
+.layoutLight {
+  min-height: 100vh;
+  background: $bg-light-radial;
+  background-attachment: fixed;
+}
+
+.content {
+  padding: 28px 36px;
+  max-width: 1760px;
+  margin: 0 auto;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    padding: 16px 14px;
+  }
+}
+
+.footer {
+  text-align: center;
+  background: transparent;
+  opacity: 0.6;
+  font-size: 0.85rem;
+}

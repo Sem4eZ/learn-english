@@ -1,0 +1,52 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.card {
+  border-radius: $radius-xl !important;
+  box-shadow: $shadow-card !important;
+  margin-bottom: 24px;
+}
+
+.header {
+  @include flex-between;
+  margin-bottom: 16px;
+}
+
+.tag {
+  font-size: 0.85rem;
+  padding: 3px 10px;
+  border-radius: $radius-sm;
+}
+
+.audioButton {
+  font-size: 18px;
+  color: $primary-color;
+}
+
+.contextBox {
+  background: $primary-light;
+  border-left: 4px solid $primary-color;
+  padding: 12px 16px;
+  border-radius: 0 10px 10px 0;
+  margin-bottom: 20px;
+}
+
+.contextLabel {
+  font-size: 0.8rem;
+  color: $primary-color;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contextText {
+  margin: 4px 0 0 0 !important;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+.questionTitle {
+  font-weight: 700 !important;
+  margin: 8px 0 20px 0 !important;
+  line-height: 1.4 !important;
+}

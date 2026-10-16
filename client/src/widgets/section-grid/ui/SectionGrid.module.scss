@@ -1,0 +1,116 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.header {
+  margin-bottom: 28px;
+}
+
+.title {
+  margin-bottom: 6px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  opacity: 0.8;
+}
+
+.sectionCard {
+  height: 100%;
+  border-radius: $radius-xl !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+  backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #06b6d4, #10b981);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.45), 0 0 24px rgba(99, 102, 241, 0.15) !important;
+
+    &::before {
+      opacity: 1;
+    }
+
+    .iconWrapper {
+      transform: scale(1.08) rotate(3deg);
+    }
+  }
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cardTop {
+  @include flex-between;
+  margin-bottom: 18px;
+}
+
+.iconWrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: $radius-lg;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  @include flex-center;
+  transition: transform 0.3s ease;
+}
+
+.cardTitle {
+  margin-bottom: 10px !important;
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  line-height: 1.35;
+}
+
+.cardDescription {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  min-height: 52px;
+  opacity: 0.85;
+}
+
+.cardFooter {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.trainButton {
+  border-radius: $radius-md;
+  font-weight: 600;
+  height: 42px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.38);
+  }
+}

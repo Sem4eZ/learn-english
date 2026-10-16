@@ -1,0 +1,318 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.deckContainer {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.topBar {
+  @include flex-between;
+  margin-bottom: 8px;
+}
+
+.cardWrapper {
+  perspective: 1200px;
+  width: 100%;
+  height: 420px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+
+  &.flipped {
+    transform: rotateY(180deg);
+  }
+}
+
+.cardFace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: $radius-xl;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  transition: $transition-smooth;
+}
+
+.cardFront {
+  composes: cardFace;
+  background: radial-gradient(circle at top left, #272262 0%, #171439 100%);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  transform: rotateY(0deg);
+
+  &:hover {
+    border-color: rgba(99, 102, 241, 0.75);
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+  }
+}
+
+.cardBack {
+  composes: cardFace;
+  background: radial-gradient(circle at top left, #0e2e28 0%, #091a18 100%);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  transform: rotateY(180deg);
+
+  &:hover {
+    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+  }
+}
+
+.cardHeader {
+  @include flex-between;
+  width: 100%;
+}
+
+.cardContent {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.mainWord {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.phonetic {
+  font-size: 1.15rem;
+  color: #a5b4fc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.contextSnippet {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 640px;
+  line-height: 1.55;
+  font-style: italic;
+  margin-top: 6px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: $radius-md;
+}
+
+.translationText {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: #34d399;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.grammarNote {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: $radius-md;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 660px;
+  text-align: left;
+  color: #d1fae5;
+}
+
+.flipHint {
+  font-size: 0.85rem;
+  opacity: 0.6;
+  margin-top: auto;
+}
+
+.actionControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+/* 4 SRS Rating Buttons Panel */
+.srsRatingPanel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.srsRatingBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 10px;
+  min-height: 72px;
+  border-radius: $radius-lg;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  background: rgba(30, 41, 59, 0.85);
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.again {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.08);
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: #ef4444;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+    }
+
+    .ratingTitle {
+      color: #ef4444;
+    }
+  }
+
+  &.hard {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.08);
+
+    &:hover {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: #f59e0b;
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25);
+    }
+
+    .ratingTitle {
+      color: #f59e0b;
+    }
+  }
+
+  &.good {
+    border-color: rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.08);
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.18);
+      border-color: #3b82f6;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
+    }
+
+    .ratingTitle {
+      color: #3b82f6;
+    }
+  }
+
+  &.easy {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.08);
+
+    &:hover {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: #10b981;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+    }
+
+    .ratingTitle {
+      color: #10b981;
+    }
+  }
+}
+
+.ratingHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ratingTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.shortcutBadge {
+  font-size: 0.75rem;
+  opacity: 0.65;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.ratingSubTime {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+.btnAction {
+  border-radius: $radius-md;
+  height: 48px;
+  padding: 0 28px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.summaryCard {
+  text-align: center;
+  padding: 56px 32px;
+  border-radius: $radius-xl;
+  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.summaryTrophy {
+  font-size: 56px;
+  color: $warning-color;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 12px rgba(245, 158, 11, 0.4));
+}
+
+.summarySubtitle {
+  font-size: 1.15rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.summaryActions {
+  margin-top: 28px;
+}
+
+.soundIconFront {
+  font-size: 22px;
+  color: #818cf8;
+}
+
+.soundIconBack {
+  font-size: 22px;
+  color: #34d399;
+}
+
+.backDetailText {
+  margin: 6px 0;
+  font-size: 1.05rem;
+  opacity: 0.9;
+  max-width: 640px;
+}

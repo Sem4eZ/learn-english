@@ -1,0 +1,161 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.header {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.title {
+  margin-bottom: 4px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+.searchBar {
+  margin-bottom: 20px;
+}
+
+.filtersRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.wordsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+}
+
+.wordCard {
+  border-radius: $radius-lg !important;
+  transition: $transition-smooth;
+  box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.1) !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px -4px rgba(99, 102, 241, 0.2) !important;
+  }
+}
+
+.cardTop {
+  @include flex-between;
+  margin-bottom: 12px;
+}
+
+.wordHeading {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0 !important;
+}
+
+.phonetic {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: $secondary-color;
+  margin-left: 8px;
+}
+
+.translation {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: $success-color;
+  margin-bottom: 8px;
+}
+
+.definition {
+  font-size: 0.88rem;
+  opacity: 0.8;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+
+.exampleBox {
+  background: rgba(99, 102, 241, 0.08);
+  border-left: 3px solid $primary-color;
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  margin-top: 8px;
+}
+
+.exampleEn {
+  font-size: 0.88rem;
+  font-style: italic;
+  margin-bottom: 4px;
+}
+
+.exampleRu {
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+.trainCardsBtn {
+  border-radius: $radius-sm;
+  background: $success-color !important;
+  border-color: $success-color !important;
+}
+
+.quizBtn {
+  border-radius: $radius-sm;
+  background: $primary-color !important;
+  border-color: $primary-color !important;
+  font-weight: 700;
+}
+
+.searchInput {
+  border-radius: $radius-md;
+}
+
+.searchIcon {
+  color: $primary-color;
+  margin-right: 6px;
+}
+
+.sectionSelect {
+  min-width: 180px;
+}
+
+.levelSelect {
+  min-width: 140px;
+}
+
+.favIconActive {
+  color: #f59e0b;
+}
+
+.favIconInactive {
+  color: #94a3b8;
+}
+
+.soundIcon {
+  color: $primary-color;
+}
+
+.loadingWrapper {
+  text-align: center;
+  padding: 80px 0;
+}
+
+.emptyCard {
+  text-align: center;
+  padding: 60px 20px;
+  border-radius: $radius-xl !important;
+}
+
+.badgeRow {
+  margin-bottom: 10px;
+}

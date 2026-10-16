@@ -1,0 +1,89 @@
+@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/mixins' as *;
+
+.container {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.optionButton {
+  height: auto;
+  min-height: 56px;
+  padding: 12px 18px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.05rem;
+  border-radius: $radius-md;
+  white-space: normal;
+  transition: $transition-smooth;
+
+  &.correct {
+    border-color: $success-color !important;
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: $success-color !important;
+    font-weight: 700 !important;
+  }
+
+  &.wrong {
+    border-color: $danger-color !important;
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: $danger-color !important;
+  }
+}
+
+.optionLetter {
+  opacity: 0.6;
+  margin-right: 10px;
+}
+
+.explanationCard {
+  margin-top: 16px;
+  border-radius: 14px !important;
+  transition: $transition-smooth;
+
+  &.correct {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+  }
+
+  &.wrong {
+    background-color: rgba(239, 68, 68, 0.05) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+  }
+}
+
+.cardHeader {
+  @include flex-between;
+}
+
+.explanationText {
+  margin: 8px 0 4px 0 !important;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.ruleAlert {
+  border-radius: 10px;
+}
+
+.phoneticsTip {
+  font-size: 0.85rem;
+}
+
+.nextButtonWrapper {
+  text-align: right;
+  margin-top: 12px;
+}
+
+.nextButton {
+  border-radius: $radius-sm;
+  padding: 0 24px;
+}

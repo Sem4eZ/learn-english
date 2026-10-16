@@ -1,0 +1,50 @@
+// Global Styles & Resets
+@use './variables' as *;
+@use './mixins' as *;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: $font-family-base;
+  overflow-x: hidden;
+}
+
+// Custom Scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.3);
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(150, 150, 150, 0.5);
+  }
+}
+
+// Ant Design Card Polish
+.ant-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+.ant-card-hoverable:hover {
+  transform: translateY(-4px);
+}
+
+// Responsive navigation hide on mobile
+@include tablet {
+  .header-nav {
+    display: none !important;
+  }
+}
