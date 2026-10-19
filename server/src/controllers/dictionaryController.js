@@ -142,7 +142,7 @@ async function getDictionary(req, res) {
       ${orderBySql}
       LIMIT ? OFFSET ?
     `);
-    const data = await listStmt.all(...listParams);
+    let data = await listStmt.all(...listParams);
 
     // Total words matching filter in dictionary table (without practice due-date exclusion)
     let baseWhereClauses = [];
@@ -169,6 +169,29 @@ async function getDictionary(req, res) {
     const totalOverallRow = await db.prepare('SELECT COUNT(*) as count FROM dictionary').get();
     const totalOverall = totalOverallRow ? totalOverallRow.count : 0;
 
+    // Infinite Learning & Review / Cram Fallback:
+    // If practice mode returned 0 words (user has completed all current repetitions for this level),
+    // but the level HAS words in the dictionary:
+    // Seamlessly fall back to returning words from this level sorted by earliest due date & fewest reps!
+    // This allows infinite practice anytime without locking the user out with an empty screen.
+    let isCramMode = false;
+    if (mode === 'practice' && data.length === 0 && totalInDb > 0) {
+      isCramMode = true;
+      const fallbackStmt = db.prepare(`
+        SELECT d.*, s.grade as srs_grade, s.reps as srs_reps, s.due_date as srs_due_date, s.interval as srs_interval
+        FROM dictionary d
+        LEFT JOIN srs_reviews s ON d.id = s.word_id AND s.user_id = ?
+        ${baseWhereSql}
+        ORDER BY 
+          s.due_date ASC,
+          s.reps ASC,
+          d.id DESC
+        LIMIT ? OFFSET ?
+      `);
+      data = await fallbackStmt.all(userId, ...baseParams, limitNum, offset);
+      total = totalInDb;
+    }
+
     res.json({
       success: true,
       data,
@@ -178,7 +201,8 @@ async function getDictionary(req, res) {
         total,
         pages: Math.ceil(total / limitNum) || 1,
         totalInDb,
-        totalOverall
+        totalOverall,
+        isCramMode
       }
     });
   } catch (err) {
@@ -203,19 +227,26 @@ async function toggleFavorite(req, res) {
 
 async function generateDictionaryWords(req, res) {
   try {
-    const { level = 'A1', sectionId = 'general', count = 35 } = req.body;
+    const { level = 'A1', sectionId = 'general', count = 35 } = req.body || {};
     const countNum = Math.max(1, Math.min(50, parseInt(count, 10) || 35));
     
     const geminiService = require('../services/geminiService');
-    const newWords = await geminiService.generateVocabulary(level, sectionId, countNum);
+    let newWords = [];
+    try {
+      newWords = await geminiService.generateVocabulary(level, sectionId, countNum);
+    } catch (genErr) {
+      console.warn('Primary vocab generation note:', genErr.message);
+    }
 
     const countRes = await db.prepare('SELECT COUNT(*) as count FROM dictionary').get();
     const totalCount = countRes ? countRes.count : 0;
 
     res.json({
       success: true,
-      message: `Словарь пополнен на ${newWords.length} новых слов!`,
-      data: newWords,
+      message: newWords && newWords.length > 0 
+        ? `Словарь пополнен на ${newWords.length} новых слов!` 
+        : `Все доступные слова уровня ${level} уже в словаре. Вы можете тренировать их в режиме свободного закрепления!`,
+      data: newWords || [],
       totalCount
     });
   } catch (err) {
@@ -295,10 +326,10 @@ async function recordSrsReview(req, res) {
         reviewed_at = excluded.reviewed_at
     `).run(userId, wordId, gradeNum, reps, nextIntervalDays, ef, formattedDueDate);
 
-    // Award XP immediately
+    // Award XP and record activity & streak immediately
     const xpReward = gradeNum === 4 ? 25 : gradeNum === 3 ? 15 : gradeNum === 2 ? 10 : 5;
-    await db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`).run(xpReward, userId);
-    const updatedUser = await db.prepare('SELECT xp, streak FROM users WHERE id = ?').get(userId);
+    const streakService = require('../services/streakService');
+    const activityResult = await streakService.recordUserActivity(userId, xpReward);
 
     res.json({
       success: true,
@@ -308,8 +339,8 @@ async function recordSrsReview(req, res) {
         ef,
         dueDate: dueDate.toISOString(),
         xpEarned: xpReward,
-        totalXp: updatedUser ? updatedUser.xp : xpReward,
-        streak: updatedUser ? updatedUser.streak : 1
+        totalXp: activityResult.xp,
+        streak: activityResult.streak
       }
     });
   } catch (err) {

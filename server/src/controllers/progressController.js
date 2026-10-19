@@ -27,35 +27,16 @@ async function recordAnswer(req, res) {
     const isCorrect = question.correct_index === Number(selectedIndex);
     const xpReward = isCorrect ? 15 : 0;
 
-    // Update user stats
-    const todayStr = new Date().toISOString().slice(0, 10);
-    let streak = user.streak || 1;
-    let xp = user.xp + xpReward;
-
-    if (user.last_active_date) {
-      const last = new Date(user.last_active_date);
-      const today = new Date(todayStr);
-      const diffDays = Math.ceil(Math.abs(today - last) / (1000 * 60 * 60 * 24));
-
-      if (diffDays === 1) {
-        streak += 1;
-      } else if (diffDays > 1) {
-        streak = 1;
-      }
-    }
-
-    await db.prepare(`
-      UPDATE users 
-      SET xp = ?, streak = ?, last_active_date = ?
-      WHERE id = ?
-    `).run(xp, streak, todayStr, userId);
-
     // Save user answer
     const insertAnswer = db.prepare(`
       INSERT INTO user_answers (user_id, question_id, selected_index, is_correct)
       VALUES (?, ?, ?, ?)
     `);
     await insertAnswer.run(userId, questionId, selectedIndex, isCorrect ? 1 : 0);
+
+    // Update user stats & streak via centralized streakService
+    const streakService = require('../services/streakService');
+    const activityResult = await streakService.recordUserActivity(userId, xpReward);
 
     res.json({
       success: true,
@@ -66,8 +47,8 @@ async function recordAnswer(req, res) {
         grammarRule: question.grammar_rule,
         pronunciationTip: question.pronunciation_tip,
         xpEarned: xpReward,
-        totalXp: xp,
-        streak
+        totalXp: activityResult.xp,
+        streak: activityResult.streak
       }
     });
   } catch (err) {
@@ -302,13 +283,21 @@ async function getStats(req, res) {
     else if (level >= 5) rankTitle = 'Знаток (Fluent)';
     else if (level >= 3) rankTitle = 'Практик (Practitioner)';
 
+    // Calculate dynamic streak and ensure DB is in sync
+    const streakService = require('../services/streakService');
+    const userStreak = await streakService.getUserStreak(userId);
+    if (user.streak !== userStreak) {
+      await db.prepare('UPDATE users SET streak = ? WHERE id = ?').run(userStreak, userId);
+      user.streak = userStreak;
+    }
+
     // Badges / Milestones earned
     const badges = [
       { id: 'first_step', title: 'Первый шаг', desc: 'Первая тренировка пройдена', icon: 'RocketOutlined', unlocked: totalInteractions > 0 },
       { id: 'words_50', title: 'Книжный червь', desc: 'Выучено более 50 слов', icon: 'BookOutlined', unlocked: totalWordsLearned >= 50 },
       { id: 'words_100', title: 'Словарный запас', desc: 'Выучено более 100 слов', icon: 'AppstoreOutlined', unlocked: totalWordsLearned >= 100 },
       { id: 'sniper', title: 'Снайпер точности', desc: 'Точность ответов выше 80%', icon: 'AimOutlined', unlocked: overallAccuracy >= 80 && totalInteractions >= 10 },
-      { id: 'streak_3', title: 'Огненная серия', desc: 'Серия занятий от 2 дней', icon: 'FireOutlined', unlocked: (user.streak || 1) >= 2 },
+      { id: 'streak_3', title: 'Огненная серия', desc: 'Серия занятий от 2 дней', icon: 'FireOutlined', unlocked: userStreak >= 2 },
       { id: 'level_5', title: 'Знаток языка', desc: 'Достигнут 5-й уровень', icon: 'TrophyOutlined', unlocked: level >= 5 },
       { id: 'memory_vault', title: 'Крепкая память', desc: 'Более 20 слов в повторении', icon: 'CrownOutlined', unlocked: (masteredWords + reviewWords) >= 20 }
     ];
@@ -323,7 +312,7 @@ async function getStats(req, res) {
         levelPercent,
         progressXP,
         neededXP,
-        streak: user.streak || 1,
+        streak: userStreak,
         totalAnswered: totalInteractions,
         correctAnswered: totalCorrectInteractions,
         accuracy: overallAccuracy,
@@ -362,30 +351,25 @@ async function getHistory(req, res) {
       return res.json({ success: true, data: [] });
     }
     const userId = user.id;
-    const mistakesOnly = req.query.mistakesOnly === 'true';
 
-    // 1. Fetch grammar answers
-    let grammarSql = `
+    // Fetch ONLY actual mistakes: incorrect grammar answers (is_correct = 0) and low-grade vocabulary reviews (grade <= 2)
+    const grammarSql = `
       SELECT 
         'grammar' as type,
-        ua.id, ua.selected_index, ua.is_correct, ua.answered_at,
+        ua.id, ua.selected_index, 0 as is_correct, ua.answered_at,
         q.id as question_id, q.section_id, q.level, q.question_text, 
         q.options_json, q.correct_index, q.explanation, q.grammar_rule,
         NULL as word, NULL as translation, NULL as transcription, NULL as srs_grade, NULL as reps
       FROM user_answers ua
       JOIN questions q ON ua.question_id = q.id
-      WHERE ua.user_id = ?
+      WHERE ua.user_id = ? AND ua.is_correct = 0
     `;
-    if (mistakesOnly) {
-      grammarSql += ' AND ua.is_correct = 0 ';
-    }
 
-    // 2. Fetch vocabulary reviews
-    let vocabSql = `
+    const vocabSql = `
       SELECT 
         'vocab' as type,
         s.id, NULL as selected_index, 
-        (CASE WHEN s.grade >= 3 THEN 1 ELSE 0 END) as is_correct,
+        0 as is_correct,
         s.reviewed_at as answered_at,
         s.word_id as question_id, d.section_id, d.level, 
         d.word as question_text,
@@ -395,11 +379,8 @@ async function getHistory(req, res) {
         d.word, d.translation, d.transcription, s.grade as srs_grade, s.reps
       FROM srs_reviews s
       JOIN dictionary d ON s.word_id = d.id
-      WHERE s.user_id = ?
+      WHERE s.user_id = ? AND s.grade <= 2
     `;
-    if (mistakesOnly) {
-      vocabSql += ' AND s.grade <= 2 ';
-    }
 
     const grammarRows = await db.prepare(grammarSql).all(userId);
     const vocabRows = await db.prepare(vocabSql).all(userId);

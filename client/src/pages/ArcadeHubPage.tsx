@@ -49,6 +49,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedSection, setSelectedSection] = useState<string>(initialCategory || 'all');
   const [totalInDb, setTotalInDb] = useState<number>(0);
+  const [isCramMode, setIsCramMode] = useState<boolean>(false);
   const isReplenishingRef = useRef<boolean>(false);
 
   // Load sections if not passed via props
@@ -73,11 +74,12 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
           const fresh = res.data.filter(w => !existingIds.has(w.id));
           return [...prev, ...fresh];
         });
+        message.success(res.message || `Добавлено ${res.data.length} новых слов!`);
         return res.data;
       }
       return [];
     } catch (err) {
-      console.warn('Silent auto-replenishment note:', err);
+      console.warn('Auto-replenishment note:', err);
       return [];
     } finally {
       isReplenishingRef.current = false;
@@ -87,19 +89,34 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   const fetchWords = async () => {
     setLoading(true);
     try {
-      const res = await dictionaryApi.getDictionary({
+      let res = await dictionaryApi.getDictionary({
         level: selectedLevel,
         sectionId: selectedSection,
         mode: 'practice',
         limit: 1000
       });
-      setWords(res.data);
-      const dbCount = res.pagination?.totalInDb ?? res.pagination?.total ?? res.data.length;
+
+      // Infinite Learning Fallback:
+      // If practice mode returned 0 words (user has completed all current repetitions for this level),
+      // fetch all available words for this level so the user can freely practice anytime!
+      if (!res.data || res.data.length === 0) {
+        res = await dictionaryApi.getDictionary({
+          level: selectedLevel,
+          sectionId: selectedSection,
+          limit: 1000
+        });
+        setIsCramMode(true);
+      } else {
+        setIsCramMode(Boolean(res.pagination?.isCramMode));
+      }
+
+      setWords(res.data || []);
+      const dbCount = res.pagination?.totalInDb ?? res.pagination?.total ?? res.data?.length ?? 0;
       setTotalInDb(dbCount);
-      if (res.data.length < 30) {
+      if ((res.data || []).length < 20) {
         handleNeedMoreWords(35);
       }
-      return res.data;
+      return res.data || [];
     } catch (err) {
       console.error('Failed to load arcade words:', err);
       return [];
@@ -421,23 +438,17 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
                 </div>
 
                 <div className={styles.toolbarRight}>
-                  <div className={styles.gradeFilter}>
-                    <span className={styles.gradeLabel}>Грейд:</span>
-                    <Select
-                      value={selectedLevel}
-                      onChange={setSelectedLevel}
-                      className={styles.gradeSelect}
-                      options={[
-                        { label: 'Все уровни', value: 'all' },
-                        { label: 'A1 (Beginner)', value: 'A1' },
-                        { label: 'A2 (Elementary)', value: 'A2' },
-                        { label: 'B1 (Intermediate)', value: 'B1' },
-                        { label: 'B2 (Upper-Inter.)', value: 'B2' },
-                        { label: 'C1 (Advanced)', value: 'C1' },
-                      ]}
-                    />
-                  </div>
-                  <Tag color="purple" className={styles.gradeCountTag}>
+                  {isCramMode && (
+                    <Tag color="green" className={styles.gradeCountTag}>
+                      🌟 Свободное повторение
+                    </Tag>
+                  )}
+                  {selectedLevel !== 'all' && (
+                    <Tag color="purple" className={styles.gradeCountTag}>
+                      Уровень {selectedLevel}
+                    </Tag>
+                  )}
+                  <Tag color="blue" className={styles.gradeCountTag}>
                     {loading ? 'Загрузка...' : `${words.length} слов`}
                   </Tag>
                 </div>

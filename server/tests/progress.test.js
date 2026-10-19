@@ -242,19 +242,19 @@ describe('User Progress, Analytics & Gamification Test Suite', () => {
   // --------------------------------------------------------------------------
   // History & Mistakes Engine
   // --------------------------------------------------------------------------
-  it('14. History: Returns chronological unified list of user answers', async () => {
+  it('14. History: Returns chronological list of user mistake entries (only errors)', async () => {
     const res = await fetch(`${BASE_URL}/progress/history?userId=${TEST_USER}`);
     assert.strictEqual(res.status, 200);
     const body = await res.json();
     assert.strictEqual(body.success, true);
     assert.ok(Array.isArray(body.data));
-    assert.ok(body.data.length >= 2);
+    assert.ok(body.data.length >= 1);
 
-    // Verify fields
+    // Verify fields and strictly mistake status
     const item = body.data[0];
     assert.ok(item.type);
     assert.ok(item.answered_at);
-    assert.ok(typeof item.is_correct === 'number');
+    assert.strictEqual(item.is_correct, 0);
   });
 
   it('15. History Mistakes Only Filter: When mistakesOnly=true, returns strictly mistakes', async () => {

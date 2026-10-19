@@ -141,12 +141,19 @@ async function login(req, res) {
       return res.status(401).json({ success: false, error: 'Неверный пароль' });
     }
 
+    const streakService = require('../services/streakService');
+    const dynamicStreak = await streakService.getUserStreak(userRow.id);
+    if (dynamicStreak !== userRow.streak) {
+      await db.prepare('UPDATE users SET streak = ? WHERE id = ?').run(dynamicStreak, userRow.id);
+      userRow.streak = dynamicStreak;
+    }
+
     const level = Math.floor(userRow.xp / 50) + 1;
     const user = {
       id: userRow.id,
       username: userRow.username,
       xp: userRow.xp,
-      streak: userRow.streak,
+      streak: dynamicStreak,
       level
     };
 
@@ -192,12 +199,19 @@ async function refreshAuth(req, res) {
       return res.status(401).json({ success: false, error: 'Пользователь не найден' });
     }
 
+    const streakService = require('../services/streakService');
+    const dynamicStreak = await streakService.getUserStreak(userRow.id);
+    if (dynamicStreak !== userRow.streak) {
+      await db.prepare('UPDATE users SET streak = ? WHERE id = ?').run(dynamicStreak, userRow.id);
+      userRow.streak = dynamicStreak;
+    }
+
     const level = Math.floor(userRow.xp / 50) + 1;
     const user = {
       id: userRow.id,
       username: userRow.username,
       xp: userRow.xp,
-      streak: userRow.streak,
+      streak: dynamicStreak,
       level,
       isGuest: false
     };

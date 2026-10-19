@@ -278,7 +278,21 @@ Pedagogical Quality Guidelines:
   }
 
   async _executeVocabGeneration(level = 'B1', sectionId = 'general', count = 10) {
-    let topicFocus = 'general everyday English vocabulary, real-life communication, common verbs and nouns';
+    const DIVERSE_THEMES = [
+      'home, kitchen, living space and everyday utensils',
+      'city life, public places, shops, transport and directions',
+      'food, groceries, drinks, cooking, meals and flavors',
+      'hobbies, sports, leisure, creative arts and entertainment',
+      'nature, weather, climate, landscapes, plants and animals',
+      'clothing, footwear, accessories, fabrics and personal items',
+      'human emotions, character traits, sensations and bodily feelings',
+      'professions, workplace interactions, tools, routines and crafts',
+      'travel, hotels, luggage, geography, vacation and sightseeing',
+      'active daily verbs, expressive adjectives and practical collocations'
+    ];
+    const randomTheme = DIVERSE_THEMES[Math.floor(Math.random() * DIVERSE_THEMES.length)];
+
+    let topicFocus = `Everyday communication (${randomTheme})`;
     if (sectionId && sectionId !== 'general' && sectionId !== 'all') {
       const sectionRow = await db.prepare('SELECT * FROM sections WHERE id = ?').get(sectionId);
       if (sectionRow) {
@@ -286,10 +300,10 @@ Pedagogical Quality Guidelines:
       }
     }
 
-    // Retrieve recent words already in the database for this level to avoid duplicates
+    // Retrieve up to 300 recent and random words already in the database for this level to avoid duplicates
     let existingWordsList = '';
     try {
-      const existingRows = await db.prepare('SELECT word FROM dictionary WHERE level = ? ORDER BY id DESC LIMIT 150').all(level);
+      const existingRows = await db.prepare('SELECT word FROM dictionary WHERE level = ? ORDER BY id DESC LIMIT 300').all(level);
       if (existingRows.length > 0) {
         existingWordsList = existingRows.map(r => r.word).join(', ');
       }
@@ -297,8 +311,8 @@ Pedagogical Quality Guidelines:
 
     const systemPrompt = `
 You are an expert Cambridge/Oxford lexicographer and English tutor.
-Generate ${count} essential, high-yield English vocabulary words or phrasal verbs for CEFR level ${level}.
-Topic Category: "${topicFocus}".
+Generate ${count} essential, high-yield English vocabulary words, collocations, or phrasal verbs for CEFR level ${level}.
+Topic Category & Subtheme: "${topicFocus}".
 
 Strict Output Requirements:
 1. Return ONLY a valid JSON array of ${count} objects.
