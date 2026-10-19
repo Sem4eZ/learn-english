@@ -1,0 +1,53 @@
+name: Render 24/7 Keep-Alive & Harvester Pulse
+
+on:
+  schedule:
+    # Runs every 10 minutes to prevent Render Free Tier from spinning down (15 min inactivity timeout)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: 'keep-alive'
+  cancel-in-progress: false
+
+jobs:
+  keep-alive:
+    name: Ping Render API Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping Health Endpoint
+        id: ping-health
+        run: |
+          START_TIME=$(date +%s%3N)
+          HTTP_STATUS=$(curl -s -o /tmp/health_response.json -w "%{http_code}" --max-time 60 https://learn-english-bfqg.onrender.com/api/health)
+          END_TIME=$(date +%s%3N)
+          LATENCY=$((END_TIME - START_TIME))
+          
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Latency: ${LATENCY}ms"
+          cat /tmp/health_response.json || true
+          
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Health check failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          
+          echo "status=$HTTP_STATUS" >> $GITHUB_OUTPUT
+          echo "latency=${LATENCY}ms" >> $GITHUB_OUTPUT
+
+      - name: Check Harvester Telemetry
+        id: ping-harvester
+        run: |
+          curl -s -o /tmp/harvester_stats.json --max-time 30 https://learn-english-bfqg.onrender.com/api/dictionary/harvester-stats || true
+          cat /tmp/harvester_stats.json || true
+
+      - name: Report Keep-Alive Status
+        run: |
+          echo "### 🌾 Render 24/7 Keep-Alive Pulse" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target URL**: https://learn-english-bfqg.onrender.com/api/health" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **HTTP Status**: ${{ steps.ping-health.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latency**: ${{ steps.ping-health.outputs.latency }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Server Status**: Online & Active (Render sleep prevented)" >> $GITHUB_STEP_SUMMARY
