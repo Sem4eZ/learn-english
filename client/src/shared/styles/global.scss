@@ -14,6 +14,10 @@ html, body {
   overflow-x: hidden;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 // Centralized Color Tokens & Semantic Properties
 :root, [data-theme="dark"] {
   // Brand & Accent Palette
