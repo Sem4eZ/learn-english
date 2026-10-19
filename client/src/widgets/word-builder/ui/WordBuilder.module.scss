@@ -7,11 +7,19 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  @media (max-width: 600px) {
+    gap: 10px;
+  }
 }
 
 .topBar {
   @include flex-between;
   margin-bottom: 8px;
+
+  @media (max-width: 600px) {
+    margin-bottom: 4px;
+  }
 }
 
 .targetCard {
@@ -21,6 +29,11 @@
   border: 1px solid var(--trainer-card-border) !important;
   text-align: center;
   box-shadow: $shadow-card;
+
+  @media (max-width: 600px) {
+    padding: 14px 12px !important;
+    border-radius: $radius-lg !important;
+  }
 }
 
 .meaningText {
@@ -28,6 +41,11 @@
   font-weight: 800;
   color: $primary-color;
   margin-bottom: 8px;
+
+  @media (max-width: 600px) {
+    font-size: 1.35rem;
+    margin-bottom: 4px;
+  }
 }
 
 .contextSub {
@@ -36,6 +54,12 @@
   font-style: italic;
   max-width: 520px;
   margin: 0 auto 12px;
+
+  @media (max-width: 600px) {
+    font-size: 0.85rem;
+    margin: 0 auto 6px;
+    line-height: 1.35;
+  }
 }
 
 .assemblyArea {
@@ -50,6 +74,12 @@
   align-items: center;
   background: var(--trainer-opt-bg);
   transition: $transition-smooth;
+
+  @media (max-width: 600px) {
+    min-height: 54px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
 
   &.correct {
     border-color: $success-color;
@@ -73,6 +103,10 @@
   font-style: italic;
   font-size: 0.95rem;
   opacity: 0.5;
+
+  @media (max-width: 600px) {
+    font-size: 0.85rem;
+  }
 }
 
 .letterTile {
@@ -88,6 +122,13 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, background 0.15s ease;
+
+  @media (max-width: 600px) {
+    width: 38px;
+    height: 42px;
+    font-size: 1.15rem !important;
+    border-radius: $radius-sm !important;
+  }
 
   &:hover {
     transform: translateY(-2px);
@@ -109,6 +150,11 @@
   padding: 18px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: $radius-lg;
+
+  @media (max-width: 600px) {
+    padding: 10px 6px;
+    gap: 6px;
+  }
 }
 
 .availableTile {
@@ -139,7 +185,9 @@
   @media (max-width: 600px) {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    width: 100%;
+    gap: 8px;
+    margin-top: 10px;
   }
 }
 
@@ -149,20 +197,24 @@
   gap: 10px;
 
   @media (max-width: 600px) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     gap: 8px;
   }
 }
 
 .auxBtn {
-  height: 42px !important;
+  height: 44px !important;
   font-weight: 600 !important;
   border-radius: $radius-md !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+
+  @media (max-width: 600px) {
+    width: 100% !important;
+  }
 }
 
 .summaryCard {
@@ -191,6 +243,39 @@
 
 .summaryActions {
   margin-top: 24px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 10px !important;
+
+  :global(.ant-space-item) {
+    width: 100% !important;
+  }
+
+  button {
+    width: 100% !important;
+    height: 48px !important;
+    border-radius: $radius-md !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+
+  @media (max-width: 600px) {
+    margin-top: 16px;
+    gap: 8px !important;
+
+    button {
+      height: 44px !important;
+      font-size: 0.95rem !important;
+    }
+  }
 }
 
 .primaryActionBtn {
@@ -209,7 +294,7 @@
 }
 
 .successBtn {
-  height: 44px !important;
+  height: 46px !important;
   padding: 0 24px !important;
   font-size: 1rem !important;
   font-weight: 700 !important;
@@ -217,9 +302,12 @@
   background: $color-success !important;
   border-color: $color-success !important;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 
   @media (max-width: 600px) {
-    width: 100%;
+    width: 100% !important;
   }
 }
 

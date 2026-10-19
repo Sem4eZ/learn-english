@@ -7,11 +7,19 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  @media (max-width: 600px) {
+    gap: 10px;
+  }
 }
 
 .topBar {
   @include flex-between;
   margin-bottom: 8px;
+
+  @media (max-width: 600px) {
+    margin-bottom: 2px;
+  }
 }
 
 .timerPill {
@@ -46,6 +54,12 @@
   flex-direction: column;
   justify-content: center;
 
+  @media (max-width: 600px) {
+    padding: 12px 10px;
+    min-height: 125px;
+    border-radius: $radius-lg !important;
+  }
+
   &.feedbackCorrect {
     border-color: $success-color !important;
     background: rgba(16, 185, 129, 0.15) !important;
@@ -72,6 +86,18 @@
   font-weight: 800;
   color: var(--trainer-word-color);
   margin-bottom: 12px;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+
+  @media (max-width: 600px) {
+    font-size: 1.5rem;
+    margin-bottom: 2px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 1.35rem;
+  }
 }
 
 .translationDisplay {
@@ -79,17 +105,33 @@
   font-weight: 700;
   color: $primary-color;
   margin-bottom: 8px;
+
+  @media (max-width: 600px) {
+    font-size: 1.15rem;
+    margin-bottom: 2px;
+  }
 }
 
 .pairHint {
   font-size: 0.9rem;
   color: var(--trainer-prompt-color);
+
+  @media (max-width: 600px) {
+    font-size: 0.75rem;
+  }
 }
 
 .controlsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+
+  @media (max-width: 600px) {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
 }
 
 .btnAction {
@@ -102,6 +144,13 @@
   justify-content: center;
   gap: 10px;
   transition: transform 0.1s ease;
+
+  @media (max-width: 600px) {
+    height: 44px !important;
+    font-size: 1rem !important;
+    width: 100% !important;
+    gap: 6px;
+  }
 
   &:active {
     transform: scale(0.97);
@@ -133,6 +182,10 @@
   opacity: 0.6;
   text-transform: uppercase;
   margin-left: 6px;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
 }
 
 .summaryCard {
@@ -161,6 +214,39 @@
 
 .summaryActions {
   margin-top: 24px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 10px !important;
+
+  :global(.ant-space-item) {
+    width: 100% !important;
+  }
+
+  button {
+    width: 100% !important;
+    height: 48px !important;
+    border-radius: $radius-md !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+
+  @media (max-width: 600px) {
+    margin-top: 16px;
+    gap: 8px !important;
+
+    button {
+      height: 44px !important;
+      font-size: 0.95rem !important;
+    }
+  }
 }
 
 .primaryActionBtn {

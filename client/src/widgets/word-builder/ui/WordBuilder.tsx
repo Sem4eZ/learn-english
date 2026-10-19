@@ -239,7 +239,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
           </Tag>
         </Paragraph>
 
-        <Space size="middle" className={styles.summaryActions} wrap>
+        <Space size="middle" direction="vertical" className={styles.summaryActions}>
           <Button
             type="primary"
             size="large"
@@ -367,6 +367,18 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
 
       {/* Action Controls */}
       <div className={styles.actionsRow}>
+        {isCorrect === true && (
+          <Button
+            type="primary"
+            size="large"
+            icon={<ArrowRightOutlined />}
+            onClick={handleNextWord}
+            className={styles.successBtn}
+          >
+            {currentIndex + 1 >= exerciseWords.length ? 'Завершить' : 'Следующее слово ➔'}
+          </Button>
+        )}
+
         <div className={styles.actionButtonsGroup}>
           <Button
             icon={<BulbOutlined />}
@@ -386,18 +398,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             Сбросить
           </Button>
         </div>
-
-        {isCorrect === true && (
-          <Button
-            type="primary"
-            size="large"
-            icon={<ArrowRightOutlined />}
-            onClick={handleNextWord}
-            className={styles.successBtn}
-          >
-            {currentIndex + 1 >= exerciseWords.length ? 'Завершить' : 'Следующее слово'}
-          </Button>
-        )}
       </div>
     </div>
   );

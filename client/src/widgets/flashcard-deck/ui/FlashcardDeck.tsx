@@ -272,7 +272,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
         </div>
 
         {/* Round Navigation Actions */}
-        <Space size="middle" className={styles.summaryActions} wrap>
+        <Space size="middle" direction="vertical" className={styles.summaryActions}>
           {hasMoreRounds ? (
             <Button
               type="primary"
@@ -451,9 +451,9 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
                     {currentItem.backDetail}
                   </Paragraph>
                 )}
-                {currentItem.backGrammar && currentItem.backGrammar.trim() !== currentItem.backDetail?.trim() && (
+                {currentItem.backGrammar && currentItem.backGrammar.trim() !== currentItem.backDetail?.trim() && !/правильный ответ|passive voice|conditional|third conditional|past simple/i.test(currentItem.backGrammar) && (
                   <div className={styles.grammarNote}>
-                    💡 <strong>Правило / Нюанс:</strong> {currentItem.backGrammar}
+                    💬 <strong>Пример:</strong> {currentItem.backGrammar}
                   </div>
                 )}
               </div>

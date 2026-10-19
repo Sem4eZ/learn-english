@@ -209,7 +209,7 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
           </Tag>
         </Paragraph>
 
-        <Space size="middle" className={styles.summaryActions} wrap>
+        <Space size="middle" direction="vertical" className={styles.summaryActions}>
           <Button
             type="primary"
             size="large"

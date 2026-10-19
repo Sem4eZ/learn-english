@@ -8,6 +8,10 @@
   flex-direction: column;
   gap: 20px;
   width: 100%;
+
+  @media (max-width: 600px) {
+    gap: 8px;
+  }
 }
 
 .topBar {
@@ -15,6 +19,11 @@
   flex-direction: column;
   gap: 10px;
   margin-bottom: 8px;
+
+  @media (max-width: 600px) {
+    gap: 4px;
+    margin-bottom: 2px;
+  }
 }
 
 .topBarRow {
@@ -23,6 +32,10 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
+
+  @media (max-width: 600px) {
+    gap: 6px;
+  }
 }
 
 .roundTitleGroup {
@@ -36,11 +49,19 @@
   font-size: 1.15rem;
   font-weight: 700;
   color: #fff;
+
+  @media (max-width: 600px) {
+    font-size: 0.95rem;
+  }
 }
 
 .deckPoolHint {
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.6);
+
+  @media (max-width: 600px) {
+    font-size: 0.75rem;
+  }
 }
 
 .topBarBadges {
@@ -48,6 +69,10 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+
+  @media (max-width: 600px) {
+    gap: 4px;
+  }
 }
 
 .xpSavedBadge {
@@ -72,6 +97,11 @@
   margin-top: 4px;
   flex-wrap: wrap;
   gap: 6px;
+
+  @media (max-width: 600px) {
+    font-size: 0.75rem;
+    margin-top: 2px;
+  }
 }
 
 .safeExitHint {
@@ -86,16 +116,16 @@
 .cardWrapper {
   perspective: 1200px;
   width: 100%;
-  height: 420px;
+  height: 400px;
   cursor: pointer;
   user-select: none;
 
   @media (max-width: 600px) {
-    height: clamp(380px, 52vh, 460px);
+    height: clamp(200px, 30vh, 255px);
   }
 
   @media (max-width: 400px) {
-    height: clamp(370px, 54vh, 440px);
+    height: clamp(185px, 28vh, 235px);
   }
 }
 
@@ -120,7 +150,7 @@
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-radius: $radius-xl;
-  padding: 32px 28px;
+  padding: 28px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -134,7 +164,7 @@
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 
   @media (max-width: 600px) {
-    padding: 16px 14px;
+    padding: 10px 14px;
     border-radius: $radius-lg;
   }
 }
@@ -177,7 +207,8 @@
   width: 100%;
 
   @media (max-width: 600px) {
-    gap: 8px;
+    gap: 4px;
+    margin: 2px 0;
   }
 }
 
@@ -191,7 +222,7 @@
   word-break: break-word;
 
   @media (max-width: 600px) {
-    font-size: 1.7rem;
+    font-size: 1.55rem;
   }
 }
 
@@ -199,6 +230,10 @@
   font-size: 1.15rem;
   color: #a5b4fc;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  @media (max-width: 600px) {
+    font-size: 0.95rem;
+  }
 }
 
 .contextSnippet {
@@ -212,6 +247,13 @@
   background: rgba(255, 255, 255, 0.04);
   border-radius: $radius-md;
   word-break: break-word;
+
+  @media (max-width: 600px) {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    padding: 4px 8px;
+    margin-top: 2px;
+  }
 }
 
 .translationText {
@@ -223,7 +265,7 @@
   word-break: break-word;
 
   @media (max-width: 600px) {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
   }
 }
 
@@ -295,7 +337,8 @@
 
   @media (max-width: 600px) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 6px;
+    margin-top: 4px;
   }
 }
 
@@ -314,8 +357,9 @@
   background: rgba(30, 41, 59, 0.85);
 
   @media (max-width: 600px) {
-    min-height: 58px;
-    padding: 10px 8px;
+    min-height: 48px;
+    padding: 6px 4px;
+    border-radius: $radius-md;
   }
 
   &:hover {
@@ -396,6 +440,10 @@
 .ratingTitle {
   font-size: 1.05rem;
   font-weight: 700;
+
+  @media (max-width: 600px) {
+    font-size: 0.92rem;
+  }
 }
 
 .shortcutBadge {
@@ -404,12 +452,21 @@
   background: rgba(255, 255, 255, 0.08);
   padding: 2px 6px;
   border-radius: 4px;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
 }
 
 .ratingSubTime {
   font-size: 0.8rem;
   opacity: 0.75;
   margin-top: 4px;
+
+  @media (max-width: 600px) {
+    font-size: 0.7rem;
+    margin-top: 1px;
+  }
 }
 
 .btnAction {
@@ -418,6 +475,11 @@
   padding: 0 28px;
   font-size: 1rem;
   font-weight: 600;
+
+  @media (max-width: 600px) {
+    height: 44px;
+    width: 100%;
+  }
 }
 
 .summaryCard {
@@ -443,6 +505,39 @@
 
 .summaryActions {
   margin-top: 28px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 10px !important;
+
+  :global(.ant-space-item) {
+    width: 100% !important;
+  }
+
+  button {
+    width: 100% !important;
+    height: 48px !important;
+    border-radius: $radius-md !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+
+  @media (max-width: 600px) {
+    margin-top: 16px;
+    gap: 8px !important;
+
+    button {
+      height: 44px !important;
+      font-size: 0.95rem !important;
+    }
+  }
 }
 
 .soundIconFront {

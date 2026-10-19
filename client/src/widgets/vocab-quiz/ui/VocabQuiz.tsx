@@ -38,6 +38,11 @@ interface QuestionItem {
 
 export type RoundMode = '15' | '30' | '45' | '60' | 'all';
 
+const isCorruptedGrammar = (text?: string): boolean => {
+  if (!text) return false;
+  return /правильный ответ|союз\s+['"]?unless['"]?|passive voice|conditional|third conditional|past simple/i.test(text);
+};
+
 export const VocabQuiz: React.FC<VocabQuizProps> = ({
   words,
   initialDirection = 'en-ru',
@@ -275,7 +280,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
           </Tag>
         </Paragraph>
 
-        <Space size="middle" className={styles.summaryActions} wrap>
+        <Space size="middle" direction="vertical" className={styles.summaryActions}>
           <Button
             type="primary"
             size="large"
@@ -458,12 +463,12 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
               "{currentQ.targetWord.example_sentence}"
             </div>
           )}
-          {currentQ.targetWord.example_translation && (
+          {currentQ.targetWord.example_translation && !isCorruptedGrammar(currentQ.targetWord.example_translation) && (
             <div className={styles.exampleRu}>
               {currentQ.targetWord.example_translation}
             </div>
           )}
-          {currentQ.targetWord.definition && !currentQ.targetWord.example_sentence && (
+          {currentQ.targetWord.definition && !currentQ.targetWord.example_sentence && !isCorruptedGrammar(currentQ.targetWord.definition) && (
             <div className={styles.exampleRu}>
               {currentQ.targetWord.definition}
             </div>
