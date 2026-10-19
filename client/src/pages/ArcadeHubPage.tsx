@@ -141,7 +141,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
     try {
       const lvl = selectedLevel === 'all' ? 'A1' : selectedLevel;
       const sec = selectedSection === 'all' ? 'general' : selectedSection;
-      const res = await dictionaryApi.generateWords(lvl, sec, 35);
+      const res = await dictionaryApi.generateWords(lvl, sec, 50);
       hideLoading();
       if (res.success && res.data?.length > 0) {
         message.success(res.message || `Добавлено ${res.data.length} новых слов для уровня ${lvl}!`);

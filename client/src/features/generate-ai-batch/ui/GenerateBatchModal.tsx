@@ -77,7 +77,7 @@ export const GenerateBatchModal: React.FC<GenerateBatchModalProps> = ({
         initialValues={{
           sectionId: initialSectionId || sections[0]?.id || 'grammar',
           level: initialLevel,
-          count: 5,
+          count: 10,
           customTopic: '',
         }}
       >
@@ -106,7 +106,7 @@ export const GenerateBatchModal: React.FC<GenerateBatchModalProps> = ({
         </Form.Item>
 
         <Form.Item name="count" label="Количество вопросов">
-          <Slider min={3} max={10} marks={{ 3: '3', 5: '5', 10: '10' }} />
+          <Slider min={5} max={15} marks={{ 5: '5', 10: '10', 15: '15' }} />
         </Form.Item>
       </Form>
     </Modal>

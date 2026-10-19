@@ -33,7 +33,7 @@ class GeminiService {
   /**
    * Generates a batch of fresh questions with in-flight deduplication
    */
-  async generateQuestions(sectionId, level = 'B1', count = 5, customTopic = '') {
+  async generateQuestions(sectionId, level = 'B1', count = 10, customTopic = '') {
     const cacheKey = `${sectionId}_${level}_${customTopic}`;
 
     if (this.inFlightRequests.has(cacheKey)) {
@@ -141,7 +141,13 @@ Pedagogical Quality Guidelines:
         // Parse JSON array
         let parsedQuestions = [];
         try {
-          parsedQuestions = JSON.parse(rawText);
+          let cleaned = (rawText || '').trim();
+          if (cleaned.startsWith('```json')) {
+            cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
+          } else if (cleaned.startsWith('```')) {
+            cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
+          }
+          parsedQuestions = JSON.parse(cleaned);
           if (!Array.isArray(parsedQuestions) && typeof parsedQuestions === 'object') {
             if (Array.isArray(parsedQuestions.questions)) {
               parsedQuestions = parsedQuestions.questions;
@@ -259,7 +265,7 @@ Pedagogical Quality Guidelines:
    * Generates a batch of rich vocabulary words for the dictionary on demand
    * with in-flight deduplication and duplicate-prevention
    */
-  async generateVocabulary(level = 'B1', sectionId = 'general', count = 10) {
+  async generateVocabulary(level = 'B1', sectionId = 'general', count = 50) {
     const cacheKey = `vocab_${level}_${sectionId}`;
 
     if (this.inFlightVocab.has(cacheKey)) {
@@ -277,7 +283,7 @@ Pedagogical Quality Guidelines:
     }
   }
 
-  async _executeVocabGeneration(level = 'B1', sectionId = 'general', count = 10) {
+  async _executeVocabGeneration(level = 'B1', sectionId = 'general', count = 50) {
     const DIVERSE_THEMES = [
       'home, kitchen, living space and everyday utensils',
       'city life, public places, shops, transport and directions',
@@ -363,7 +369,20 @@ All translations and definitions must be precise, natural, and suited for ${leve
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) continue;
 
-        let parsed = JSON.parse(rawText);
+        let parsed = [];
+        try {
+          let cleaned = rawText.trim();
+          if (cleaned.startsWith('```json')) {
+            cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
+          } else if (cleaned.startsWith('```')) {
+            cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
+          }
+          parsed = JSON.parse(cleaned);
+        } catch (pErr) {
+          console.warn(`[Vocab Fallback] Failed to parse JSON from ${model}:`, pErr.message);
+          continue;
+        }
+
         if (!Array.isArray(parsed) && parsed.words) parsed = parsed.words;
         if (!Array.isArray(parsed)) parsed = [parsed];
 

@@ -89,12 +89,12 @@ async function getQuestions(req, res) {
 
 async function generateBatch(req, res) {
   try {
-    const { sectionId, level = 'B1', count = 5, customTopic = '' } = req.body;
+    const { sectionId, level = 'B1', count = 10, customTopic = '' } = req.body;
     if (!sectionId) {
       return res.status(400).json({ success: false, error: 'sectionId is required' });
     }
 
-    const countNum = Math.max(1, Math.min(10, parseInt(count, 10) || 5));
+    const countNum = Math.max(1, Math.min(15, parseInt(count, 10) || 10));
     const generated = await geminiService.generateQuestions(sectionId, level, countNum, customTopic);
 
     res.json({

@@ -17,8 +17,10 @@ const {
   toggleFavorite, 
   generateDictionaryWords, 
   recordSrsReview, 
-  lookupWord 
+  lookupWord,
+  getHarvesterStats
 } = require('./controllers/dictionaryController');
+const backgroundHarvester = require('./services/backgroundHarvester');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -60,6 +62,7 @@ app.post('/api/questions/generate', generateBatch);
 
 // Dictionary & SRS
 app.get('/api/dictionary', getDictionary);
+app.get('/api/dictionary/harvester-stats', getHarvesterStats);
 app.post('/api/dictionary/generate', generateDictionaryWords);
 app.post('/api/dictionary/lookup', lookupWord);
 app.post('/api/dictionary/review', recordSrsReview);
@@ -92,7 +95,12 @@ if (require.main === module) {
     console.log(`  🚀 Fluentiq API Server active on http://localhost:${PORT}`);
     console.log(`  💾 Database: ${db.isTurso ? '🌐 Turso Cloud libSQL (Persistent)' : '📁 Local SQLite WAL (node:sqlite)'}`);
     console.log(`  🧠 AI Engine: Google Gemini Flash-Lite & Fallback Pipeline`);
+    console.log(`  🌾 Background Harvester: 24/7 autonomous replenishment`);
     console.log(`======================================================\n`);
+
+    if (process.env.BACKGROUND_HARVESTER_ENABLED !== 'false' && process.env.NODE_ENV !== 'test') {
+      backgroundHarvester.start();
+    }
   });
 }
 
