@@ -1,0 +1,58 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
+import { AudioChallenge } from '@/widgets/audio-challenge/ui/AudioChallenge';
+import { TrainerLayout } from '@/widgets/trainer-layout/ui/TrainerLayout';
+import { useTrainerWords } from '@/shared/hooks/useTrainerWords';
+import { AuthUser } from '@/features/auth/ui/AuthModal';
+
+export interface AudioTrainerPageProps {
+  currentUser?: AuthUser | null;
+  onRequireAuth?: () => void;
+  onRefreshStats?: () => void;
+}
+
+export const AudioTrainerPage: React.FC<AudioTrainerPageProps> = ({
+  currentUser,
+  onRequireAuth,
+  onRefreshStats,
+}) => {
+  const navigate = useNavigate();
+  const {
+    words,
+    audioItems,
+    loading,
+    isCramMode,
+    level,
+    fetchWords,
+    handleNeedMoreWords,
+    handleGameComplete,
+  } = useTrainerWords({ onRefreshStats });
+
+  React.useEffect(() => {
+    if (!currentUser) {
+      message.warning('Для выполнения тренировок и сохранения прогресса войдите или зарегистрируйтесь');
+      onRequireAuth?.();
+    }
+  }, [currentUser, onRequireAuth]);
+
+  return (
+    <TrainerLayout
+      title="Аудирование и диктант"
+      icon="🎧"
+      level={level}
+      isCramMode={isCramMode}
+      wordsCount={words.length}
+      loading={loading}
+      onBack={() => navigate('/trainers')}
+      onGenerate={() => handleNeedMoreWords(35)}
+    >
+      <AudioChallenge
+        items={audioItems}
+        onComplete={(score) => handleGameComplete(score)}
+        onRefresh={fetchWords}
+        onNeedMore={() => handleNeedMoreWords(35)}
+      />
+    </TrainerLayout>
+  );
+};
