@@ -19,20 +19,12 @@ import {
   SoundOutlined, 
   StarFilled, 
   StarOutlined, 
-  AppstoreOutlined, 
-  ThunderboltFilled, 
   ReloadOutlined,
-  FireFilled,
-  BookOutlined,
   PlusCircleOutlined
 } from '@ant-design/icons';
 import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
 import { soundEffects } from '@/shared/lib/audio';
-import { FlashcardDeck, FlashcardItem } from '@/widgets/flashcard-deck/ui/FlashcardDeck';
-import { VocabQuiz } from '@/widgets/vocab-quiz/ui/VocabQuiz';
-import { SpeedSprint } from '@/widgets/speed-sprint/ui/SpeedSprint';
-import { WordBuilder } from '@/widgets/word-builder/ui/WordBuilder';
 import { AuthUser } from '@/features/auth/ui/AuthModal';
 import styles from './DictionaryPage.module.scss';
 
@@ -61,15 +53,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
   const [pageSize, setPageSize] = useState<number>(24);
   const [total, setTotal] = useState<number>(0);
   const [isLookingUp, setIsLookingUp] = useState<boolean>(false);
-
-  // Modals for all interactive training modes
-  const [deckModalOpen, setDeckModalOpen] = useState<boolean>(false);
-  const [quizModalOpen, setQuizModalOpen] = useState<boolean>(false);
-  const [sprintModalOpen, setSprintModalOpen] = useState<boolean>(false);
-  const [builderModalOpen, setBuilderModalOpen] = useState<boolean>(false);
   const [generating, setGenerating] = useState<boolean>(false);
-  const [trainerWords, setTrainerWords] = useState<DictionaryItem[]>([]);
-  const [trainerLoading, setTrainerLoading] = useState<'quiz' | 'deck' | 'sprint' | 'builder' | null>(null);
 
   // Ref to track the active query sequence and eliminate race conditions
   const activeRequestIdRef = useRef<number>(0);
@@ -188,7 +172,6 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
 
   useEffect(() => {
     setPage(1);
-    setTrainerWords([]);
     const timer = setTimeout(() => {
       fetchWords(search, 1, pageSize);
     }, 200);
@@ -209,62 +192,6 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
     }
   };
 
-  const openTrainer = async (mode: 'quiz' | 'deck' | 'sprint' | 'builder') => {
-    if (!currentUser) {
-      message.warning('Для выполнения тренировок и сохранения прогресса войдите или зарегистрируйтесь');
-      onRequireAuth?.();
-      return;
-    }
-    let wordsForTrainer = trainerWords;
-    if (wordsForTrainer.length === 0) {
-      if (total <= items.length && items.length > 0) {
-        wordsForTrainer = items;
-        setTrainerWords(items);
-      } else {
-        setTrainerLoading(mode);
-        try {
-          const res = await dictionaryApi.getDictionary({
-            search,
-            sectionId: selectedSection,
-            level: selectedLevel,
-            favoritesOnly,
-            page: 1,
-            limit: 1000
-          });
-          const loaded = res.data && res.data.length > 0 ? res.data : items;
-          wordsForTrainer = loaded;
-          setTrainerWords(loaded);
-        } catch (err) {
-          console.warn('Failed to load full trainer words, using page items:', err);
-          wordsForTrainer = items;
-          setTrainerWords(items);
-        } finally {
-          setTrainerLoading(null);
-        }
-      }
-    }
-
-    if (mode === 'quiz') setQuizModalOpen(true);
-    else if (mode === 'deck') setDeckModalOpen(true);
-    else if (mode === 'sprint') setSprintModalOpen(true);
-    else if (mode === 'builder') setBuilderModalOpen(true);
-  };
-
-  const activeTrainerWords = trainerWords.length > 0 ? trainerWords : items;
-
-  // Convert dictionary items to flashcard items
-  const trainerFlashcardItems: FlashcardItem[] = activeTrainerWords.map(item => ({
-    id: item.id,
-    frontMain: item.word,
-    frontPhonetic: item.transcription,
-    frontContext: item.example_sentence,
-    backMain: item.translation,
-    backDetail: item.definition,
-    backGrammar: item.example_translation,
-    level: item.level,
-    category: item.section_id
-  }));
-
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -274,55 +201,13 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
             Интерактивный словарь
           </Title>
           <Text type="secondary" className={styles.headerSubtitle}>
-            Тематическая лексика, идиомы, транскрипция, произношение и тренировка в карточках.
+            Тематическая лексика, идиомы, транскрипция, произношение и детальные примеры.
           </Text>
         </div>
 
         <Space wrap size="middle">
           <Button
             type="primary"
-            icon={<ThunderboltFilled />}
-            size="large"
-            loading={trainerLoading === 'quiz'}
-            onClick={() => openTrainer('quiz')}
-            disabled={total < 2 && items.length < 2}
-            className={styles.quizBtn}
-          >
-            🎯 Квиз 1 из 4 ({total || items.length})
-          </Button>
-
-          <Button
-            icon={<AppstoreOutlined />}
-            size="large"
-            loading={trainerLoading === 'deck'}
-            onClick={() => openTrainer('deck')}
-            disabled={total === 0 && items.length === 0}
-            className={styles.trainCardsBtn}
-          >
-            🗂️ 3D Карточки
-          </Button>
-
-          <Button
-            icon={<FireFilled className={styles.sprintBtnIcon} />}
-            size="large"
-            loading={trainerLoading === 'sprint'}
-            onClick={() => openTrainer('sprint')}
-            disabled={total < 2 && items.length < 2}
-          >
-            ⚡ Спринт
-          </Button>
-
-          <Button
-            icon={<BookOutlined />}
-            size="large"
-            loading={trainerLoading === 'builder'}
-            onClick={() => openTrainer('builder')}
-            disabled={total === 0 && items.length === 0}
-          >
-            🧩 Спеллинг
-          </Button>
-
-          <Button
             icon={<PlusCircleOutlined className={styles.generateBtnIcon} />}
             size="large"
             loading={generating}
@@ -336,8 +221,10 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
             icon={<ReloadOutlined />}
             size="large"
             onClick={() => fetchWords(search, page, pageSize)}
-            title="Обновить"
-          />
+            title="Обновить список"
+          >
+            Обновить
+          </Button>
         </Space>
       </div>
 
@@ -546,112 +433,7 @@ export const DictionaryPage: React.FC<DictionaryPageProps> = ({
           )}
         </>
       )}
-
-      {/* Flashcards Deck Modal */}
-      <Modal
-        title={
-          <span>
-            <AppstoreOutlined className={styles.modalTitleIconIndigo} />
-            Тренировка карточек словаря
-          </span>
-        }
-        open={deckModalOpen}
-        onCancel={() => setDeckModalOpen(false)}
-        footer={null}
-        width={920}
-        style={{ maxWidth: '96vw', margin: '0 auto' }}
-        destroyOnHidden
-      >
-        <div className={styles.modalBody}>
-          <FlashcardDeck
-            items={trainerFlashcardItems}
-            onFinish={() => onRefreshStats?.()}
-          />
-        </div>
-      </Modal>
-
-      {/* Vocab Quiz Modal (1 of 4 choices) */}
-      <Modal
-        title={
-          <span>
-            <ThunderboltFilled className={styles.modalTitleIconCyan} />
-            Квиз по запоминанию: выбор 1 из 4
-          </span>
-        }
-        open={quizModalOpen}
-        onCancel={() => {
-          setQuizModalOpen(false);
-          onRefreshStats?.();
-        }}
-        footer={null}
-        width={760}
-        style={{ maxWidth: '96vw', margin: '0 auto' }}
-        destroyOnHidden
-      >
-        <div className={styles.modalBody}>
-          <VocabQuiz
-            words={activeTrainerWords}
-            onClose={() => {
-              setQuizModalOpen(false);
-              onRefreshStats?.();
-            }}
-            onComplete={() => onRefreshStats?.()}
-          />
-        </div>
-      </Modal>
-
-      {/* Speed Sprint Modal (60s) */}
-      <Modal
-        title={
-          <span>
-            <FireFilled className={styles.modalTitleIconAmber} />
-            Скоростной спринт на 60 секунд
-          </span>
-        }
-        open={sprintModalOpen}
-        onCancel={() => {
-          setSprintModalOpen(false);
-          onRefreshStats?.();
-        }}
-        footer={null}
-        width={720}
-        style={{ maxWidth: '96vw', margin: '0 auto' }}
-        destroyOnHidden
-      >
-        <div className={styles.modalBody}>
-          <SpeedSprint
-            words={activeTrainerWords}
-            onClose={() => {
-              setSprintModalOpen(false);
-              onRefreshStats?.();
-            }}
-            onComplete={() => onRefreshStats?.()}
-          />
-        </div>
-      </Modal>
-
-      {/* Word Builder Modal (Spelling) */}
-      <Modal
-        title={
-          <span>
-            <BookOutlined className={styles.modalTitleIconPurple} />
-            Конструктор слов и спеллинг
-          </span>
-        }
-        open={builderModalOpen}
-        onCancel={() => setBuilderModalOpen(false)}
-        footer={null}
-        width={760}
-        style={{ maxWidth: '96vw', margin: '0 auto' }}
-        destroyOnHidden
-      >
-        <div className={styles.modalBody}>
-          <WordBuilder
-            words={activeTrainerWords}
-            onClose={() => setBuilderModalOpen(false)}
-          />
-        </div>
-      </Modal>
     </div>
   );
 };
+

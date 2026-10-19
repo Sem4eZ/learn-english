@@ -9,11 +9,8 @@ export const userApiSlice = baseApi.injectEndpoints({
       transformResponse: (res: { success: boolean; data: UserStats }) => res.data || INITIAL_USER_STATS,
       providesTags: ['Stats'],
     }),
-    getHistory: builder.query<HistoryItem[], { mistakesOnly?: boolean } | void>({
-      query: (params) => ({
-        url: '/progress/history',
-        params: params?.mistakesOnly ? { mistakesOnly: true } : undefined,
-      }),
+    getHistory: builder.query<HistoryItem[], void>({
+      query: () => '/progress/history',
       transformResponse: (res: { success: boolean; data: HistoryItem[] }) => res.data || [],
       providesTags: ['History'],
     }),
@@ -44,10 +41,10 @@ export const userApi = {
     }
   },
 
-  async getHistory(mistakesOnly = false): Promise<HistoryItem[]> {
+  async getHistory(): Promise<HistoryItem[]> {
     try {
       const res = await store.dispatch(
-        userApiSlice.endpoints.getHistory.initiate({ mistakesOnly }, { forceRefetch: true })
+        userApiSlice.endpoints.getHistory.initiate(undefined, { forceRefetch: true })
       ).unwrap();
       return res || [];
     } catch (err) {

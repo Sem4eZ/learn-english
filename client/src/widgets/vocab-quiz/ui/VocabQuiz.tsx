@@ -236,7 +236,12 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
       }
     }
 
-    const qs = generateQuestions(currentWords, direction, true);
+    let qs = generateQuestions(currentWords, direction, true);
+    if (qs.length === 0) {
+      usedWordIdsRef.current.clear();
+      qs = generateQuestions(currentWords, direction, false);
+    }
+
     if (qs.length > 0) {
       setQuestions(qs);
       setCurrentIndex(0);

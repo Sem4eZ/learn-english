@@ -142,14 +142,20 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
 
   // Round progression handlers
   const handleNextRound = useCallback(() => {
-    const targetSize = roundMode === 'all' ? remainingPool.length : (parseInt(roundMode, 10) || 15);
-    const nextBatch = remainingPool.slice(0, targetSize);
-    const nextPool = remainingPool.slice(targetSize);
+    const targetSize = roundMode === 'all' ? (remainingPool.length || items.length) : (parseInt(roundMode, 10) || 15);
+    let nextBatch = remainingPool.slice(0, targetSize);
+    let nextPool = remainingPool.slice(targetSize);
 
     if (nextBatch.length === 0) {
-      onNeedMore?.();
-      onRefresh?.();
-      return;
+      if (items && items.length > 0) {
+        const shuffled = [...items].sort(() => 0.5 - Math.random());
+        nextBatch = shuffled.slice(0, targetSize);
+        nextPool = shuffled.slice(targetSize);
+      } else {
+        onNeedMore?.();
+        onRefresh?.();
+        return;
+      }
     }
 
     setRoundCards(nextBatch);
@@ -161,9 +167,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
     setIsRoundFinished(false);
     setIsFlipped(false);
 
-    if (nextPool.length < 15) {
-      onNeedMore?.();
-    }
+    onNeedMore?.();
   }, [roundMode, remainingPool, onNeedMore, onRefresh]);
 
   const handleRepeatRound = useCallback(() => {

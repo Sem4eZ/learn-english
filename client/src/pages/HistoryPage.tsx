@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, Table, Tag, Typography, Switch, Space, Button, Empty, Spin, Segmented } from 'antd';
+import { Card, Table, Tag, Typography, Space, Button, Empty, Spin, Segmented } from 'antd';
 import { 
-  CheckCircleFilled, 
   CloseCircleFilled, 
   SoundOutlined, 
   ReloadOutlined,
@@ -20,13 +19,12 @@ type HistoryFilterType = 'all' | 'vocab' | 'grammar';
 export const HistoryPage: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mistakesOnly, setMistakesOnly] = useState(false);
   const [typeFilter, setTypeFilter] = useState<HistoryFilterType>('all');
 
-  const fetchHistory = async (onlyMistakes = mistakesOnly) => {
+  const fetchHistory = async () => {
     setLoading(true);
     try {
-      const data = await userApi.getHistory(onlyMistakes);
+      const data = await userApi.getHistory();
       setHistory(data);
     } catch (err) {
       console.error('Failed to fetch history:', err);
@@ -36,8 +34,8 @@ export const HistoryPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchHistory(mistakesOnly);
-  }, [mistakesOnly]);
+    fetchHistory();
+  }, []);
 
   const filteredHistory = useMemo(() => {
     if (typeFilter === 'all') return history;
@@ -49,15 +47,11 @@ export const HistoryPage: React.FC = () => {
       title: 'Статус',
       dataIndex: 'is_correct',
       key: 'status',
-      width: 110,
-      render: (isCorrect: number, record: HistoryItem) => (
-        isCorrect ? (
-          <Tag color="success" icon={<CheckCircleFilled />}>Усвоено</Tag>
-        ) : (
-          <Tag color="error" icon={<CloseCircleFilled />}>
-            {record.type === 'vocab' ? 'Снова' : 'Ошибка'}
-          </Tag>
-        )
+      width: 140,
+      render: (_: any, record: HistoryItem) => (
+        <Tag color="error" icon={<CloseCircleFilled />}>
+          {record.type === 'vocab' ? 'На повторение' : 'Ошибка'}
+        </Tag>
       ),
     },
     {
@@ -187,18 +181,15 @@ export const HistoryPage: React.FC = () => {
     },
   ];
 
-  const vocabMistakesCount = history.filter(h => h.type === 'vocab' && !h.is_correct).length;
-  const grammarMistakesCount = history.filter(h => h.type === 'grammar' && !h.is_correct).length;
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
           <Title level={2} className={styles.title}>
-            История ответов и работа над ошибками
+            Работа над ошибками
           </Title>
           <Text type="secondary">
-            Анализируйте изученные слова, пройденные тесты и тренируйте проблемные места
+            Детальный список ошибок из словаря и грамматических тестов для быстрого закрепления
           </Text>
         </div>
 
@@ -208,27 +199,19 @@ export const HistoryPage: React.FC = () => {
             value={typeFilter}
             onChange={(val) => setTypeFilter(val as HistoryFilterType)}
             options={[
-              { label: `Все (${history.length})`, value: 'all' },
+              { label: `Все ошибки (${history.length})`, value: 'all' },
               { label: <><BookOutlined /> Словарь</>, value: 'vocab' },
               { label: <><ThunderboltFilled /> Грамматика</>, value: 'grammar' },
             ]}
           />
 
-          <Space size="middle">
-            <Space>
-              <Text strong>Только ошибки:</Text>
-              <Switch
-                checked={mistakesOnly}
-                onChange={(checked) => setMistakesOnly(checked)}
-              />
-            </Space>
-
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => fetchHistory()}
-              title="Обновить"
-            />
-          </Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => fetchHistory()}
+            title="Обновить список ошибок"
+          >
+            Обновить
+          </Button>
         </div>
       </div>
 
@@ -239,11 +222,7 @@ export const HistoryPage: React.FC = () => {
           </div>
         ) : filteredHistory.length === 0 ? (
           <Empty 
-            description={
-              mistakesOnly 
-                ? 'Отлично! Ошибок в выбранной категории пока нет.' 
-                : 'История пока пуста. Начните тренироваться в тренажерах или словаре!'
-            } 
+            description="Отлично! Ошибок пока нет. Продолжайте тренироваться в тренажерах и словаре!" 
           />
         ) : (
           <Table

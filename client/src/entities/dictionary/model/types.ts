@@ -37,5 +37,6 @@ export interface DictionaryResponse {
     pages: number;
     totalInDb?: number;
     totalOverall?: number;
+    isCramMode?: boolean;
   };
 }
