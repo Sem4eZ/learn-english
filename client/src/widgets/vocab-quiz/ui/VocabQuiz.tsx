@@ -27,13 +27,16 @@ export interface VocabQuizProps {
   onNeedMore?: () => Promise<DictionaryItem[]> | void;
 }
 
+interface QuestionOption {
+  id: number;
+  item: DictionaryItem;
+  text: string;
+  isCorrect: boolean;
+}
+
 interface QuestionItem {
   targetWord: DictionaryItem;
-  options: {
-    id: number;
-    text: string;
-    isCorrect: boolean;
-  }[];
+  options: QuestionOption[];
 }
 
 export type RoundMode = '15' | '30' | '45' | '60' | 'all';
@@ -97,26 +100,41 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     selectedTargets.forEach(t => usedWordIdsRef.current.add(t.id));
 
     return selectedTargets.map(target => {
-      const targetText = (dir === 'en-ru' ? target.translation : target.word).trim().toLowerCase();
-      const seenTexts = new Set<string>([targetText]);
+      const targetEn = (target.word || '').trim().toLowerCase();
+      const targetRu = (target.translation || '').trim().toLowerCase();
+      const seenEn = new Set<string>([targetEn]);
+      const seenRu = new Set<string>([targetRu]);
       const distractors: DictionaryItem[] = [];
 
       const pool = [...wordList].sort(() => 0.5 - Math.random());
       for (const w of pool) {
         if (w.id === target.id) continue;
-        const text = (dir === 'en-ru' ? w.translation : w.word).trim().toLowerCase();
-        if (text && !seenTexts.has(text)) {
-          seenTexts.add(text);
+        const en = (w.word || '').trim().toLowerCase();
+        const ru = (w.translation || '').trim().toLowerCase();
+        if (en && ru && !seenEn.has(en) && !seenRu.has(ru)) {
+          seenEn.add(en);
+          seenRu.add(ru);
           distractors.push(w);
           if (distractors.length >= 3) break;
         }
       }
 
+      if (distractors.length < 3) {
+        for (const w of pool) {
+          if (w.id === target.id) continue;
+          if (!distractors.some(d => d.id === w.id)) {
+            distractors.push(w);
+            if (distractors.length >= 3) break;
+          }
+        }
+      }
+
       const allFour = [target, ...distractors];
-      const shuffledOptions = allFour
+      const shuffledOptions: QuestionOption[] = allFour
         .sort(() => 0.5 - Math.random())
         .map(item => ({
           id: item.id,
+          item,
           text: dir === 'en-ru' ? item.translation : item.word,
           isCorrect: item.id === target.id
         }));
@@ -140,7 +158,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
       setMaxCombo(0);
       setIsFinished(false);
     }
-  }, [words, direction]);
+  }, [words]);
 
   const handleRoundModeChange = (modeVal: string | number) => {
     const newMode = modeVal as RoundMode;
@@ -213,7 +231,17 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
   };
 
   const handleToggleDirection = () => {
-    setDirection(prev => (prev === 'en-ru' ? 'ru-en' : 'en-ru'));
+    const nextDir = direction === 'en-ru' ? 'ru-en' : 'en-ru';
+    setDirection(nextDir);
+    setQuestions(prev =>
+      prev.map(q => ({
+        ...q,
+        options: q.options.map(opt => ({
+          ...opt,
+          text: nextDir === 'en-ru' ? opt.item.translation : opt.item.word
+        }))
+      }))
+    );
   };
 
   const handleLearnNewWords = async () => {
@@ -449,7 +477,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
                 <span className={styles.optionIndexBadge}>
                   {letters[idx]}
                 </span>
-                <span>{opt.text}</span>
+                <span>{direction === 'en-ru' ? (opt.item?.translation || opt.text) : (opt.item?.word || opt.text)}</span>
               </div>
               {isAnswered && opt.isCorrect && <CheckOutlined className={styles.correctIcon} />}
               {isAnswered && opt.id === selectedOptionId && !opt.isCorrect && (
