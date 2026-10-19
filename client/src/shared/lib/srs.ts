@@ -106,6 +106,7 @@ export class SRSEngine {
       }
 
       updated.reps += 1;
+      updated.interval = nextIntervalDays;
       updated.state = (updated.reps >= 4 && updated.interval >= 14) ? 'mastered' : 'review';
     }
 
