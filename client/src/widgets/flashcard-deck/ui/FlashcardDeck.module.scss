@@ -48,7 +48,7 @@
 .roundTitleText {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text-primary, #0f172a);
 
   @media (max-width: 600px) {
     font-size: 0.95rem;
@@ -57,7 +57,7 @@
 
 .deckPoolHint {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-muted, #94a3b8);
 
   @media (max-width: 600px) {
     font-size: 0.75rem;
@@ -93,7 +93,7 @@
   align-items: center;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--color-text-secondary, #475569);
   margin-top: 4px;
   flex-wrap: wrap;
   gap: 6px;
@@ -310,11 +310,12 @@
 }
 
 .srsPrompt {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-secondary, #475569);
   text-align: center;
   margin-top: 10px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .actionControls {
@@ -354,7 +355,6 @@
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   user-select: none;
-  background: rgba(15, 23, 42, 0.95);
 
   @media (max-width: 600px) {
     min-height: 52px;
@@ -370,87 +370,219 @@
     transform: translateY(0);
   }
 
+  // --- Again (Снова) ---
   &.again {
-    border-color: rgba(239, 68, 68, 0.75);
-    background: rgba(239, 68, 68, 0.16);
-
-    &:hover {
-      background: rgba(239, 68, 68, 0.28);
-      border-color: #f87171;
-      box-shadow: 0 8px 22px rgba(239, 68, 68, 0.35);
-    }
+    background: #fff1f2;
+    border-color: #f87171;
 
     .ratingTitle {
-      color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    .shortcutBadge {
+      color: #991b1b;
+      background: #fee2e2;
     }
 
     .ratingSubTime {
-      color: #fef2f2;
-      background: rgba(185, 28, 28, 0.45);
-      border: 1px solid rgba(248, 113, 113, 0.4);
+      color: #ffffff;
+      background: #dc2626;
+      border: none;
+    }
+
+    &:hover {
+      background: #ffe4e6;
+      border-color: #ef4444;
+      box-shadow: 0 8px 20px rgba(220, 38, 38, 0.25);
+    }
+
+    :global([data-theme="dark"]) &,
+    :global(.theme-dark) & {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.75);
+
+      .ratingTitle {
+        color: #fca5a5;
+      }
+
+      .shortcutBadge {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      .ratingSubTime {
+        color: #fef2f2;
+        background: rgba(185, 28, 28, 0.55);
+        border: 1px solid rgba(248, 113, 113, 0.4);
+      }
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.28);
+        border-color: #f87171;
+        box-shadow: 0 8px 22px rgba(239, 68, 68, 0.35);
+      }
     }
   }
 
+  // --- Hard (Трудно) ---
   &.hard {
-    border-color: rgba(245, 158, 11, 0.75);
-    background: rgba(245, 158, 11, 0.16);
-
-    &:hover {
-      background: rgba(245, 158, 11, 0.28);
-      border-color: #fbbf24;
-      box-shadow: 0 8px 22px rgba(245, 158, 11, 0.35);
-    }
+    background: #fffbeb;
+    border-color: #fbbf24;
 
     .ratingTitle {
-      color: #fde68a;
+      color: #b45309;
+    }
+
+    .shortcutBadge {
+      color: #78350f;
+      background: #fef3c7;
     }
 
     .ratingSubTime {
-      color: #fffbeb;
-      background: rgba(180, 83, 9, 0.45);
-      border: 1px solid rgba(251, 191, 36, 0.4);
+      color: #ffffff;
+      background: #d97706;
+      border: none;
+    }
+
+    &:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      box-shadow: 0 8px 20px rgba(217, 119, 6, 0.25);
+    }
+
+    :global([data-theme="dark"]) &,
+    :global(.theme-dark) & {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(245, 158, 11, 0.75);
+
+      .ratingTitle {
+        color: #fde68a;
+      }
+
+      .shortcutBadge {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      .ratingSubTime {
+        color: #fffbeb;
+        background: rgba(180, 83, 9, 0.55);
+        border: 1px solid rgba(251, 191, 36, 0.4);
+      }
+
+      &:hover {
+        background: rgba(245, 158, 11, 0.28);
+        border-color: #fbbf24;
+        box-shadow: 0 8px 22px rgba(245, 158, 11, 0.35);
+      }
     }
   }
 
+  // --- Good (Хорошо) ---
   &.good {
-    border-color: rgba(59, 130, 246, 0.75);
-    background: rgba(59, 130, 246, 0.16);
-
-    &:hover {
-      background: rgba(59, 130, 246, 0.28);
-      border-color: #60a5fa;
-      box-shadow: 0 8px 22px rgba(59, 130, 246, 0.35);
-    }
+    background: #eff6ff;
+    border-color: #60a5fa;
 
     .ratingTitle {
-      color: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    .shortcutBadge {
+      color: #1e40af;
+      background: #dbeafe;
     }
 
     .ratingSubTime {
-      color: #eff6ff;
-      background: rgba(29, 78, 216, 0.45);
-      border: 1px solid rgba(96, 165, 250, 0.4);
+      color: #ffffff;
+      background: #2563eb;
+      border: none;
+    }
+
+    &:hover {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    }
+
+    :global([data-theme="dark"]) &,
+    :global(.theme-dark) & {
+      background: rgba(59, 130, 246, 0.16);
+      border-color: rgba(59, 130, 246, 0.75);
+
+      .ratingTitle {
+        color: #bfdbfe;
+      }
+
+      .shortcutBadge {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      .ratingSubTime {
+        color: #eff6ff;
+        background: rgba(29, 78, 216, 0.55);
+        border: 1px solid rgba(96, 165, 250, 0.4);
+      }
+
+      &:hover {
+        background: rgba(59, 130, 246, 0.28);
+        border-color: #60a5fa;
+        box-shadow: 0 8px 22px rgba(59, 130, 246, 0.35);
+      }
     }
   }
 
+  // --- Easy (Легко) ---
   &.easy {
-    border-color: rgba(16, 185, 129, 0.75);
-    background: rgba(16, 185, 129, 0.16);
-
-    &:hover {
-      background: rgba(16, 185, 129, 0.28);
-      border-color: #34d399;
-      box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
-    }
+    background: #ecfdf5;
+    border-color: #34d399;
 
     .ratingTitle {
-      color: #a7f3d0;
+      color: #047857;
+    }
+
+    .shortcutBadge {
+      color: #065f46;
+      background: #d1fae5;
     }
 
     .ratingSubTime {
-      color: #ecfdf5;
-      background: rgba(4, 120, 87, 0.45);
-      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #ffffff;
+      background: #059669;
+      border: none;
+    }
+
+    &:hover {
+      background: #d1fae5;
+      border-color: #10b981;
+      box-shadow: 0 8px 20px rgba(5, 150, 105, 0.25);
+    }
+
+    :global([data-theme="dark"]) &,
+    :global(.theme-dark) & {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.75);
+
+      .ratingTitle {
+        color: #a7f3d0;
+      }
+
+      .shortcutBadge {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      .ratingSubTime {
+        color: #ecfdf5;
+        background: rgba(4, 120, 87, 0.55);
+        border: 1px solid rgba(52, 211, 153, 0.4);
+      }
+
+      &:hover {
+        background: rgba(16, 185, 129, 0.28);
+        border-color: #34d399;
+        box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
+      }
     }
   }
 }
@@ -474,8 +606,6 @@
 .shortcutBadge {
   font-size: 0.72rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.14);
   padding: 2px 6px;
   border-radius: 4px;
 
@@ -517,8 +647,9 @@
   text-align: center;
   padding: 56px 32px;
   border-radius: $radius-xl;
-  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: var(--color-bg-surface, #ffffff);
+  border: 1px solid var(--color-border-card, rgba(99, 102, 241, 0.25));
+  box-shadow: var(--color-shadow-card, 0 16px 40px rgba(0, 0, 0, 0.1));
 }
 
 .summaryTrophy {
@@ -605,15 +736,24 @@
 
 .hideAnswerControls {
   margin-top: 12px;
+
+  button {
+    color: var(--color-text-secondary, #475569) !important;
+    font-weight: 500;
+
+    &:hover {
+      color: var(--color-primary, #6366f1) !important;
+    }
+  }
 }
 
 .roundCompletionCard {
   text-align: center;
   padding: 48px 32px;
   border-radius: $radius-xl;
-  background: radial-gradient(circle at top, rgba(99, 102, 241, 0.18) 0%, rgba(15, 23, 42, 0.95) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  background: var(--color-bg-surface, #ffffff);
+  border: 1px solid var(--color-border-card, rgba(99, 102, 241, 0.35));
+  box-shadow: var(--color-shadow-card, 0 16px 40px rgba(0, 0, 0, 0.15));
 }
 
 .roundCompletionTrophy {
@@ -632,8 +772,8 @@
 }
 
 .roundStatItem {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--color-bg-subtle, rgba(99, 102, 241, 0.05));
+  border: 1px solid var(--color-border-subtle, rgba(0, 0, 0, 0.08));
   border-radius: $radius-lg;
   padding: 16px 24px;
   min-width: 140px;
@@ -646,25 +786,25 @@
 .roundStatVal {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text-primary, #0f172a);
 
   &.success {
-    color: #34d399;
+    color: var(--color-success, #059669);
   }
 
   &.gold {
-    color: $color-warning;
+    color: var(--color-warning, #d97706);
   }
 }
 
 .roundStatLabel {
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-text-secondary, #475569);
 }
 
 .modeSegmented {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: var(--color-bg-subtle, rgba(0, 0, 0, 0.04)) !important;
+  border: 1px solid var(--color-border-card, rgba(0, 0, 0, 0.12)) !important;
 }
 
 
