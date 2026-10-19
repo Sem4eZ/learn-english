@@ -322,7 +322,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             className={styles.drawerNavBtn}
             onClick={() => handleTabClick('dictionary')}
           >
-            📖 Словарь ({stats?.totalAnswered ? `${stats.totalAnswered} слов` : 'Каталог'})
+            📖 Словарь
             <RightOutlined className={styles.drawerArrow} />
           </Button>
           <Button

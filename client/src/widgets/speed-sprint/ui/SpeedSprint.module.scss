@@ -55,8 +55,8 @@
   justify-content: center;
 
   @media (max-width: 600px) {
-    padding: 18px 12px;
-    min-height: 170px;
+    padding: 12px 10px;
+    min-height: 125px;
     border-radius: $radius-lg !important;
   }
 
@@ -91,12 +91,12 @@
   hyphens: none;
 
   @media (max-width: 600px) {
-    font-size: 1.65rem;
-    margin-bottom: 4px;
+    font-size: 1.5rem;
+    margin-bottom: 2px;
   }
 
   @media (max-width: 380px) {
-    font-size: 1.45rem;
+    font-size: 1.35rem;
   }
 }
 
@@ -107,8 +107,8 @@
   margin-bottom: 8px;
 
   @media (max-width: 600px) {
-    font-size: 1.25rem;
-    margin-bottom: 4px;
+    font-size: 1.15rem;
+    margin-bottom: 2px;
   }
 }
 
@@ -117,7 +117,7 @@
   color: var(--trainer-prompt-color);
 
   @media (max-width: 600px) {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -127,6 +127,9 @@
   gap: 16px;
 
   @media (max-width: 600px) {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
     gap: 8px;
   }
 }
@@ -143,8 +146,9 @@
   transition: transform 0.1s ease;
 
   @media (max-width: 600px) {
-    height: 52px !important;
-    font-size: 1.05rem !important;
+    height: 44px !important;
+    font-size: 1rem !important;
+    width: 100% !important;
     gap: 6px;
   }
 
@@ -178,6 +182,10 @@
   opacity: 0.6;
   text-transform: uppercase;
   margin-left: 6px;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
 }
 
 .summaryCard {
@@ -206,6 +214,39 @@
 
 .summaryActions {
   margin-top: 24px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center;
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 10px !important;
+
+  :global(.ant-space-item) {
+    width: 100% !important;
+  }
+
+  button {
+    width: 100% !important;
+    height: 48px !important;
+    border-radius: $radius-md !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+  }
+
+  @media (max-width: 600px) {
+    margin-top: 16px;
+    gap: 8px !important;
+
+    button {
+      height: 44px !important;
+      font-size: 0.95rem !important;
+    }
+  }
 }
 
 .primaryActionBtn {

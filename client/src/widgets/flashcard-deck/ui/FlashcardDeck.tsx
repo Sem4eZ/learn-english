@@ -272,7 +272,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
         </div>
 
         {/* Round Navigation Actions */}
-        <Space size="middle" className={styles.summaryActions} wrap>
+        <Space size="middle" direction="vertical" className={styles.summaryActions}>
           {hasMoreRounds ? (
             <Button
               type="primary"

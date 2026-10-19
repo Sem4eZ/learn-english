@@ -239,7 +239,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
           </Tag>
         </Paragraph>
 
-        <Space size="middle" className={styles.summaryActions} wrap>
+        <Space size="middle" direction="vertical" className={styles.summaryActions}>
           <Button
             type="primary"
             size="large"
