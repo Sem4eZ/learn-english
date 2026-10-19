@@ -23,7 +23,7 @@ export function useTrainerWords(options: UseTrainerWordsOptions = {}) {
   const [totalInDb, setTotalInDb] = useState<number>(0);
   const isReplenishingRef = useRef<boolean>(false);
 
-  const handleNeedMoreWords = useCallback(async (count = 35): Promise<DictionaryItem[]> => {
+  const handleNeedMoreWords = useCallback(async (count = 50): Promise<DictionaryItem[]> => {
     if (isReplenishingRef.current) return [];
     isReplenishingRef.current = true;
     try {
@@ -77,12 +77,12 @@ export function useTrainerWords(options: UseTrainerWordsOptions = {}) {
 
       if (fetchedWords.length === 0) {
         // If there are zero words, await initial auto-generation so the user does not land on an empty screen
-        const fresh = await handleNeedMoreWords(35);
+        const fresh = await handleNeedMoreWords(50);
         if (fresh && fresh.length > 0) {
           return fresh;
         }
       } else if (fetchedWords.length < 20) {
-        handleNeedMoreWords(35);
+        handleNeedMoreWords(50);
       }
       return fetchedWords;
     } catch (err) {

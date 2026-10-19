@@ -198,7 +198,7 @@ describe('useTrainerWords Hook Tests', () => {
     renderHook(() => useTrainerWords(), { wrapper });
 
     await waitFor(() => {
-      expect(genWordsSpy).toHaveBeenCalledWith('A1', 'general', 35);
+      expect(genWordsSpy).toHaveBeenCalledWith('A1', 'general', 50);
     });
   });
 

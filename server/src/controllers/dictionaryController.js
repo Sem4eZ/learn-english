@@ -227,8 +227,8 @@ async function toggleFavorite(req, res) {
 
 async function generateDictionaryWords(req, res) {
   try {
-    const { level = 'A1', sectionId = 'general', count = 35 } = req.body || {};
-    const countNum = Math.max(1, Math.min(50, parseInt(count, 10) || 35));
+    const { level = 'A1', sectionId = 'general', count = 50 } = req.body || {};
+    const countNum = Math.max(1, Math.min(60, parseInt(count, 10) || 50));
     
     const geminiService = require('../services/geminiService');
     let newWords = [];
@@ -376,10 +376,25 @@ async function lookupWord(req, res) {
   }
 }
 
+async function getHarvesterStats(req, res) {
+  try {
+    const backgroundHarvester = require('../services/backgroundHarvester');
+    const stats = backgroundHarvester.getStats();
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (err) {
+    console.error('Error fetching harvester stats:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 module.exports = {
   getDictionary,
   toggleFavorite,
   generateDictionaryWords,
   recordSrsReview,
-  lookupWord
+  lookupWord,
+  getHarvesterStats
 };
