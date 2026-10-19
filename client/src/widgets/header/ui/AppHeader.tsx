@@ -13,6 +13,7 @@ import {
   MenuOutlined,
   RightOutlined
 } from '@ant-design/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { UserStats } from '@/entities/user/model/types';
 import { AuthUser } from '@/features/auth/ui/AuthModal';
 import styles from './AppHeader.module.scss';
@@ -21,8 +22,8 @@ const { Header } = Layout;
 
 interface AppHeaderProps {
   stats: UserStats | null;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
   isDark: boolean;
   onToggleTheme: () => void;
   currentUser?: AuthUser | null;
@@ -41,6 +42,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onLogout,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentTab = React.useMemo(() => {
+    if (activeTab) return activeTab;
+    const path = location.pathname;
+    if (path.startsWith('/dictionary')) return 'dictionary';
+    if (path.startsWith('/stats') || path.startsWith('/dashboard')) return 'stats';
+    if (path.startsWith('/history')) return 'history';
+    return 'arcade';
+  }, [activeTab, location.pathname]);
 
   const xp = stats?.xp ?? currentUser?.xp ?? 0;
   const streak = stats?.streak ?? currentUser?.streak ?? 1;
@@ -49,7 +61,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const isGuest = !currentUser || currentUser.isGuest;
 
   const handleTabClick = (tab: string) => {
-    onTabChange(tab);
+    onTabChange?.(tab);
+    if (tab === 'arcade') navigate('/trainers');
+    else if (tab === 'dictionary') navigate('/dictionary');
+    else if (tab === 'stats') navigate('/stats');
+    else if (tab === 'history') navigate('/history');
     setDrawerOpen(false);
   };
 
@@ -110,28 +126,28 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className={styles.desktopNav}>
             <Space size="middle">
               <Button
-                type={activeTab === 'arcade' ? 'primary' : 'text'}
+                type={currentTab === 'arcade' ? 'primary' : 'text'}
                 icon={<ThunderboltFilled />}
                 onClick={() => handleTabClick('arcade')}
               >
                 🎮 Тренажеры
               </Button>
               <Button
-                type={activeTab === 'dictionary' ? 'primary' : 'text'}
+                type={currentTab === 'dictionary' ? 'primary' : 'text'}
                 icon={<BookOutlined />}
                 onClick={() => handleTabClick('dictionary')}
               >
                 Словарь
               </Button>
               <Button
-                type={activeTab === 'stats' ? 'primary' : 'text'}
+                type={currentTab === 'stats' ? 'primary' : 'text'}
                 icon={<TrophyOutlined />}
                 onClick={() => handleTabClick('stats')}
               >
                 Дашборд
               </Button>
               <Button
-                type={activeTab === 'history' ? 'primary' : 'text'}
+                type={currentTab === 'history' ? 'primary' : 'text'}
                 icon={<HistoryOutlined />}
                 onClick={() => handleTabClick('history')}
               >
@@ -304,7 +320,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className={styles.drawerNavList}>
           <div className={styles.drawerNavTitle}>Разделы приложения</div>
           <Button
-            type={activeTab === 'arcade' ? 'primary' : 'text'}
+            type={currentTab === 'arcade' ? 'primary' : 'text'}
             block
             size="large"
             icon={<ThunderboltFilled />}
@@ -315,7 +331,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <RightOutlined className={styles.drawerArrow} />
           </Button>
           <Button
-            type={activeTab === 'dictionary' ? 'primary' : 'text'}
+            type={currentTab === 'dictionary' ? 'primary' : 'text'}
             block
             size="large"
             icon={<BookOutlined />}
@@ -326,7 +342,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <RightOutlined className={styles.drawerArrow} />
           </Button>
           <Button
-            type={activeTab === 'stats' ? 'primary' : 'text'}
+            type={currentTab === 'stats' ? 'primary' : 'text'}
             block
             size="large"
             icon={<TrophyOutlined />}
@@ -337,7 +353,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <RightOutlined className={styles.drawerArrow} />
           </Button>
           <Button
-            type={activeTab === 'history' ? 'primary' : 'text'}
+            type={currentTab === 'history' ? 'primary' : 'text'}
             block
             size="large"
             icon={<HistoryOutlined />}
@@ -354,8 +370,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <nav className={styles.bottomNav} aria-label="Мобильная навигация">
         <button
           type="button"
-          className={`${styles.bottomNavItem} ${activeTab === 'arcade' ? styles.active : ''}`}
-          onClick={() => onTabChange('arcade')}
+          className={`${styles.bottomNavItem} ${currentTab === 'arcade' ? styles.active : ''}`}
+          onClick={() => handleTabClick('arcade')}
           aria-label="Тренажеры"
         >
           <ThunderboltFilled className={styles.bottomNavIcon} />
@@ -364,8 +380,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <button
           type="button"
-          className={`${styles.bottomNavItem} ${activeTab === 'dictionary' ? styles.active : ''}`}
-          onClick={() => onTabChange('dictionary')}
+          className={`${styles.bottomNavItem} ${currentTab === 'dictionary' ? styles.active : ''}`}
+          onClick={() => handleTabClick('dictionary')}
           aria-label="Словарь"
         >
           <BookOutlined className={styles.bottomNavIcon} />
@@ -374,8 +390,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <button
           type="button"
-          className={`${styles.bottomNavItem} ${activeTab === 'stats' ? styles.active : ''}`}
-          onClick={() => onTabChange('stats')}
+          className={`${styles.bottomNavItem} ${currentTab === 'stats' ? styles.active : ''}`}
+          onClick={() => handleTabClick('stats')}
           aria-label="Дашборд"
         >
           <TrophyOutlined className={styles.bottomNavIcon} />
@@ -384,8 +400,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <button
           type="button"
-          className={`${styles.bottomNavItem} ${activeTab === 'history' ? styles.active : ''}`}
-          onClick={() => onTabChange('history')}
+          className={`${styles.bottomNavItem} ${currentTab === 'history' ? styles.active : ''}`}
+          onClick={() => handleTabClick('history')}
           aria-label="История"
         >
           <HistoryOutlined className={styles.bottomNavIcon} />

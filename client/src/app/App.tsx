@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, message, Spin } from 'antd';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout, message } from 'antd';
 import { AntdConfigProvider } from './providers/AntdConfigProvider';
 import { AppHeader } from '@/widgets/header/ui/AppHeader';
 import { ArcadeHubPage } from '@/pages/ArcadeHubPage';
 import { DictionaryPage } from '@/pages/DictionaryPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { HistoryPage } from '@/pages/HistoryPage';
+import { QuizTrainerPage } from '@/pages/trainers/QuizTrainerPage';
+import { SprintTrainerPage } from '@/pages/trainers/SprintTrainerPage';
+import { BuilderTrainerPage } from '@/pages/trainers/BuilderTrainerPage';
+import { CardsTrainerPage } from '@/pages/trainers/CardsTrainerPage';
+import { AudioTrainerPage } from '@/pages/trainers/AudioTrainerPage';
+import { GrammarTrainerPage } from '@/pages/trainers/GrammarTrainerPage';
 import { GenerateBatchModal } from '@/features/generate-ai-batch/ui/GenerateBatchModal';
 import { AuthModal, AuthUser } from '@/features/auth/ui/AuthModal';
 import { Section } from '@/entities/section/model/types';
@@ -24,9 +31,6 @@ export const App: React.FC = () => {
   const [isDark, setIsDark] = useState<boolean>(() => {
     return localStorage.getItem('fluentiq_theme') !== 'light' && localStorage.getItem('lexiflow_theme') !== 'light';
   });
-
-  // Default homepage is the interactive Trainers Hub ('arcade')
-  const [activeTab, setActiveTab] = useState<string>('arcade');
 
   const [sections, setSections] = useState<Section[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -90,7 +94,6 @@ export const App: React.FC = () => {
           authSession.getRefreshToken() || undefined
         );
       } else if (res && res.authenticated === false) {
-        // Access token might be expired, attempt silent refresh
         if (refreshToken) {
           try {
             const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -108,13 +111,11 @@ export const App: React.FC = () => {
             console.warn('Failed to refresh auth token silently:', refreshErr);
           }
         }
-        // Explicitly unauthenticated and refresh token invalid
         authSession.clearAuth();
         setCurrentUser(null);
         setAuthModalOpen(true);
       }
     } catch (err) {
-      // Backend cold-start or temporary network glitch: do not aggressively log out!
       console.warn('Backend cold start / network delay, keeping saved user session:', err);
       if (savedUser) {
         setCurrentUser(savedUser);
@@ -182,7 +183,7 @@ export const App: React.FC = () => {
     });
 
     return unsubscribe;
-  }, []);
+  }, [loadSections, loadUser, loadStats]);
 
   const handleAuthSuccess = (user: AuthUser) => {
     setCurrentUser(user);
@@ -200,68 +201,150 @@ export const App: React.FC = () => {
 
   return (
     <AntdConfigProvider isDark={isDark}>
-      <Layout className={isDark ? styles.layoutDark : styles.layoutLight}>
-        <AppHeader
-          stats={stats}
-          activeTab={activeTab}
-          onTabChange={(tab) => setActiveTab(tab)}
-          isDark={isDark}
-          onToggleTheme={handleToggleTheme}
-          currentUser={currentUser}
-          onOpenAuth={() => setAuthModalOpen(true)}
-          onLogout={handleLogout}
-        />
+      <HashRouter>
+        <Layout className={isDark ? styles.layoutDark : styles.layoutLight}>
+          <AppHeader
+            stats={stats}
+            isDark={isDark}
+            onToggleTheme={handleToggleTheme}
+            currentUser={currentUser}
+            onOpenAuth={() => setAuthModalOpen(true)}
+            onLogout={handleLogout}
+          />
 
-        <Content className={styles.content}>
-          {activeTab === 'arcade' && (
-            <ArcadeHubPage
-              sections={sections}
-              currentUser={currentUser}
-              onRequireAuth={() => setAuthModalOpen(true)}
-              onRefreshStats={loadStats}
-            />
-          )}
+          <Content className={styles.content}>
+            <Routes>
+              {/* Main Hub & Default Route */}
+              <Route path="/" element={<Navigate to="/trainers" replace />} />
+              <Route
+                path="/trainers"
+                element={
+                  <ArcadeHubPage
+                    sections={sections}
+                    currentUser={currentUser}
+                    onRequireAuth={() => setAuthModalOpen(true)}
+                    onRefreshStats={loadStats}
+                  />
+                }
+              />
 
-          {activeTab === 'dictionary' && (
-            <DictionaryPage 
-              currentUser={currentUser}
-              onRequireAuth={() => setAuthModalOpen(true)}
-              onRefreshStats={loadStats} 
-            />
-          )}
+              {/* Dedicated Trainer Routes */}
+              <Route
+                path="/trainers/quiz"
+                element={
+                  <QuizTrainerPage
+                    currentUser={currentUser}
+                    onRequireAuth={() => setAuthModalOpen(true)}
+                    onRefreshStats={loadStats}
+                  />
+                }
+              />
+              <Route
+                path="/trainers/sprint"
+                element={
+                  <SprintTrainerPage
+                    currentUser={currentUser}
+                    onRequireAuth={() => setAuthModalOpen(true)}
+                    onRefreshStats={loadStats}
+                  />
+                }
+              />
+              <Route
+                path="/trainers/builder"
+                element={
+                  <BuilderTrainerPage
+                    currentUser={currentUser}
+                    onRequireAuth={() => setAuthModalOpen(true)}
+                    onRefreshStats={loadStats}
+                  />
+                }
+              />
+              <Route
+                path="/trainers/cards"
+                element={
+                  <CardsTrainerPage
+                    currentUser={currentUser}
+                    onRequireAuth={() => setAuthModalOpen(true)}
+                    onRefreshStats={loadStats}
+                  />
+                }
+              />
+              <Route
+                path="/trainers/audio"
+                element={
+                  <AudioTrainerPage
+                    currentUser={currentUser}
+                    onRequireAuth={() => setAuthModalOpen(true)}
+                    onRefreshStats={loadStats}
+                  />
+                }
+              />
+              <Route
+                path="/trainers/grammar"
+                element={
+                  <GrammarTrainerPage
+                    allSections={sections}
+                    onRefreshStats={loadStats}
+                  />
+                }
+              />
+              <Route path="/grammar" element={<Navigate to="/trainers/grammar" replace />} />
 
-          {activeTab === 'stats' && (
-            <DashboardPage stats={stats} onRefreshStats={loadStats} />
-          )}
+              {/* App Section Routes */}
+              <Route
+                path="/dictionary"
+                element={
+                  <DictionaryPage 
+                    currentUser={currentUser}
+                    onRequireAuth={() => setAuthModalOpen(true)}
+                    onRefreshStats={loadStats} 
+                  />
+                }
+              />
+              <Route
+                path="/stats"
+                element={
+                  <DashboardPage stats={stats} onRefreshStats={loadStats} />
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={<Navigate to="/stats" replace />}
+              />
+              <Route
+                path="/history"
+                element={<HistoryPage />}
+              />
 
-          {activeTab === 'history' && (
-            <HistoryPage />
-          )}
-        </Content>
+              {/* 404 Fallback */}
+              <Route path="*" element={<Navigate to="/trainers" replace />} />
+            </Routes>
+          </Content>
 
-        <Footer className={styles.footer}>
-          Fluentiq — Интерактивная платформа изучения английского языка © 2026.
-        </Footer>
+          <Footer className={styles.footer}>
+            Fluentiq — Интерактивная платформа изучения английского языка © 2026.
+          </Footer>
 
-        {/* Global Modal for batch generation */}
-        <GenerateBatchModal
-          visible={generateModalOpen}
-          sections={sections}
-          initialSectionId={targetSectionForGen}
-          onClose={() => setGenerateModalOpen(false)}
-          onGenerated={() => {
-            loadSections();
-            loadStats();
-          }}
-        />
+          {/* Global Modal for batch generation */}
+          <GenerateBatchModal
+            visible={generateModalOpen}
+            sections={sections}
+            initialSectionId={targetSectionForGen}
+            onClose={() => setGenerateModalOpen(false)}
+            onGenerated={() => {
+              loadSections();
+              loadStats();
+            }}
+          />
 
-        {/* Auth Modal (Login / Register) */}
-        <AuthModal
-          open={authModalOpen}
-          onClose={() => setAuthModalOpen(false)}
-          onSuccess={handleAuthSuccess}
-        />
-      </Layout>
+          {/* Auth Modal (Login / Register) */}
+          <AuthModal
+            open={authModalOpen}
+            onClose={() => setAuthModalOpen(false)}
+            onSuccess={handleAuthSuccess}
+          />
+        </Layout>
+      </HashRouter>
     </AntdConfigProvider>
   );
 };

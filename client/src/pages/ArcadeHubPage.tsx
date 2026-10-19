@@ -1,56 +1,43 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, Typography, Button, Space, Select, Tag, Spin, message, Alert } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Card, Button, Typography, Tag, Space, Alert, Spin } from 'antd';
 import { 
-  ArrowLeftOutlined, 
   ThunderboltFilled, 
-  FireFilled, 
-  BookOutlined,
   PlayCircleFilled,
-  CustomerServiceOutlined
+  BookOutlined
 } from '@ant-design/icons';
-import { DictionaryItem } from '@/entities/dictionary/model/types';
 import { Section } from '@/entities/section/model/types';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
-import { sectionApi } from '@/entities/section/api/sectionApi';
-import { VocabQuiz } from '@/widgets/vocab-quiz/ui/VocabQuiz';
-import { SpeedSprint } from '@/widgets/speed-sprint/ui/SpeedSprint';
-import { WordBuilder } from '@/widgets/word-builder/ui/WordBuilder';
-import { FlashcardDeck } from '@/widgets/flashcard-deck/ui/FlashcardDeck';
-import { AudioChallenge } from '@/widgets/audio-challenge/ui/AudioChallenge';
-import { PracticePage } from '@/pages/PracticePage';
 import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { sectionApi } from '@/entities/section/api/sectionApi';
+import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
 import styles from './ArcadeHubPage.module.scss';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
-type ArcadeMode = 'idle' | 'grammar' | 'quiz' | 'sprint' | 'builder' | 'cards' | 'audio';
+export type ArcadeMode = 'grammar' | 'quiz' | 'sprint' | 'builder' | 'cards' | 'audio';
 
 interface ArcadeHubPageProps {
-  onRefreshStats?: () => void;
   sections?: Section[];
   initialCategory?: string;
-  initialMode?: ArcadeMode;
   currentUser?: AuthUser | null;
   onRequireAuth?: () => void;
+  onRefreshStats?: () => void;
 }
 
-export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({ 
-  onRefreshStats,
+export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   sections: propSections,
   initialCategory,
-  initialMode = 'idle',
   currentUser,
-  onRequireAuth
+  onRequireAuth,
 }) => {
-  const [selectedMode, setSelectedMode] = useState<ArcadeMode>(initialMode);
-  const [words, setWords] = useState<DictionaryItem[]>([]);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [sections, setSections] = useState<Section[]>(propSections || []);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [selectedLevel, setSelectedLevel] = useState<string>('all');
-  const [selectedSection, setSelectedSection] = useState<string>(initialCategory || 'all');
+  const [selectedLevel, setSelectedLevel] = useState<string>(() => searchParams.get('level') || 'all');
+  const [selectedSection, setSelectedSection] = useState<string>(() => searchParams.get('category') || initialCategory || 'all');
   const [totalInDb, setTotalInDb] = useState<number>(0);
-  const [isCramMode, setIsCramMode] = useState<boolean>(false);
-  const isReplenishingRef = useRef<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   // Load sections if not passed via props
   useEffect(() => {
@@ -61,125 +48,61 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
     }
   }, [propSections]);
 
-  const handleNeedMoreWords = useCallback(async (count = 35): Promise<DictionaryItem[]> => {
-    if (isReplenishingRef.current) return [];
-    const targetLevel = selectedLevel !== 'all' ? selectedLevel : 'A1';
-    const targetSection = selectedSection !== 'all' ? selectedSection : 'general';
-    isReplenishingRef.current = true;
-    try {
-      const res = await dictionaryApi.generateWords(targetLevel, targetSection, count);
-      if (res.success && res.data?.length > 0) {
-        setWords(prev => {
-          const existingIds = new Set(prev.map(w => w.id));
-          const fresh = res.data.filter(w => !existingIds.has(w.id));
-          return [...prev, ...fresh];
-        });
-        message.success(res.message || `Добавлено ${res.data.length} новых слов!`);
-        return res.data;
-      }
-      return [];
-    } catch (err) {
-      console.warn('Auto-replenishment note:', err);
-      return [];
-    } finally {
-      isReplenishingRef.current = false;
-    }
-  }, [selectedLevel, selectedSection]);
+  // Sync state with URL search params
+  const handleLevelChange = (lvl: string) => {
+    setSelectedLevel(lvl);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (lvl === 'all') next.delete('level');
+      else next.set('level', lvl);
+      return next;
+    });
+  };
 
-  const fetchWords = async () => {
-    setLoading(true);
-    try {
-      let res = await dictionaryApi.getDictionary({
-        level: selectedLevel,
-        sectionId: selectedSection,
-        mode: 'practice',
-        limit: 1000
-      });
-
-      // Infinite Learning Fallback:
-      // If practice mode returned 0 words (user has completed all current repetitions for this level),
-      // fetch all available words for this level so the user can freely practice anytime!
-      if (!res.data || res.data.length === 0) {
-        res = await dictionaryApi.getDictionary({
-          level: selectedLevel,
-          sectionId: selectedSection,
-          limit: 1000
-        });
-        setIsCramMode(true);
-      } else {
-        setIsCramMode(Boolean(res.pagination?.isCramMode));
-      }
-
-      setWords(res.data || []);
-      const dbCount = res.pagination?.totalInDb ?? res.pagination?.total ?? res.data?.length ?? 0;
-      setTotalInDb(dbCount);
-      if ((res.data || []).length < 20) {
-        handleNeedMoreWords(35);
-      }
-      return res.data || [];
-    } catch (err) {
-      console.error('Failed to load arcade words:', err);
-      return [];
-    } finally {
-      setLoading(false);
-    }
+  const handleSectionChange = (sec: string) => {
+    setSelectedSection(sec);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (sec === 'all') next.delete('category');
+      else next.set('category', sec);
+      return next;
+    });
   };
 
   useEffect(() => {
-    fetchWords();
+    let isCancelled = false;
+    const fetchCount = async () => {
+      setLoading(true);
+      try {
+        const res = await dictionaryApi.getDictionary({
+          level: selectedLevel,
+          sectionId: selectedSection,
+          limit: 1,
+        });
+        if (!isCancelled) {
+          const dbCount = res.pagination?.totalInDb ?? res.pagination?.total ?? 0;
+          setTotalInDb(dbCount);
+        }
+      } catch (err) {
+        console.error('Failed to load count:', err);
+      } finally {
+        if (!isCancelled) setLoading(false);
+      }
+    };
+    fetchCount();
+    return () => { isCancelled = true; };
   }, [selectedLevel, selectedSection]);
 
-  const handleStartMode = async (modeId: ArcadeMode) => {
+  const handleStartMode = (modeId: ArcadeMode) => {
     if (!currentUser) {
-      message.warning('Для выполнения тренировок и сохранения прогресса войдите или зарегистрируйтесь');
       onRequireAuth?.();
       return;
     }
-
-    if (modeId === 'grammar') {
-      setSelectedMode('grammar');
-      return;
-    }
-
-    if (words.length >= 2) {
-      setSelectedMode(modeId);
-      return;
-    }
-
-    // If words are still generating/loading or empty, trigger on-demand preparation
-    const targetLevel = selectedLevel !== 'all' ? selectedLevel : 'A1';
-    const targetSection = selectedSection !== 'all' ? selectedSection : 'general';
-    message.loading({
-      content: `Подготовка слов для уровня ${targetLevel}...`,
-      key: 'start-mode-loading',
-      duration: 10
-    });
-    setLoading(true);
-    try {
-      await dictionaryApi.generateWords(targetLevel, targetSection, 35);
-      const freshWords = await fetchWords();
-      if (freshWords.length > 0) {
-        message.success({ content: 'Слова готовы! Запуск тренажера...', key: 'start-mode-loading', duration: 1.5 });
-        setSelectedMode(modeId);
-      } else {
-        message.error({ content: 'Не удалось подготовить слова. Попробуйте еще раз.', key: 'start-mode-loading' });
-      }
-    } catch (err) {
-      message.error({ content: 'Ошибка при подготовке слов к игре.', key: 'start-mode-loading' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGameComplete = async (xpEarned: number) => {
-    try {
-      if (xpEarned > 0) {
-        onRefreshStats?.();
-      }
-      fetchWords();
-    } catch (err) {
-      console.error('Failed to update stats:', err);
-    }
+    const params = new URLSearchParams();
+    if (selectedLevel !== 'all') params.set('level', selectedLevel);
+    if (selectedSection !== 'all') params.set('category', selectedSection);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    navigate(`/trainers/${modeId}${queryString}`);
   };
 
   const modes = [
@@ -232,307 +155,123 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
       id: 'audio' as ArcadeMode,
       icon: '🎧',
       title: 'Аудирование и диктант',
-      badge: 'На слух',
+      badge: 'Восприятие на слух',
       badgeColor: 'green',
-      description: 'Восприятие беглой английской речи на слух с нормальной (1.0x) и замедленной (0.75x) скоростью. Соберите услышанную фразу из слов.',
-      xpReward: '+20 XP за фразу'
+      description: 'Тренируйте восприятие речи носителей на слух. Слушайте озвучку фразы в естественном темпе и собирайте предложение из слов.',
+      xpReward: '+25 XP за фразу'
     }
   ];
 
-  const currentModeObj = modes.find(m => m.id === selectedMode);
-
-  const cardItems = React.useMemo(() => {
-    const seen = new Set<string>();
-    const unique = [];
-    for (const w of words) {
-      const key = (w.word || '').trim().toLowerCase();
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        unique.push({
-          id: w.id,
-          frontMain: w.word,
-          frontPhonetic: w.transcription,
-          frontContext: w.example_sentence,
-          backMain: w.translation,
-          backDetail: w.definition,
-          backGrammar: w.example_translation,
-          level: w.level,
-          category: w.section_id
-        });
-      }
-    }
-    return unique.sort(() => 0.5 - Math.random());
-  }, [words]);
-
-  const audioItems = React.useMemo(() => {
-    const seen = new Set<string>();
-    const unique = [];
-    for (const w of words) {
-      const s = (w.example_sentence || w.word || '').trim();
-      if (s && !seen.has(s.toLowerCase())) {
-        seen.add(s.toLowerCase());
-        unique.push({
-          id: w.id,
-          sentence: s,
-          translation: w.example_translation || w.translation,
-          hint: w.definition,
-          level: w.level
-        });
-      }
-    }
-    return unique.sort(() => 0.5 - Math.random());
-  }, [words]);
+  const levels = ['all', 'A1', 'A2', 'B1', 'B2', 'C1'];
 
   return (
     <div className={styles.container}>
-      {selectedMode === 'idle' ? (
-        <>
-          <div className={styles.header}>
-            <Title level={2} className={styles.title}>
-              🎮 Интерактивные тренажеры
-            </Title>
-            <Paragraph className={styles.subtitle}>
-              Разносторонние форматы обучения: грамматика и контекст, словарные квизы, скоростные спринты, спеллинг, 3D карточки и аудирование.
-            </Paragraph>
-          </div>
+      <div className={styles.header}>
+        <Title level={2} className={styles.title}>
+          🎮 Интерактивные тренажеры
+        </Title>
+        <Paragraph className={styles.subtitle}>
+          Разносторонние форматы обучения: грамматика и контекст, словарные квизы, скоростные спринты, спеллинг, 3D карточки и аудирование.
+        </Paragraph>
+      </div>
 
-          {!currentUser && (
-            <Alert
-              type="info"
-              showIcon
-              style={{ marginBottom: 20, borderRadius: 12 }}
-              message="Вход в игру"
-              description={
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginTop: 4 }}>
-                  <span>Чтобы выполнять задания, повышать уровень, зарабатывать XP и сохранять интервальные повторения, войдите в аккаунт или зарегистрируйтесь.</span>
-                  <Button type="primary" size="small" onClick={onRequireAuth}>
-                    Войти или зарегистрироваться
-                  </Button>
-                </div>
-              }
-            />
-          )}
-
-          {/* Filter Bar */}
-          <div className={styles.filterBar}>
-            <Space wrap size="middle">
-              <Space>
-                <Text strong>Уровень CEFR:</Text>
-                <Select
-                  value={selectedLevel}
-                  onChange={setSelectedLevel}
-                  className={styles.levelSelect}
-                  options={[
-                    { label: 'Все уровни', value: 'all' },
-                    { label: 'A1 (Beginner)', value: 'A1' },
-                    { label: 'A2 (Elementary)', value: 'A2' },
-                    { label: 'B1 (Intermediate)', value: 'B1' },
-                    { label: 'B2 (Upper-Inter.)', value: 'B2' },
-                    { label: 'C1 (Advanced)', value: 'C1' },
-                  ]}
-                />
-              </Space>
-
-              <Space>
-                <Text strong>Тематика:</Text>
-                <Select
-                  value={selectedSection}
-                  onChange={setSelectedSection}
-                  className={styles.sectionSelect}
-                  options={[
-                    { label: 'Все темы и категории', value: 'all' },
-                    ...sections.map(s => ({ label: s.title, value: s.id }))
-                  ]}
-                />
-              </Space>
-            </Space>
-
-            <Space wrap align="center">
-              <Tag color="purple" className={styles.dbCountTag}>
-                Доступно слов в базе: {totalInDb || words.length}
-              </Tag>
-            </Space>
-          </div>
-
-          {loading ? (
-            <div className={styles.loadingContainer}>
-              <Spin size="large" />
-              <div className={styles.loadingMessage}>
-                ⚡ Загрузка слов для уровня <b>{selectedLevel === 'all' ? 'Все уровни' : selectedLevel}</b>...
-              </div>
-            </div>
-          ) : (
-            <div className={styles.cardsGrid}>
-              {modes.map((m) => (
-                <Card key={m.id} className={styles.modeCard}>
-                  <div>
-                    <div className={styles.modeHeader}>
-                      <div className={styles.modeIcon}>
-                        {m.icon}
-                      </div>
-                      <div>
-                        <Title level={4} className={styles.modeTitle}>
-                          {m.title}
-                        </Title>
-                        <Tag color={m.badgeColor} className={styles.modeBadge}>
-                          {m.badge}
-                        </Tag>
-                      </div>
-                    </div>
-
-                    <Paragraph className={styles.modeDescription}>
-                      {m.description}
-                    </Paragraph>
-                  </div>
-
-                  <div className={styles.modeFooter}>
-                    <Tag color="cyan">
-                      <ThunderboltFilled /> {m.xpReward}
-                    </Tag>
-
-                    <Button
-                      type="primary"
-                      icon={m.id === 'grammar' ? <BookOutlined /> : <PlayCircleFilled />}
-                      onClick={() => handleStartMode(m.id)}
-                      loading={loading && selectedMode === m.id}
-                    >
-                      {m.id === 'grammar' ? 'Тренировать' : 'Играть'}
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <div className={styles.activeGameArea}>
-          {selectedMode === 'grammar' ? (
-            <PracticePage
-              allSections={sections}
-              initialSectionId={selectedSection !== 'all' ? selectedSection : 'grammar'}
-              initialLevel={selectedLevel !== 'all' ? selectedLevel : 'B1'}
-              onBack={() => setSelectedMode('idle')}
-              onRefreshStats={() => onRefreshStats?.()}
-            />
-          ) : (
-            <>
-              <div className={styles.activeTrainerToolbar}>
-                <div className={styles.toolbarLeft}>
-                  <Button
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => {
-                      setSelectedMode('idle');
-                      onRefreshStats?.();
-                    }}
-                    size="middle"
-                    className={styles.backBtn}
-                  >
-                    Назад к тренажерам
-                  </Button>
-                  {currentModeObj && (
-                    <div className={styles.trainerTitleInfo}>
-                      <span className={styles.trainerIcon}>{currentModeObj.icon}</span>
-                      <span className={styles.trainerTitle}>{currentModeObj.title}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className={styles.toolbarRight}>
-                  {isCramMode && (
-                    <Tag color="green" className={styles.gradeCountTag}>
-                      🌟 Свободное повторение
-                    </Tag>
-                  )}
-                  {selectedLevel !== 'all' && (
-                    <Tag color="purple" className={styles.gradeCountTag}>
-                      Уровень {selectedLevel}
-                    </Tag>
-                  )}
-                  <Tag color="blue" className={styles.gradeCountTag}>
-                    {loading ? 'Загрузка...' : `${words.length} слов`}
-                  </Tag>
-                </div>
-              </div>
-
-              {loading ? (
-                <div className={styles.loadingContainer}>
-                  <Spin size="large" />
-                  <div className={styles.loadingMessage}>
-                    ⚡ Загрузка слов уровня <b>{selectedLevel === 'all' ? 'Все уровни' : selectedLevel}</b>...
-                  </div>
-                </div>
-              ) : words.length === 0 ? (
-                <Card className={styles.emptyCard}>
-                  <Title level={4}>Нет доступных слов для уровня {selectedLevel}</Title>
-                  <Paragraph type="secondary">
-                    Нажмите кнопку ниже, чтобы подготовить слова для этого уровня.
-                  </Paragraph>
-                  <Button 
-                    type="primary" 
-                    icon={<ThunderboltFilled />} 
-                    onClick={() => handleNeedMoreWords(35)}
-                    loading={loading}
-                  >
-                    Сгенерировать слова для {selectedLevel}
-                  </Button>
-                </Card>
-              ) : (
-                <>
-                  {selectedMode === 'quiz' && (
-                    <VocabQuiz
-                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
-                      words={words}
-                      onComplete={(score, total, xp) => handleGameComplete(xp)}
-                      onClose={() => setSelectedMode('idle')}
-                      onNeedMore={() => handleNeedMoreWords(35)}
-                    />
-                  )}
-
-                  {selectedMode === 'sprint' && (
-                    <SpeedSprint
-                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
-                      words={words}
-                      onComplete={(score, combo, xp) => handleGameComplete(xp)}
-                      onClose={() => setSelectedMode('idle')}
-                      onNeedMore={() => handleNeedMoreWords(35)}
-                    />
-                  )}
-
-                  {selectedMode === 'builder' && (
-                    <WordBuilder
-                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
-                      words={words}
-                      onComplete={(score, total, xp) => handleGameComplete(xp)}
-                      onClose={() => setSelectedMode('idle')}
-                      onNeedMore={() => handleNeedMoreWords(35)}
-                    />
-                  )}
-
-                  {selectedMode === 'cards' && (
-                    <FlashcardDeck
-                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
-                      items={cardItems}
-                      onFinish={() => handleGameComplete(50)}
-                      onRefresh={fetchWords}
-                      onNeedMore={() => handleNeedMoreWords(35)}
-                    />
-                  )}
-
-                  {selectedMode === 'audio' && (
-                    <AudioChallenge
-                      key={`${selectedMode}-${selectedLevel}-${selectedSection}`}
-                      items={audioItems}
-                      onComplete={(score) => handleGameComplete(score)}
-                      onRefresh={fetchWords}
-                      onNeedMore={() => handleNeedMoreWords(35)}
-                    />
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </div>
+      {!currentUser && (
+        <Alert
+          type="info"
+          showIcon
+          className={styles.guestAlert}
+          message="Внимание: гостевой режим"
+          description="Вы можете тренироваться прямо сейчас, но для сохранения прогресса, стриков и места в таблице лидеров войдите или создайте аккаунт."
+          action={
+            <Button size="small" type="primary" onClick={onRequireAuth}>
+              Войти
+            </Button>
+          }
+        />
       )}
+
+      {/* Global Grade Selection Bar */}
+      <div className={styles.levelFilterBar}>
+        <div className={styles.levelFilterLabel}>
+          Уровень сложности (CEFR):
+        </div>
+        <div className={styles.levelButtonsGroup}>
+          {levels.map(lvl => (
+            <button
+              key={lvl}
+              type="button"
+              className={`${styles.levelBtn} ${selectedLevel === lvl ? styles.activeLevelBtn : ''}`}
+              onClick={() => handleLevelChange(lvl)}
+            >
+              {lvl === 'all' ? 'Все уровни' : lvl}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filter by topics */}
+      <div className={styles.categoryFilters}>
+        <Space wrap size={[8, 8]}>
+          <Tag.CheckableTag
+            checked={selectedSection === 'all'}
+            onChange={() => handleSectionChange('all')}
+            className={styles.filterTag}
+          >
+            Все темы ({totalInDb} слов)
+          </Tag.CheckableTag>
+          {sections.map(s => (
+            <Tag.CheckableTag
+              key={s.id}
+              checked={selectedSection === s.id}
+              onChange={() => handleSectionChange(s.id)}
+              className={styles.filterTag}
+            >
+              {s.icon} {s.title}
+            </Tag.CheckableTag>
+          ))}
+        </Space>
+      </div>
+
+      {/* Trainers Cards Grid */}
+      <div className={styles.modesGrid}>
+        {modes.map(m => (
+          <Card key={m.id} className={styles.modeCard} hoverable>
+            <div className={styles.modeContent}>
+              <div className={styles.modeTop}>
+                <div className={styles.modeIconCircle}>{m.icon}</div>
+                <div className={styles.modeHeader}>
+                  <div className={styles.modeTitleRow}>
+                    <Title level={4} className={styles.modeTitle}>
+                      {m.title}
+                    </Title>
+                    <Tag color={m.badgeColor} className={styles.modeBadge}>
+                      {m.badge}
+                    </Tag>
+                  </div>
+                </div>
+              </div>
+
+              <Paragraph className={styles.modeDescription}>
+                {m.description}
+              </Paragraph>
+            </div>
+
+            <div className={styles.modeFooter}>
+              <Tag color="cyan">
+                <ThunderboltFilled /> {m.xpReward}
+              </Tag>
+
+              <Button
+                type="primary"
+                icon={m.id === 'grammar' ? <BookOutlined /> : <PlayCircleFilled />}
+                onClick={() => handleStartMode(m.id)}
+              >
+                {m.id === 'grammar' ? 'Тренировать' : 'Играть'}
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };
