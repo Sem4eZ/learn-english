@@ -2,126 +2,129 @@
 @use '@/shared/styles/mixins' as *;
 
 .toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   margin-bottom: 24px;
+  padding: 16px 20px;
+  background: var(--color-bg-surface, #ffffff);
+  border: 1px solid var(--color-border-card, rgba(0, 0, 0, 0.08));
+  border-radius: 14px;
+  box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.06);
+
+  @media (max-width: 600px) {
+    padding: 12px 14px;
+  }
 }
 
 .toolbarHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.leftGroup {
+  display: flex;
+  align-items: center;
   gap: 14px;
+  flex: 1;
+  min-width: 260px;
   flex-wrap: wrap;
 }
 
 .backButton {
   flex-shrink: 0;
-  border-radius: $radius-sm;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .titleWrapper {
-  flex: 1;
-  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .sectionTitle {
   margin: 0 !important;
-  font-size: 1.35rem !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary, #0f172a) !important;
   line-height: 1.3 !important;
 
   @media (max-width: 600px) {
-    font-size: 1.15rem !important;
+    font-size: 1.1rem !important;
   }
+}
+
+.badgesGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.infoBadge {
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  margin: 0 !important;
 }
 
 .sectionSubtitle {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #475569) !important;
   line-height: 1.4;
   display: block;
-  margin-top: 2px;
-}
-
-.filterControls {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 10px 14px;
-  border-radius: $radius-md;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
-  @media (max-width: 600px) {
-    padding: 8px 10px;
-    gap: 8px;
-  }
-}
-
-.filterGroup {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.filterLabel {
-  font-weight: 700;
-  white-space: nowrap !important;
-  flex-shrink: 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.topicSelect {
-  width: 210px;
-
-  @media (max-width: 600px) {
-    width: 145px;
-    max-width: 48vw;
-  }
-}
-
-.levelDropdown {
-  width: 78px;
 }
 
 .actionGroup {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;
+  gap: 10px;
+  flex-shrink: 0;
 
   @media (max-width: 600px) {
-    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
 .addQuestionsBtn {
-  border-radius: $radius-sm;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .loadingContainer {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 80px 20px;
+  gap: 20px;
+  background: var(--color-bg-surface, #ffffff);
+  border-radius: 16px;
+  border: 1px solid var(--color-border-card, rgba(0, 0, 0, 0.08));
 }
 
 .loadingText {
-  margin-top: 20px;
+  text-align: center;
 }
 
 .errorAlert {
-  border-radius: $radius-md;
-  margin: 40px 0;
+  margin-bottom: 24px;
+  border-radius: 12px;
 }
 
 .emptyContainer {
-  padding: 60px 0;
+  padding: 60px 20px;
+  background: var(--color-bg-surface, #ffffff);
+  border-radius: 16px;
+  border: 1px solid var(--color-border-card, rgba(0, 0, 0, 0.08));
 }
-
-.modeSwitcher {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
-}
-

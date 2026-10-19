@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Space, Button, Spin, Alert, Empty, Select } from 'antd';
+import { Typography, Button, Spin, Alert, Empty, Tag } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Question } from '@/entities/question/model/types';
 import { Section } from '@/entities/section/model/types';
 import { questionApi } from '@/entities/question/api/questionApi';
 import { QuestionCard } from '@/widgets/question-card/ui/QuestionCard';
 import { SmartPagination } from '@/widgets/infinite-stream/ui/SmartPagination';
-import { LevelSelect } from '@/features/filter-level/ui/LevelSelect';
 import { GenerateBatchModal } from '@/features/generate-ai-batch/ui/GenerateBatchModal';
 import styles from './PracticePage.module.scss';
 
@@ -40,6 +39,14 @@ export const PracticePage: React.FC<PracticePageProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [generateModalOpen, setGenerateModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialLevel) setLevel(initialLevel);
+  }, [initialLevel]);
+
+  useEffect(() => {
+    if (initialSectionId) setCurrentSectionId(initialSectionId);
+  }, [initialSectionId]);
 
   const fetchQuestions = async (
     targetPage = page,
@@ -79,16 +86,6 @@ export const PracticePage: React.FC<PracticePageProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLevelChange = (newLevel: string) => {
-    setLevel(newLevel);
-    setPage(1);
-  };
-
-  const handleTopicChange = (newTopic: string) => {
-    setCurrentSectionId(newTopic);
-    setPage(1);
-  };
-
   const currentSection = allSections.find(s => s.id === currentSectionId) || section;
 
   return (
@@ -96,46 +93,37 @@ export const PracticePage: React.FC<PracticePageProps> = ({
       {/* Top Toolbar */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarHeader}>
-          <Button icon={<ArrowLeftOutlined />} size="middle" onClick={onBack} className={styles.backButton}>
-            Назад
-          </Button>
-          <div className={styles.titleWrapper}>
-            <Title level={3} className={styles.sectionTitle}>
-              {currentSection ? currentSection.title : '📘 Грамматика и конструкции'}
-            </Title>
-            <Text type="secondary" className={styles.sectionSubtitle}>
-              Практические задания, вставка предлогов и пропущенных слов, разбор правил
-            </Text>
-          </div>
-        </div>
-
-        <div className={styles.filterControls}>
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Тема:</span>
-            <Select
-              value={currentSectionId}
-              onChange={handleTopicChange}
-              className={styles.topicSelect}
-              options={[
-                { label: 'Все темы (микс)', value: 'all' },
-                ...(allSections.length > 0
-                  ? allSections.map(s => ({ label: s.title, value: s.id }))
-                  : [
-                      { label: 'Грамматика и конструкции', value: 'grammar' },
-                      { label: 'Деловой английский', value: 'business' },
-                      { label: 'Разговорный английский', value: 'conversational' },
-                      { label: 'Фразовые глаголы и идиомы', value: 'phrasal_idioms' },
-                      { label: 'IT и разработка', value: 'tech_it' },
-                      { label: 'Путешествия', value: 'travel' },
-                      { label: 'IELTS / TOEFL', value: 'ielts_toefl' },
-                    ])
-              ]}
-            />
-          </div>
-
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Уровень:</span>
-            <LevelSelect value={level} onChange={handleLevelChange} className={styles.levelDropdown} />
+          <div className={styles.leftGroup}>
+            <Button 
+              icon={<ArrowLeftOutlined />} 
+              size="middle" 
+              onClick={onBack} 
+              className={styles.backButton}
+            >
+              Назад к тренажерам
+            </Button>
+            <div className={styles.titleWrapper}>
+              <div className={styles.titleRow}>
+                <Title level={3} className={styles.sectionTitle}>
+                  {currentSection ? currentSection.title : '📘 Грамматика и конструкции'}
+                </Title>
+                <div className={styles.badgesGroup}>
+                  {level && level !== 'all' && (
+                    <Tag color="purple" className={styles.infoBadge}>
+                      Уровень {level}
+                    </Tag>
+                  )}
+                  {currentSection && currentSectionId !== 'all' && (
+                    <Tag color="blue" className={styles.infoBadge}>
+                      {currentSection.title.split('(')[0].trim()}
+                    </Tag>
+                  )}
+                </div>
+              </div>
+              <Text type="secondary" className={styles.sectionSubtitle}>
+                Практические задания, вставка предлогов и пропущенных слов, разбор правил
+              </Text>
+            </div>
           </div>
 
           <div className={styles.actionGroup}>
