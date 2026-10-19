@@ -105,11 +105,13 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
   useEffect(() => {
     if (words.length >= 2) {
       startNewGame();
+    } else {
+      setIsActive(false);
     }
   }, [words]);
 
   useEffect(() => {
-    if (!isActive || isFinished) return;
+    if (!isActive || isFinished || words.length < 2) return;
 
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
