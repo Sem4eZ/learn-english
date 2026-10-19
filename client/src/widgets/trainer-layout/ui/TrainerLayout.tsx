@@ -65,11 +65,11 @@ export const TrainerLayout: React.FC<TrainerLayoutProps> = ({
       </div>
 
       {/* Loading state */}
-      {loading && wordsCount === 0 ? (
+      {loading ? (
         <div className={styles.loadingContainer}>
           <Spin size="large" />
           <div className={styles.loadingMessage}>
-            ⚡ Загрузка слов уровня <b>{level === 'all' ? 'Все уровни' : level}</b>...
+            ⚡ Загрузка и подготовка слов уровня <b>{level === 'all' ? 'Все уровни' : level}</b>...
           </div>
         </div>
       ) : wordsCount === 0 ? (

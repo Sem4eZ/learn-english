@@ -75,7 +75,13 @@ export function useTrainerWords(options: UseTrainerWordsOptions = {}) {
       const dbCount = res.pagination?.totalInDb ?? res.pagination?.total ?? fetchedWords.length;
       setTotalInDb(dbCount);
 
-      if (fetchedWords.length < 20) {
+      if (fetchedWords.length === 0) {
+        // If there are zero words, await initial auto-generation so the user does not land on an empty screen
+        const fresh = await handleNeedMoreWords(35);
+        if (fresh && fresh.length > 0) {
+          return fresh;
+        }
+      } else if (fetchedWords.length < 20) {
         handleNeedMoreWords(35);
       }
       return fetchedWords;
