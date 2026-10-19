@@ -222,7 +222,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
         />
 
         <div>
-          <Space size="middle" className={styles.speedSelector}>
+          <Space size="middle" wrap className={styles.speedSelector}>
             <Button
               type={speed === 0.95 ? 'primary' : 'default'}
               size="small"

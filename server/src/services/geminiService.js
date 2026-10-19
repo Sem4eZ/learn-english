@@ -84,7 +84,10 @@ Strict Output Requirements:
   "vocabularyWord": "The key target English word or collocation featured in this question",
   "vocabularyTranslation": "Precise Russian translation of the target word/collocation",
   "vocabularyTranscription": "IPA phonetic transcription, e.g. /dɪˈplɔɪ/",
-  "vocabularyPartOfSpeech": "noun, verb, adjective, or phrasal verb"
+  "vocabularyPartOfSpeech": "noun, verb, adjective, or phrasal verb",
+  "vocabularyDefinition": "Concise natural English definition of the target word itself (NOT an explanation of the test question)",
+  "vocabularyExampleSentence": "An authentic English example sentence containing the target word itself",
+  "vocabularyExampleTranslation": "Russian translation of that example sentence"
 }
 
 Pedagogical Quality Guidelines:
@@ -184,6 +187,26 @@ Pedagogical Quality Guidelines:
               const wordClean = q.vocabularyWord.trim();
               const existingWord = await db.prepare('SELECT id FROM dictionary WHERE LOWER(word) = LOWER(?)').get(wordClean);
               if (!existingWord) {
+                // Ensure definition is a true lexical definition, never a test explanation or grammar answer
+                const rawDef = q.vocabularyDefinition || '';
+                const isBadDef = /правильный ответ|союз|конструкция|используется с|применяется|вариант/i.test(rawDef);
+                const cleanDef = (!isBadDef && rawDef.trim()) 
+                  ? rawDef.trim() 
+                  : `Key English vocabulary term: ${wordClean}`;
+
+                // Ensure example sentence contains the target word
+                let cleanSentence = (q.vocabularyExampleSentence || '').trim();
+                const wordRoot = wordClean.toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
+                if (!cleanSentence || !cleanSentence.toLowerCase().includes(wordRoot)) {
+                  cleanSentence = `You should learn how to use "${wordClean}" in daily English.`;
+                }
+
+                // Ensure translation is clean
+                let cleanExampleTr = (q.vocabularyExampleTranslation || '').trim();
+                if (!cleanExampleTr || /правильный ответ|союз|конструкция|вариант/i.test(cleanExampleTr)) {
+                  cleanExampleTr = `Вам стоит научиться использовать «${wordClean}» в повседневном английском.`;
+                }
+
                 await db.prepare(`
                   INSERT INTO dictionary (
                     word, transcription, part_of_speech, translation, definition,
@@ -194,13 +217,13 @@ Pedagogical Quality Guidelines:
                   q.vocabularyTranscription || '',
                   q.vocabularyPartOfSpeech || 'word',
                   q.vocabularyTranslation.trim(),
-                  q.explanation || '',
-                  q.contextText || q.questionText,
-                  q.explanation || '',
+                  cleanDef,
+                  cleanSentence,
+                  cleanExampleTr,
                   level,
                   sectionId
                 );
-                console.log(`[Lazy DB Enrichment] Auto-saved new dictionary word: "${wordClean}"`);
+                console.log(`[Lazy DB Enrichment] Auto-saved new verified dictionary word: "${wordClean}"`);
               }
             } catch (vocabErr) {
               // Ignore duplicate or schema constraint silently
@@ -286,8 +309,8 @@ Strict Output Requirements:
     "transcription": "/IPA phonetics/",
     "partOfSpeech": "noun, verb, adjective, or phrasal verb",
     "translation": "Точный русский перевод (1-3 синонима)",
-    "definition": "Clear concise English definition",
-    "exampleSentence": "Authentic, modern example sentence in English",
+    "definition": "Clear concise English definition of the target word itself (never explain test questions or grammar rules)",
+    "exampleSentence": "Authentic, natural example sentence in English strictly containing the target word",
     "exampleTranslation": "Русский перевод примера",
     "ruleTip": "Полезный совет по употреблению, предлогу или типичной ошибке"
   }

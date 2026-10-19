@@ -23,10 +23,19 @@
   position: relative;
   overflow: hidden;
   box-shadow: $shadow-card;
+
+  @include mobile {
+    padding: 14px 12px !important;
+    border-radius: $radius-lg !important;
+  }
 }
 
 .directionTag {
   margin-bottom: 12px;
+
+  @include mobile {
+    margin-bottom: 6px;
+  }
 }
 
 .targetWord {
@@ -39,6 +48,12 @@
   color: var(--trainer-word-color);
   margin-bottom: 6px;
   line-height: 1.25;
+
+  @include mobile {
+    font-size: 1.6rem;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
 }
 
 .phonetic {
@@ -46,11 +61,20 @@
   font-size: 1.1rem;
   color: $secondary-color;
   margin-bottom: 12px;
+
+  @include mobile {
+    font-size: 0.92rem;
+    margin-bottom: 6px;
+  }
 }
 
 .promptSub {
   font-size: 0.95rem;
   color: var(--trainer-prompt-color);
+
+  @include mobile {
+    font-size: 0.85rem;
+  }
 }
 
 .soundBtnCircle {
@@ -67,6 +91,12 @@
   cursor: pointer;
   transition: $transition-smooth;
   padding: 0;
+
+  @include mobile {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
 
   &:hover {
     background: rgba(99, 102, 241, 0.32);
@@ -86,6 +116,7 @@
 
   @include mobile {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 
@@ -106,6 +137,12 @@
   transition: $transition-smooth;
   white-space: normal !important;
   line-height: 1.4;
+
+  @include mobile {
+    min-height: 48px;
+    padding: 10px 14px !important;
+    font-size: 0.95rem !important;
+  }
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
@@ -186,6 +223,12 @@
   font-weight: 600;
   border-radius: $radius-md;
   margin-left: auto;
+
+  @include mobile {
+    width: 100% !important;
+    height: 44px !important;
+    margin-left: 0 !important;
+  }
 }
 
 .summaryCard {
