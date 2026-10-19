@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, Button, Typography, Tag, Space, Alert, Spin } from 'antd';
+import { Card, Button, Typography, Tag, Select, Alert } from 'antd';
 import { 
   ThunderboltFilled, 
   PlayCircleFilled,
@@ -37,7 +37,6 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   const [selectedLevel, setSelectedLevel] = useState<string>(() => searchParams.get('level') || 'all');
   const [selectedSection, setSelectedSection] = useState<string>(() => searchParams.get('category') || initialCategory || 'all');
   const [totalInDb, setTotalInDb] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
 
   // Load sections if not passed via props
   useEffect(() => {
@@ -72,7 +71,6 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
   useEffect(() => {
     let isCancelled = false;
     const fetchCount = async () => {
-      setLoading(true);
       try {
         const res = await dictionaryApi.getDictionary({
           level: selectedLevel,
@@ -85,8 +83,6 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
         }
       } catch (err) {
         console.error('Failed to load count:', err);
-      } finally {
-        if (!isCancelled) setLoading(false);
       }
     };
     fetchCount();
@@ -190,56 +186,59 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
         />
       )}
 
-      {/* Global Grade Selection Bar */}
-      <div className={styles.levelFilterBar}>
-        <div className={styles.levelFilterLabel}>
-          Уровень сложности (CEFR):
-        </div>
-        <div className={styles.levelButtonsGroup}>
-          {levels.map(lvl => (
-            <button
-              key={lvl}
-              type="button"
-              className={`${styles.levelBtn} ${selectedLevel === lvl ? styles.activeLevelBtn : ''}`}
-              onClick={() => handleLevelChange(lvl)}
-            >
-              {lvl === 'all' ? 'Все уровни' : lvl}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Global Filter Bar */}
+      <div className={styles.filterBar}>
+        <div className={styles.filterRow}>
+          <div className={styles.levelFilterGroup}>
+            <span className={styles.filterLabel}>Уровень сложности (CEFR):</span>
+            <div className={styles.levelButtonsGroup}>
+              {levels.map(lvl => (
+                <button
+                  key={lvl}
+                  type="button"
+                  className={`${styles.levelBtn} ${selectedLevel === lvl ? styles.activeLevelBtn : ''}`}
+                  onClick={() => handleLevelChange(lvl)}
+                >
+                  {lvl === 'all' ? 'Все уровни' : lvl}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {/* Filter by topics */}
-      <div className={styles.categoryFilters}>
-        <Space wrap size={[8, 8]}>
-          <Tag.CheckableTag
-            checked={selectedSection === 'all'}
-            onChange={() => handleSectionChange('all')}
-            className={styles.filterTag}
-          >
-            Все темы ({totalInDb} слов)
-          </Tag.CheckableTag>
-          {sections.map(s => (
-            <Tag.CheckableTag
-              key={s.id}
-              checked={selectedSection === s.id}
-              onChange={() => handleSectionChange(s.id)}
-              className={styles.filterTag}
-            >
-              {s.icon} {s.title}
-            </Tag.CheckableTag>
-          ))}
-        </Space>
+          <div className={styles.dbCountWrapper}>
+            <Tag color="purple" className={styles.dbCountTag}>
+              📚 Слов в базе: <b>{totalInDb}</b>
+            </Tag>
+          </div>
+        </div>
+
+        <div className={styles.filterRow}>
+          <div className={styles.categoryFilterGroup}>
+            <span className={styles.filterLabel}>Тематика и категория:</span>
+            <Select
+              value={selectedSection}
+              onChange={handleSectionChange}
+              className={styles.sectionSelect}
+              options={[
+                { label: '🌟 Все темы и категории', value: 'all' },
+                ...sections.map(s => ({
+                  label: s.title,
+                  value: s.id,
+                }))
+              ]}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Trainers Cards Grid */}
-      <div className={styles.modesGrid}>
+      <div className={styles.cardsGrid}>
         {modes.map(m => (
           <Card key={m.id} className={styles.modeCard} hoverable>
-            <div className={styles.modeContent}>
-              <div className={styles.modeTop}>
-                <div className={styles.modeIconCircle}>{m.icon}</div>
-                <div className={styles.modeHeader}>
+            <div className={styles.modeCardBody}>
+              <div className={styles.modeHeader}>
+                <div className={styles.modeIcon}>{m.icon}</div>
+                <div className={styles.modeHeaderInfo}>
                   <div className={styles.modeTitleRow}>
                     <Title level={4} className={styles.modeTitle}>
                       {m.title}
@@ -254,20 +253,21 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
               <Paragraph className={styles.modeDescription}>
                 {m.description}
               </Paragraph>
-            </div>
 
-            <div className={styles.modeFooter}>
-              <Tag color="cyan">
-                <ThunderboltFilled /> {m.xpReward}
-              </Tag>
+              <div className={styles.modeFooter}>
+                <Tag color="cyan" className={styles.xpTag}>
+                  <ThunderboltFilled /> {m.xpReward}
+                </Tag>
 
-              <Button
-                type="primary"
-                icon={m.id === 'grammar' ? <BookOutlined /> : <PlayCircleFilled />}
-                onClick={() => handleStartMode(m.id)}
-              >
-                {m.id === 'grammar' ? 'Тренировать' : 'Играть'}
-              </Button>
+                <Button
+                  type="primary"
+                  icon={m.id === 'grammar' ? <BookOutlined /> : <PlayCircleFilled />}
+                  onClick={() => handleStartMode(m.id)}
+                  className={styles.playBtn}
+                >
+                  {m.id === 'grammar' ? 'Тренировать' : 'Играть'}
+                </Button>
+              </div>
             </div>
           </Card>
         ))}
