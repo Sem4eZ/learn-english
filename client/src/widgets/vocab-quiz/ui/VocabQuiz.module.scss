@@ -6,17 +6,21 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
+
+  @include mobile {
+    gap: 8px;
+  }
 }
 
 .topBar {
   @include flex-between;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .questionCard {
-  border-radius: $radius-xl !important;
-  padding: 32px 24px;
+  border-radius: $radius-lg !important;
+  padding: 16px 20px;
   background: var(--trainer-card-bg) !important;
   border: 1px solid var(--trainer-card-border) !important;
   text-align: center;
@@ -25,16 +29,16 @@
   box-shadow: $shadow-card;
 
   @include mobile {
-    padding: 14px 12px !important;
-    border-radius: $radius-lg !important;
+    padding: 12px 10px !important;
+    border-radius: $radius-md !important;
   }
 }
 
 .directionTag {
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 
   @include mobile {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 }
 
@@ -42,38 +46,38 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  font-size: 2.3rem;
+  gap: 10px;
+  font-size: 2.0rem;
   font-weight: 800;
   color: var(--trainer-word-color);
-  margin-bottom: 6px;
-  line-height: 1.25;
+  margin-bottom: 2px;
+  line-height: 1.2;
 
   @include mobile {
-    font-size: 1.6rem;
-    gap: 8px;
+    font-size: 1.5rem;
+    gap: 6px;
     margin-bottom: 2px;
   }
 }
 
 .phonetic {
   font-family: monospace;
-  font-size: 1.1rem;
+  font-size: 0.98rem;
   color: $secondary-color;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 
   @include mobile {
-    font-size: 0.92rem;
-    margin-bottom: 6px;
+    font-size: 0.88rem;
+    margin-bottom: 4px;
   }
 }
 
 .promptSub {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--trainer-prompt-color);
 
   @include mobile {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
   }
 }
 
@@ -81,21 +85,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   border-radius: $radius-full;
   background: rgba(99, 102, 241, 0.16);
   border: 1px solid rgba(99, 102, 241, 0.35);
   color: #818cf8;
-  font-size: 18px;
+  font-size: 15px;
   cursor: pointer;
   transition: $transition-smooth;
   padding: 0;
 
   @include mobile {
-    width: 32px;
-    height: 32px;
-    font-size: 15px;
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
   }
 
   &:hover {
@@ -112,7 +116,7 @@
 .optionsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 10px;
 
   @include mobile {
     grid-template-columns: 1fr;
@@ -122,10 +126,10 @@
 
 .optionButton {
   height: auto !important;
-  min-height: 64px;
-  padding: 14px 18px !important;
+  min-height: 52px;
+  padding: 10px 16px !important;
   border-radius: $radius-md !important;
-  font-size: 1.05rem !important;
+  font-size: 0.98rem !important;
   font-weight: 600;
   text-align: left;
   display: flex;
@@ -136,7 +140,7 @@
   color: var(--trainer-opt-color) !important;
   transition: $transition-smooth;
   white-space: normal !important;
-  line-height: 1.4;
+  line-height: 1.35;
 
   @include mobile {
     min-height: 48px;
@@ -184,28 +188,28 @@
   border-radius: $radius-md;
   background: rgba(99, 102, 241, 0.1);
   border: 1px solid rgba(99, 102, 241, 0.25);
-  padding: 14px 18px;
-  margin-top: 10px;
+  padding: 10px 14px;
+  margin-top: 8px;
   text-align: left;
   word-break: break-word;
   overflow-wrap: break-word;
 
   @include mobile {
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
 }
 
 .exampleEn {
   font-style: italic;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: #e2e8f0;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
 .exampleRu {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #94a3b8;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -213,20 +217,20 @@
 
 .actionRow {
   @include flex-between;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .nextBtn {
-  height: 48px;
-  padding: 0 28px;
-  font-size: 1.05rem;
+  height: 42px;
+  padding: 0 24px;
+  font-size: 0.98rem;
   font-weight: 600;
   border-radius: $radius-md;
   margin-left: auto;
 
   @include mobile {
     width: 100% !important;
-    height: 44px !important;
+    height: 40px !important;
     margin-left: 0 !important;
   }
 }

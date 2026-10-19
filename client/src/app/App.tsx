@@ -25,7 +25,7 @@ import '@/shared/styles/global.scss';
 import { API_BASE_URL } from '@/shared/config';
 import styles from './App.module.scss';
 
-const { Content, Footer } = Layout;
+const { Content } = Layout;
 
 export const App: React.FC = () => {
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -320,10 +320,6 @@ export const App: React.FC = () => {
               <Route path="*" element={<Navigate to="/trainers" replace />} />
             </Routes>
           </Content>
-
-          <Footer className={styles.footer}>
-            Fluentiq — Интерактивная платформа изучения английского языка © 2026.
-          </Footer>
 
           {/* Global Modal for batch generation */}
           <GenerateBatchModal
