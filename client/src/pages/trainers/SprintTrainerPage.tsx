@@ -23,6 +23,7 @@ export const SprintTrainerPage: React.FC<SprintTrainerPageProps> = ({
     loading,
     isCramMode,
     level,
+    category,
     handleNeedMoreWords,
     handleGameComplete,
   } = useTrainerWords({ onRefreshStats });
@@ -39,6 +40,7 @@ export const SprintTrainerPage: React.FC<SprintTrainerPageProps> = ({
       title="Скоростной Спринт (60с)"
       icon="⚡"
       level={level}
+      category={category}
       isCramMode={isCramMode}
       wordsCount={words.length}
       loading={loading}

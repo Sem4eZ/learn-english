@@ -23,6 +23,7 @@ export const QuizTrainerPage: React.FC<QuizTrainerPageProps> = ({
     loading,
     isCramMode,
     level,
+    category,
     handleNeedMoreWords,
     handleGameComplete,
   } = useTrainerWords({ onRefreshStats });
@@ -39,6 +40,7 @@ export const QuizTrainerPage: React.FC<QuizTrainerPageProps> = ({
       title="Квиз: выбор 1 из 4"
       icon="🎯"
       level={level}
+      category={category}
       isCramMode={isCramMode}
       wordsCount={words.length}
       loading={loading}

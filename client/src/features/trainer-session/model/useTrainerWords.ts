@@ -7,7 +7,7 @@ import { FlashcardItem, AudioItem, UseTrainerWordsOptions } from './types';
 export function useTrainerWords(options: UseTrainerWordsOptions = {}) {
   const [searchParams] = useSearchParams();
   const level = searchParams.get('level') || options.initialLevel || 'A1';
-  const category = searchParams.get('category') || options.initialCategory || 'general';
+  const category = searchParams.get('category') || options.initialCategory || 'all';
 
   const [words, setWords] = useState<DictionaryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -19,7 +19,8 @@ export function useTrainerWords(options: UseTrainerWordsOptions = {}) {
     if (isReplenishingRef.current) return [];
     isReplenishingRef.current = true;
     try {
-      const res = await dictionaryApi.generateWords(level, category, count);
+      const targetCategory = category === 'all' ? 'general' : category;
+      const res = await dictionaryApi.generateWords(level, targetCategory, count);
       if (res.success && res.data?.length > 0) {
         setWords(prev => {
           const existingIds = new Set(prev.map(w => w.id));

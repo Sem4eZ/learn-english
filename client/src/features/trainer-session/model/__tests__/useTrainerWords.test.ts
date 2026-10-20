@@ -386,4 +386,31 @@ describe('useTrainerWords Hook Tests', () => {
       expect(result.current.totalInDb).toBe(737);
     });
   });
+
+  it('16. should default category to "all" and query all sections when no category param exists', async () => {
+    const getDictSpy = vi.spyOn(dictionaryApi, 'getDictionary').mockResolvedValueOnce({
+      success: true,
+      data: mockWords,
+      pagination: { total: 2, totalInDb: 756 },
+    } as any);
+
+    const emptyWrapper = ({ children }: { children: React.ReactNode }) => (
+      React.createElement(MemoryRouter, { initialEntries: ['/trainers/quiz?level=A1'] }, children)
+    );
+
+    const { result } = renderHook(() => useTrainerWords(), { wrapper: emptyWrapper });
+
+    expect(result.current.level).toBe('A1');
+    expect(result.current.category).toBe('all');
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(getDictSpy).toHaveBeenCalledWith(expect.objectContaining({
+      level: 'A1',
+      sectionId: 'all',
+      mode: 'practice',
+    }));
+  });
 });

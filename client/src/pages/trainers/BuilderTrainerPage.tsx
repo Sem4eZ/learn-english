@@ -23,6 +23,7 @@ export const BuilderTrainerPage: React.FC<BuilderTrainerPageProps> = ({
     loading,
     isCramMode,
     level,
+    category,
     handleNeedMoreWords,
     handleGameComplete,
   } = useTrainerWords({ onRefreshStats });
@@ -39,6 +40,7 @@ export const BuilderTrainerPage: React.FC<BuilderTrainerPageProps> = ({
       title="Конструктор слов (Спеллинг)"
       icon="🧩"
       level={level}
+      category={category}
       isCramMode={isCramMode}
       wordsCount={words.length}
       loading={loading}

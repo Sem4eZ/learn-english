@@ -24,6 +24,7 @@ export const AudioTrainerPage: React.FC<AudioTrainerPageProps> = ({
     loading,
     isCramMode,
     level,
+    category,
     fetchWords,
     handleNeedMoreWords,
     handleGameComplete,
@@ -41,6 +42,7 @@ export const AudioTrainerPage: React.FC<AudioTrainerPageProps> = ({
       title="Аудирование и диктант"
       icon="🎧"
       level={level}
+      category={category}
       isCramMode={isCramMode}
       wordsCount={words.length}
       loading={loading}
