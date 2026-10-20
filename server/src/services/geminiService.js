@@ -15,7 +15,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 const DEFAULT_MODELS = [
   'gemini-flash-lite-latest',
-  'gemini-2.5-flash-lite',
+  'gemini-3.5-flash-lite',
   'gemini-flash-latest',
   'gemini-2.5-flash'
 ];
@@ -23,6 +23,161 @@ const DEFAULT_MODELS = [
 const CANDIDATE_MODELS = process.env.GEMINI_MODELS
   ? process.env.GEMINI_MODELS.split(',').map(m => m.trim()).filter(Boolean)
   : DEFAULT_MODELS;
+
+/**
+ * Resilient JSON Array Parser & Recovery Engine
+ * Handles markdown fences, unescaped internal quotes, newlines, and extracts
+ * valid items individually if a single item contains syntax errors.
+ */
+function cleanAndParseJsonArray(rawText, expectedProperty = 'words') {
+  if (!rawText || typeof rawText !== 'string') return [];
+
+  let cleaned = rawText.trim();
+  // Strip markdown code fences (```json or ```)
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+  }
+
+  // 1. Direct parse fast path
+  try {
+    const res = JSON.parse(cleaned);
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res[expectedProperty])) return res[expectedProperty];
+    if (res && Array.isArray(res.words)) return res.words;
+    if (res && Array.isArray(res.questions)) return res.questions;
+    if (res && typeof res === 'object') return [res];
+  } catch (_) {
+    // Proceed to repair steps
+  }
+
+  // 2. Try array slicing between first '[' and last ']'
+  const firstBracket = cleaned.indexOf('[');
+  const lastBracket = cleaned.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket > firstBracket) {
+    const slice = cleaned.substring(firstBracket, lastBracket + 1);
+    try {
+      const res = JSON.parse(slice);
+      if (Array.isArray(res)) return res;
+    } catch (_) {
+      // Proceed to object-by-object extraction
+    }
+  }
+
+  // 3. Object-by-object extraction & recovery
+  const recovered = [];
+  const objRegex = /\{[\s\S]*?\}(?=\s*,\s*\{|\s*\])/g;
+  let match;
+  while ((match = objRegex.exec(cleaned)) !== null) {
+    let block = match[0].trim();
+    try {
+      const obj = JSON.parse(block);
+      recovered.push(obj);
+    } catch (_) {
+      try {
+        const sanitized = block
+          .replace(/[\r\n]+/g, ' ')
+          .replace(/"translation"\s*:\s*"([\s\S]*?)"(?=\s*,\s*")/g, (m, val) => {
+            return `"translation": "${val.replace(/"/g, "'")}"`;
+          });
+        const obj = JSON.parse(sanitized);
+        recovered.push(obj);
+      } catch (__) {
+        // Skip malformed individual element
+      }
+    }
+  }
+
+  if (recovered.length > 0) {
+    return recovered;
+  }
+
+  // 4. Fallback: try stripping unescaped newlines from entire array slice
+  if (firstBracket !== -1 && lastBracket > firstBracket) {
+    try {
+      const flattened = cleaned
+        .substring(firstBracket, lastBracket + 1)
+        .replace(/[\r\n]+/g, ' ');
+      const res = JSON.parse(flattened);
+      if (Array.isArray(res)) return res;
+    } catch (_) {}
+  }
+
+  throw new Error('Unable to parse JSON array from model output');
+}
+
+/**
+ * Rich domain-specific micro-themes ensuring 100% fresh, non-duplicate vocabulary.
+ */
+const VOCABULARY_MICRO_THEMES = {
+  general: [
+    'astronomy, solar system, space exploration, planets and cosmic phenomena',
+    'woodworking, carpentry, handmade crafts, workshop tools and repair materials',
+    'culinary arts, food science, gastronomy, spices, baking and culinary techniques',
+    'psychology, cognitive biases, mental wellness, personality traits and human behavior',
+    'architecture, urban planning, historical monuments, bridges and building construction',
+    'sports analytics, extreme athletics, athletic training, fitness and sports medicine',
+    'ecology, marine biology, wildlife conservation, biodiversity and climate ecosystems',
+    'photography, cinematography, visual arts, lenses, lighting and aesthetic composition',
+    'gardening, botany, rare plants, horticulture, agriculture and greenhouse cultivation',
+    'emotions, subtle feelings, human empathy, social relationships and character virtues',
+    'music theory, acoustic instruments, orchestral performance, sound engineering and genres',
+    'geology, volcanoes, minerals, oceanography, caverns and earth sciences',
+    'navigation, cartography, desert exploration, maritime sailing and wilderness survival',
+    'daily home appliances, furniture restoration, smart gadgets and interior decor',
+    'clothing textiles, fashion history, tailoring, fabrics and personal accessories',
+    'health, immune system, medicine, pharmacy, symptoms and wellness routines',
+    'performing arts, theater, acting terminology, stage design and classical literature',
+    'everyday street life, local markets, neighborhood communities and public services'
+  ],
+  conversational: [
+    'informal slang, modern spoken idioms, conversational fillers and react phrases',
+    'friendly banter, humor, teasing, casual greetings and warm farewells',
+    'expressing surprise, skepticism, enthusiasm, empathy and disagreement in real speech',
+    'making weekend plans, discussing opinions, storytelling transitions and spontaneous dialogue',
+    'polite requests, apologies, conversational softeners and casual phone/chat expressions',
+    'daily social interactions: coffee runs, grocery small talk, roommates and neighbors'
+  ],
+  ielts_toefl: [
+    'academic essay transition phrases, argumentative markers and thesis qualifiers',
+    'data trends, graph analysis, demographic shifts, statistical comparisons and forecasts',
+    'environmental challenges, sustainability, renewable energy and urban expansion',
+    'education systems, pedagogy, cognitive development, research methodology and literacy',
+    'scientific progress, ethical dilemmas, technological disruption and sociological theory',
+    'globalization, macroeconomics, international trade and cultural heritage preservation'
+  ],
+  phrasal_idioms: [
+    'high-frequency multi-word verbs with take, get, put, come, go, turn, break, look',
+    'idiomatic expressions for success, failure, hard work, deadlines and decision-making',
+    'relationship phrasal verbs: falling out, making up, getting along, looking up to',
+    'mind and memory idioms: off the top of one\'s head, bear in mind, ring a bell',
+    'phrasal verbs for daily routines, health, travel, spending, saving and problem-solving'
+  ],
+  business: [
+    'negotiations, deal-closing, contract stipulations, concessions and compromise',
+    'venture capital, startup funding, ROI, equity, revenue models and fiscal quarterly reports',
+    'corporate leadership, agile team management, performance KPIs and delegating tasks',
+    'product launches, brand positioning, consumer acquisition and market saturation',
+    'workplace ethics, compliance, intellectual property, corporate governance and supply chain'
+  ],
+  tech_it: [
+    'cloud computing, microservices, containerization (Docker, Kubernetes) and CI/CD pipelines',
+    'software engineering paradigms, refactoring, algorithms, latency, concurrency and caching',
+    'cybersecurity, threat vectors, encryption, penetration testing and vulnerability management',
+    'artificial intelligence, neural networks, machine learning pipelines and NLP models',
+    'frontend architecture, reactivity, DOM rendering, UI/UX interactions and accessibility',
+    'database management, SQL indexing, ACID transactions, data warehousing and ETL'
+  ],
+  travel: [
+    'airports, boarding gates, passport control, excess baggage and flight delays',
+    'hotel accommodation, concierge requests, room amenities and hospitality etiquette',
+    'public transit in foreign cities, metro transfers, ticketing and asking for directions',
+    'cultural tourism, museum etiquette, guided tours and landmark sightseeing',
+    'outdoor hiking, camping gear, trail markers, eco-tourism and mountain expeditions',
+    'travel emergencies, lost property, medical assistance abroad and currency exchange'
+  ]
+};
 
 class GeminiService {
   constructor() {
@@ -141,22 +296,9 @@ Pedagogical Quality Guidelines:
         // Parse JSON array
         let parsedQuestions = [];
         try {
-          let cleaned = (rawText || '').trim();
-          if (cleaned.startsWith('```json')) {
-            cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
-          } else if (cleaned.startsWith('```')) {
-            cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
-          }
-          parsedQuestions = JSON.parse(cleaned);
-          if (!Array.isArray(parsedQuestions) && typeof parsedQuestions === 'object') {
-            if (Array.isArray(parsedQuestions.questions)) {
-              parsedQuestions = parsedQuestions.questions;
-            } else {
-              parsedQuestions = [parsedQuestions];
-            }
-          }
+          parsedQuestions = cleanAndParseJsonArray(rawText, 'questions');
         } catch (parseErr) {
-          console.error(`Failed to parse JSON from ${model}:`, rawText);
+          console.error(`Failed to parse JSON from ${model}:`, parseErr.message);
           continue;
         }
 
@@ -284,32 +426,16 @@ Pedagogical Quality Guidelines:
   }
 
   async _executeVocabGeneration(level = 'B1', sectionId = 'general', count = 50) {
-    const DIVERSE_THEMES = [
-      'home, kitchen, living space and everyday utensils',
-      'city life, public places, shops, transport and directions',
-      'food, groceries, drinks, cooking, meals and flavors',
-      'hobbies, sports, leisure, creative arts and entertainment',
-      'nature, weather, climate, landscapes, plants and animals',
-      'clothing, footwear, accessories, fabrics and personal items',
-      'human emotions, character traits, sensations and bodily feelings',
-      'professions, workplace interactions, tools, routines and crafts',
-      'travel, hotels, luggage, geography, vacation and sightseeing',
-      'active daily verbs, expressive adjectives and practical collocations'
-    ];
-    const randomTheme = DIVERSE_THEMES[Math.floor(Math.random() * DIVERSE_THEMES.length)];
+    const sectionThemes = VOCABULARY_MICRO_THEMES[sectionId] || VOCABULARY_MICRO_THEMES.general;
+    const randomTheme = sectionThemes[Math.floor(Math.random() * sectionThemes.length)];
+    const topicFocus = `${sectionId} (${randomTheme})`;
 
-    let topicFocus = `Everyday communication (${randomTheme})`;
-    if (sectionId && sectionId !== 'general' && sectionId !== 'all') {
-      const sectionRow = await db.prepare('SELECT * FROM sections WHERE id = ?').get(sectionId);
-      if (sectionRow) {
-        topicFocus = `${sectionRow.title} (${sectionRow.prompt_focus})`;
-      }
-    }
-
-    // Retrieve up to 300 recent and random words already in the database for this level to avoid duplicates
+    // Retrieve up to 200 random existing words for this level and section to avoid duplicates
     let existingWordsList = '';
     try {
-      const existingRows = await db.prepare('SELECT word FROM dictionary WHERE level = ? ORDER BY id DESC LIMIT 300').all(level);
+      const existingRows = await db.prepare(
+        'SELECT word FROM dictionary WHERE level = ? AND section_id = ? ORDER BY RANDOM() LIMIT 200'
+      ).all(level, sectionId);
       if (existingRows.length > 0) {
         existingWordsList = existingRows.map(r => r.word).join(', ');
       }
@@ -318,26 +444,22 @@ Pedagogical Quality Guidelines:
     const systemPrompt = `
 You are an expert Cambridge/Oxford lexicographer and English tutor.
 Generate ${count} essential, high-yield English vocabulary words, collocations, or phrasal verbs for CEFR level ${level}.
-Topic Category & Subtheme: "${topicFocus}".
+Section: "${sectionId}".
+Thematic Micro-Focus: "${randomTheme}".
 
-Strict Output Requirements:
-1. Return ONLY a valid JSON array of ${count} objects.
-2. Each object MUST match this exact structure:
-[
-  {
-    "word": "English word or phrasal verb",
-    "transcription": "/IPA phonetics/",
-    "partOfSpeech": "noun, verb, adjective, or phrasal verb",
-    "translation": "Точный русский перевод (1-3 синонима)",
-    "definition": "Clear concise English definition of the target word itself (never explain test questions or grammar rules)",
-    "exampleSentence": "Authentic, natural example sentence in English strictly containing the target word",
-    "exampleTranslation": "Русский перевод примера",
-    "ruleTip": "Полезный совет по употреблению, предлогу или типичной ошибке"
-  }
-]
-
-${existingWordsList ? `IMPORTANT: Do NOT generate any of the following already known words: ${existingWordsList}. Generate fresh, different words!` : ''}
-All translations and definitions must be precise, natural, and suited for ${level} students.
+CRITICAL ANTI-DUPLICATION & QUALITY RULES:
+1. Do NOT generate generic starter words (e.g. apple, book, cat, dog, table, car, boy, girl, house, water, go, see). Focus on rich, vibrant, authentic vocabulary specific to the micro-theme "${randomTheme}" appropriate for ${level} learners.
+${existingWordsList ? `2. The following words are ALREADY in our database — DO NOT duplicate any of them: ${existingWordsList}.` : ''}
+3. Return ONLY a valid JSON array of ${count} objects with no markdown fences, no conversational text.
+4. Each object must have:
+   - "word": English word, collocation or phrasal verb
+   - "transcription": "/IPA phonetics/"
+   - "partOfSpeech": "noun", "verb", "adjective", "adverb" or "phrasal verb"
+   - "translation": accurate Russian translation (1-3 synonyms, use single quotes inside if quotes are needed)
+   - "definition": clear, concise English definition of the target word itself
+   - "exampleSentence": authentic English example sentence containing the target word
+   - "exampleTranslation": Russian translation of the example sentence
+   - "ruleTip": brief tip on usage, prepositions, or collocations
 `;
 
     let lastError = null;
@@ -371,20 +493,11 @@ All translations and definitions must be precise, natural, and suited for ${leve
 
         let parsed = [];
         try {
-          let cleaned = rawText.trim();
-          if (cleaned.startsWith('```json')) {
-            cleaned = cleaned.replace(/^```json/, '').replace(/```$/, '').trim();
-          } else if (cleaned.startsWith('```')) {
-            cleaned = cleaned.replace(/^```/, '').replace(/```$/, '').trim();
-          }
-          parsed = JSON.parse(cleaned);
+          parsed = cleanAndParseJsonArray(rawText, 'words');
         } catch (pErr) {
           console.warn(`[Vocab Fallback] Failed to parse JSON from ${model}:`, pErr.message);
           continue;
         }
-
-        if (!Array.isArray(parsed) && parsed.words) parsed = parsed.words;
-        if (!Array.isArray(parsed)) parsed = [parsed];
 
         const savedWords = [];
         const insertStmt = db.prepare(`
@@ -565,4 +678,8 @@ Requirements:
   }
 }
 
-module.exports = new GeminiService();
+const serviceInstance = new GeminiService();
+serviceInstance.cleanAndParseJsonArray = cleanAndParseJsonArray;
+serviceInstance.VOCABULARY_MICRO_THEMES = VOCABULARY_MICRO_THEMES;
+serviceInstance.DEFAULT_MODELS = DEFAULT_MODELS;
+module.exports = serviceInstance;
