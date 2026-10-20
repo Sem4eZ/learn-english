@@ -9,6 +9,7 @@ export interface TrainerLayoutProps {
   title: string;
   icon: string;
   level: string;
+  category?: string;
   isCramMode?: boolean;
   wordsCount: number;
   loading: boolean;
@@ -17,10 +18,23 @@ export interface TrainerLayoutProps {
   children: React.ReactNode;
 }
 
+const sectionLabels: Record<string, string> = {
+  all: 'Все темы',
+  general: 'Общая лексика',
+  grammar: 'Грамматика',
+  business: 'Бизнес',
+  travel: 'Путешествия',
+  tech_it: 'IT и технологии',
+  phrasal_idioms: 'Идиомы',
+  conversational: 'Разговорный',
+  ielts_toefl: 'IELTS / TOEFL',
+};
+
 export const TrainerLayout: React.FC<TrainerLayoutProps> = ({
   title,
   icon,
   level,
+  category,
   isCramMode = false,
   wordsCount,
   loading,
@@ -56,6 +70,15 @@ export const TrainerLayout: React.FC<TrainerLayoutProps> = ({
           {level !== 'all' && (
             <Tag color="purple" className={styles.badgeTag}>
               Уровень {level}
+            </Tag>
+          )}
+          {category && category !== 'all' ? (
+            <Tag color="cyan" className={styles.badgeTag}>
+              {sectionLabels[category] || category}
+            </Tag>
+          ) : (
+            <Tag color="geekblue" className={styles.badgeTag}>
+              Все темы
             </Tag>
           )}
           <Tag color="blue" className={styles.badgeTag}>

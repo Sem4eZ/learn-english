@@ -24,6 +24,7 @@ export const CardsTrainerPage: React.FC<CardsTrainerPageProps> = ({
     loading,
     isCramMode,
     level,
+    category,
     fetchWords,
     handleNeedMoreWords,
     handleGameComplete,
@@ -41,6 +42,7 @@ export const CardsTrainerPage: React.FC<CardsTrainerPageProps> = ({
       title="3D Флеш-карточки (SRS)"
       icon="🗂️"
       level={level}
+      category={category}
       isCramMode={isCramMode}
       wordsCount={words.length}
       loading={loading}
