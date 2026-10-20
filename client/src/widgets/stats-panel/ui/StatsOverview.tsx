@@ -38,26 +38,24 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 18;
 
-  if (!stats) return null;
-
-  const level = stats.level || 1;
-  const rankTitle = stats.rankTitle || 'Новичок (Novice)';
-  const progressPercent = stats.levelPercent || 0;
-  const accuracy = stats.accuracy ?? 100;
+  const level = stats?.level || 1;
+  const rankTitle = stats?.rankTitle || 'Новичок (Novice)';
+  const progressPercent = stats?.levelPercent || 0;
+  const accuracy = stats?.accuracy ?? 100;
 
   // Words dynamics
-  const wordsToday = stats.wordsToday || 0;
-  const wordsThisWeek = stats.wordsThisWeek || 0;
-  const wordsThisMonth = stats.wordsThisMonth || 0;
-  const totalWordsLearned = stats.totalWordsLearned || 0;
-  const totalDictWords = stats.totalDictWords || 0;
+  const wordsToday = stats?.wordsToday || 0;
+  const wordsThisWeek = stats?.wordsThisWeek || 0;
+  const wordsThisMonth = stats?.wordsThisMonth || 0;
+  const totalWordsLearned = stats?.totalWordsLearned || 0;
+  const totalDictWords = stats?.totalDictWords || 0;
   const totalDictPercent = totalDictWords > 0 ? Math.round((totalWordsLearned / totalDictWords) * 100) : 0;
 
   // SRS Stages
-  const mastered = stats.masteredWords || 0;
-  const review = stats.reviewWords || 0;
-  const learning = stats.learningWords || 0;
-  const newWords = stats.newWords || Math.max(0, totalDictWords - totalWordsLearned);
+  const mastered = stats?.masteredWords || 0;
+  const review = stats?.reviewWords || 0;
+  const learning = stats?.learningWords || 0;
+  const newWords = stats?.newWords || Math.max(0, totalDictWords - totalWordsLearned);
   const totalSRS = Math.max(1, mastered + review + learning + newWords);
 
   // Scaled widths for SRS SVG (viewBox 0 0 1000 20)
@@ -67,11 +65,11 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
   const wNew = Math.max(0, 1000 - (wMastered + wReview + wLearning));
 
   // Safe arrays for resilient rendering
-  const cefrItems = Array.isArray(stats.cefrBreakdown) ? stats.cefrBreakdown : [];
-  const trainerItems = Array.isArray(stats.trainerBreakdown) ? stats.trainerBreakdown : [];
-  const badgeItems = Array.isArray(stats.badges) ? stats.badges : [];
-  const sectionItems = Array.isArray(stats.sectionBreakdown) ? stats.sectionBreakdown : [];
-  const weeklyActivity = Array.isArray(stats.weeklyActivity) ? stats.weeklyActivity : [];
+  const cefrItems = Array.isArray(stats?.cefrBreakdown) ? stats.cefrBreakdown : [];
+  const trainerItems = Array.isArray(stats?.trainerBreakdown) ? stats.trainerBreakdown : [];
+  const badgeItems = Array.isArray(stats?.badges) ? stats.badges : [];
+  const sectionItems = Array.isArray(stats?.sectionBreakdown) ? stats.sectionBreakdown : [];
+  const weeklyActivity = Array.isArray(stats?.weeklyActivity) ? stats.weeklyActivity : [];
   const maxWeeklyCount = Math.max(...weeklyActivity.map(d => d.count || 0), 10);
 
   // Badges stats
@@ -232,6 +230,8 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
       },
     },
   ];
+
+  if (!stats) return null;
 
   return (
     <div className={styles.container}>
