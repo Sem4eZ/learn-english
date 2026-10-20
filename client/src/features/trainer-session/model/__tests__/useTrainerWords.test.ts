@@ -3,8 +3,8 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { useTrainerWords } from '../useTrainerWords';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
-import { DictionaryItem } from '@/entities/dictionary/model/types';
+import { dictionaryApi } from '@/entities/dictionary';
+import { DictionaryItem } from '@/entities/dictionary';
 
 const mockWords: DictionaryItem[] = [
   {

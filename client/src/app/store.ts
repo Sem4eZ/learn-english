@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
-import { baseApi } from '@/shared/api/baseApi';
+import { baseApi, setStoreDispatch } from '@/shared/api/baseApi';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +12,7 @@ export const store = configureStore({
 });
 
 setupListeners(store.dispatch);
+setStoreDispatch(store.dispatch);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

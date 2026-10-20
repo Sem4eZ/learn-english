@@ -67,6 +67,19 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 // Resilient auto-retry on 502/503/504 cold starts during backend spin-up
 const resilientBaseQuery = retry(baseQueryWithReauth, { maxRetries: 2 });
 
+let storeDispatch: ((action: any) => any) | null = null;
+
+export const setStoreDispatch = (dispatch: (action: any) => any) => {
+  storeDispatch = dispatch;
+};
+
+export const executeApiThunk = (thunk: any): any => {
+  if (!storeDispatch) {
+    throw new Error('[baseApi] Redux store dispatch has not been registered');
+  }
+  return storeDispatch(thunk);
+};
+
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: resilientBaseQuery,

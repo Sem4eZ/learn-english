@@ -7,8 +7,8 @@ import {
   BookOutlined,
   ThunderboltFilled
 } from '@ant-design/icons';
-import { HistoryItem } from '@/entities/user/model/types';
-import { userApi } from '@/entities/user/api/userApi';
+import { HistoryItem } from '@/entities/user';
+import { userApi } from '@/entities/user';
 import { soundEffects } from '@/shared/lib/audio';
 import styles from './HistoryPage.module.scss';
 

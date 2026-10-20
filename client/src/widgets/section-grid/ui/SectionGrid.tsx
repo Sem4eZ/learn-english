@@ -11,7 +11,7 @@ import {
   ArrowRightOutlined,
   PlusOutlined
 } from '@ant-design/icons';
-import { Section } from '@/entities/section/model/types';
+import { Section } from '@/entities/section';
 import styles from './SectionGrid.module.scss';
 
 const { Title, Paragraph, Text } = Typography;

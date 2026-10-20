@@ -1,6 +1,6 @@
-import { baseApi } from '@/shared/api/baseApi';
+import { baseApi, executeApiThunk } from '@/shared/api/baseApi';
 import { Question, QuestionsResponse, AnswerResult } from '../model/types';
-import { store } from '@/app/store';
+
 
 export const questionApiSlice = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -66,7 +66,7 @@ export const questionApi = {
     page?: number;
     limit?: number;
   }): Promise<QuestionsResponse> {
-    return await store.dispatch(
+    return await executeApiThunk(
       questionApiSlice.endpoints.getQuestions.initiate(params, { forceRefetch: true })
     ).unwrap();
   },
@@ -77,7 +77,7 @@ export const questionApi = {
     count?: number;
     customTopic?: string;
   }): Promise<Question[]> {
-    return await store.dispatch(
+    return await executeApiThunk(
       questionApiSlice.endpoints.generateBatch.initiate(params)
     ).unwrap();
   },
@@ -86,7 +86,7 @@ export const questionApi = {
     questionId: number;
     selectedIndex: number;
   }): Promise<AnswerResult> {
-    return await store.dispatch(
+    return await executeApiThunk(
       questionApiSlice.endpoints.submitAnswer.initiate(params)
     ).unwrap();
   },

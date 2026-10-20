@@ -3,8 +3,8 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppHeader } from '../ui/AppHeader';
-import { UserStats } from '@/entities/user/model/types';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { UserStats } from '@/entities/user';
+import { AuthUser } from '@/features/auth';
 
 const mockStats: UserStats = {
   xp: 450,

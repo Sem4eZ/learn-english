@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ArcadeHubPage } from '../ArcadeHubPage';
-import { sectionApi } from '@/entities/section/api/sectionApi';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { sectionApi } from '@/entities/section';
+import { dictionaryApi } from '@/entities/dictionary';
+import { AuthUser } from '@/features/auth';
 
 const mockUser: AuthUser = {
   id: 1,

@@ -1,16 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { message } from 'antd';
-import { DictionaryItem } from '@/entities/dictionary/model/types';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
-import { FlashcardItem } from '@/widgets/flashcard-deck/ui/FlashcardDeck';
-import { AudioItem } from '@/widgets/audio-challenge/ui/AudioChallenge';
-
-export interface UseTrainerWordsOptions {
-  initialLevel?: string;
-  initialCategory?: string;
-  onRefreshStats?: () => void;
-}
+import { DictionaryItem, dictionaryApi } from '@/entities/dictionary';
+import { FlashcardItem, AudioItem, UseTrainerWordsOptions } from './types';
 
 export function useTrainerWords(options: UseTrainerWordsOptions = {}) {
   const [searchParams] = useSearchParams();
@@ -31,7 +23,7 @@ export function useTrainerWords(options: UseTrainerWordsOptions = {}) {
       if (res.success && res.data?.length > 0) {
         setWords(prev => {
           const existingIds = new Set(prev.map(w => w.id));
-          const fresh = res.data.filter(w => !existingIds.has(w.id));
+          const fresh = res.data.filter((w: DictionaryItem) => !existingIds.has(w.id));
           return [...prev, ...fresh];
         });
         message.success(res.message || `Добавлено ${res.data.length} новых слов!`);

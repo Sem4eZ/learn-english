@@ -7,8 +7,8 @@ import {
   BulbOutlined, 
   InfoCircleOutlined 
 } from '@ant-design/icons';
-import { Question, AnswerResult } from '@/entities/question/model/types';
-import { questionApi } from '@/entities/question/api/questionApi';
+import { Question, AnswerResult } from '@/entities/question';
+import { questionApi } from '@/entities/question';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
 import { xpEventBus } from '@/shared/lib/xpEvents';

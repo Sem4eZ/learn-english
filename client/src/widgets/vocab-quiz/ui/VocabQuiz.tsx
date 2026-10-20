@@ -11,7 +11,7 @@ import {
   FireFilled,
   SwapOutlined
 } from '@ant-design/icons';
-import { DictionaryItem } from '@/entities/dictionary/model/types';
+import { DictionaryItem } from '@/entities/dictionary';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
 import { SRSEngine } from '@/shared/lib/srs';

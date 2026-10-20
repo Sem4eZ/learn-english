@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PracticePage } from '@/pages/PracticePage';
-import { Section } from '@/entities/section/model/types';
+import { Section } from '@/entities/section';
 
 export interface GrammarTrainerPageProps {
   allSections?: Section[];

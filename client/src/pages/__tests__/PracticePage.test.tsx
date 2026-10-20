@@ -2,9 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { store } from '@/app/store';
+import { configureStore } from '@reduxjs/toolkit';
+import { baseApi } from '@/shared/api/baseApi';
 import { PracticePage } from '../PracticePage';
-import { questionApi } from '@/entities/question/api/questionApi';
+import { questionApi } from '@/entities/question';
+
+const store = configureStore({
+  reducer: {
+    [baseApi.reducerPath]: baseApi.reducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(baseApi.middleware),
+});
 import { soundEffects } from '@/shared/lib/audio';
 
 const mockSection = {

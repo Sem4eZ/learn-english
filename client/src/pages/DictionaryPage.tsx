@@ -22,10 +22,10 @@ import {
   ReloadOutlined,
   PlusCircleOutlined
 } from '@ant-design/icons';
-import { DictionaryItem } from '@/entities/dictionary/model/types';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
+import { DictionaryItem } from '@/entities/dictionary';
+import { dictionaryApi } from '@/entities/dictionary';
 import { soundEffects } from '@/shared/lib/audio';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { AuthUser } from '@/features/auth';
 import styles from './DictionaryPage.module.scss';
 
 const { Title, Text } = Typography;

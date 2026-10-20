@@ -21,7 +21,7 @@ import {
   SoundOutlined,
   SearchOutlined
 } from '@ant-design/icons';
-import { UserStats } from '@/entities/user/model/types';
+import { UserStats } from '@/entities/user';
 import styles from './StatsOverview.module.scss';
 
 const { Title, Text } = Typography;

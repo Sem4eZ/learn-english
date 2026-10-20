@@ -14,8 +14,8 @@ import {
   RightOutlined
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { UserStats } from '@/entities/user/model/types';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { UserStats } from '@/entities/user';
+import { AuthUser } from '@/features/auth';
 import styles from './AppHeader.module.scss';
 
 const { Header } = Layout;

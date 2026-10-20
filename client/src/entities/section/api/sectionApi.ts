@@ -1,6 +1,6 @@
-import { baseApi } from '@/shared/api/baseApi';
+import { baseApi, executeApiThunk } from '@/shared/api/baseApi';
 import { Section } from '../model/types';
-import { store } from '@/app/store';
+
 
 export const sectionApiSlice = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -18,7 +18,7 @@ export const sectionApi = {
   ...sectionApiSlice,
   async getSections(): Promise<Section[]> {
     try {
-      const res = await store.dispatch(
+      const res = await executeApiThunk(
         sectionApiSlice.endpoints.getSections.initiate(undefined)
       ).unwrap();
       return res || [];

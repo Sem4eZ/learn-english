@@ -1,6 +1,6 @@
-import { baseApi } from '@/shared/api/baseApi';
+import { baseApi, executeApiThunk } from '@/shared/api/baseApi';
+import { setSrsReviewHandler } from '@/shared/lib/srs';
 import { DictionaryItem, DictionaryFilterParams, DictionaryResponse } from '../model/types';
-import { store } from '@/app/store';
 
 export const dictionaryApiSlice = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -75,13 +75,13 @@ export const dictionaryApi = {
   ...dictionaryApiSlice,
 
   async getDictionary(params: DictionaryFilterParams = {}): Promise<DictionaryResponse> {
-    return await store.dispatch(
+    return await executeApiThunk(
       dictionaryApiSlice.endpoints.getDictionary.initiate(params, { forceRefetch: true })
     ).unwrap();
   },
 
   async toggleFavorite(id: number): Promise<DictionaryItem> {
-    const res = await store.dispatch(
+    const res = await executeApiThunk(
       dictionaryApiSlice.endpoints.toggleFavorite.initiate(id)
     ).unwrap();
     if (res && res.data) return res.data;
@@ -89,20 +89,22 @@ export const dictionaryApi = {
   },
 
   async reviewWord(wordId: number, grade: number, trainerId?: string): Promise<any> {
-    return await store.dispatch(
+    return await executeApiThunk(
       dictionaryApiSlice.endpoints.reviewWord.initiate({ wordId, grade, trainerId })
     ).unwrap();
   },
 
   async generateWords(level = 'A1', sectionId = 'general', count = 35) {
-    return await store.dispatch(
+    return await executeApiThunk(
       dictionaryApiSlice.endpoints.generateWords.initiate({ level, sectionId, count })
     ).unwrap();
   },
 
   async lookupWord(word: string) {
-    return await store.dispatch(
+    return await executeApiThunk(
       dictionaryApiSlice.endpoints.lookupWord.initiate({ word })
     ).unwrap();
   },
 };
+
+setSrsReviewHandler((wordId, grade, trainerId) => dictionaryApi.reviewWord(Number(wordId), grade, trainerId));

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, Select, Slider, message } from 'antd';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { CEFR_LEVELS } from '@/shared/config/constants';
-import { Section } from '@/entities/section/model/types';
-import { questionApi } from '@/entities/question/api/questionApi';
+import { Section } from '@/entities/section';
+import { questionApi } from '@/entities/question';
 import styles from './GenerateBatchModal.module.scss';
 
 interface GenerateBatchModalProps {

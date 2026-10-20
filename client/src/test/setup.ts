@@ -1,5 +1,11 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import { setStoreDispatch } from '@/shared/api/baseApi';
+
+// Provide default test dispatcher for baseApi thunks
+setStoreDispatch((_thunk: any) => ({
+  unwrap: () => Promise.resolve({ success: true, data: [] }),
+}));
 
 // Mock canvas-confetti
 vi.mock('canvas-confetti', () => ({

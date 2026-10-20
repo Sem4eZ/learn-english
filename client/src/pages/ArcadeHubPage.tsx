@@ -8,10 +8,10 @@ import {
   LoadingOutlined,
   WarningOutlined
 } from '@ant-design/icons';
-import { Section } from '@/entities/section/model/types';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
-import { sectionApi } from '@/entities/section/api/sectionApi';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
+import { Section } from '@/entities/section';
+import { AuthUser } from '@/features/auth';
+import { sectionApi } from '@/entities/section';
+import { dictionaryApi } from '@/entities/dictionary';
 import styles from './ArcadeHubPage.module.scss';
 
 const { Title, Paragraph } = Typography;

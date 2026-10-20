@@ -1,5 +1,5 @@
 import { baseApi } from '@/shared/api/baseApi';
-import { AuthUser } from '../ui/AuthModal';
+import { AuthUser } from '../model/types';
 
 export interface AuthResponse {
   success: boolean;

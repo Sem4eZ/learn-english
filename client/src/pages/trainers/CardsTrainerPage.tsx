@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { FlashcardDeck } from '@/widgets/flashcard-deck/ui/FlashcardDeck';
-import { TrainerLayout } from '@/widgets/trainer-layout/ui/TrainerLayout';
-import { useTrainerWords } from '@/shared/hooks/useTrainerWords';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { FlashcardDeck } from '@/widgets/flashcard-deck';
+import { TrainerLayout } from '@/widgets/trainer-layout';
+import { useTrainerWords } from '@/features/trainer-session';
+import { AuthUser } from '@/features/auth';
 
 export interface CardsTrainerPageProps {
   currentUser?: AuthUser | null;

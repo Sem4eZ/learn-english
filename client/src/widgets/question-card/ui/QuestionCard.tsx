@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card, Tag, Typography, Button, Space } from 'antd';
 import { SoundOutlined } from '@ant-design/icons';
-import { Question, AnswerResult } from '@/entities/question/model/types';
-import { AnswerOptions } from '@/features/answer-question/ui/AnswerOptions';
+import { Question, AnswerResult } from '@/entities/question';
+import { AnswerOptions } from '@/features/answer-question';
 import { soundEffects } from '@/shared/lib/audio';
 import styles from './QuestionCard.module.scss';
 

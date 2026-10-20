@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { StatsOverview } from '../ui/StatsOverview';
-import { UserStats } from '@/entities/user/model/types';
+import { UserStats } from '@/entities/user';
 
 describe('StatsOverview Component & Analytics Suite', () => {
   const mockTrainers = [
