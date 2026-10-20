@@ -145,9 +145,9 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
   const categoryUnlockedCount = useMemo(() => categoryBadges.filter(b => b.unlocked).length, [categoryBadges]);
   const categoryLockedCount = categoryBadges.length - categoryUnlockedCount;
 
-  // Filtered by status and search
+  // Filtered by status and search, with unlocked achievements sorted to the very top
   const filteredBadges = useMemo(() => {
-    return categoryBadges.filter(b => {
+    const list = categoryBadges.filter(b => {
       if (statusFilter === 'unlocked' && !b.unlocked) return false;
       if (statusFilter === 'locked' && b.unlocked) return false;
       if (badgeSearch.trim()) {
@@ -158,6 +158,17 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
         if (!matchesTitle && !matchesDesc && !matchesCat) return false;
       }
       return true;
+    });
+
+    // Unlocked achievements always at the very top, then in-progress sorted by percent descending
+    return list.slice().sort((a, b) => {
+      if (a.unlocked !== b.unlocked) {
+        return a.unlocked ? -1 : 1;
+      }
+      if (!a.unlocked && !b.unlocked) {
+        return (b.percent ?? 0) - (a.percent ?? 0);
+      }
+      return 0;
     });
   }, [categoryBadges, statusFilter, badgeSearch]);
 

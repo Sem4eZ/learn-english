@@ -153,4 +153,16 @@ describe('StatsOverview Component & Analytics Suite', () => {
 
     expect(screen.getByText('Словарный запас: 50 слов')).toBeInTheDocument();
   });
+
+  it('8. should render unlocked achievements sorted at the very top of the list', () => {
+    const { container } = render(<StatsOverview stats={mockStats} />);
+
+    // All unlocked badges (first_step, words_50, streak_3, xp_500) must appear before locked ones
+    const badgeTitles = container.querySelectorAll('.badgeTitle');
+    const unlockedTitles = ['Первый шаг', 'Словарный запас: 50 слов', 'Серия: 3 дня', 'Опыт: 500 XP'];
+    expect(unlockedTitles).toContain(badgeTitles[0].textContent);
+    expect(unlockedTitles).toContain(badgeTitles[1].textContent);
+    expect(unlockedTitles).toContain(badgeTitles[2].textContent);
+    expect(unlockedTitles).toContain(badgeTitles[3].textContent);
+  });
 });

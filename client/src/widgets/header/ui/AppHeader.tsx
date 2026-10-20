@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Space, Button, Tag, Dropdown, MenuProps, Avatar, Drawer, Divider, Tooltip } from 'antd';
+import { Layout, Space, Button, Tag, Dropdown, MenuProps, Avatar, Drawer, Divider } from 'antd';
 import { 
   FireFilled, 
   ThunderboltFilled, 
@@ -159,49 +159,43 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {/* Desktop Stats & User Profile (Hidden on mobile < 768px) */}
           <div className={styles.desktopControls}>
             <Space size="small">
-              <Tooltip title="Открыть дашборд обучения">
-                <Tag
-                  color="warning"
-                  className={`${styles.statTag} ${styles.interactiveStat}`}
-                  onClick={() => handleTabClick('stats')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
-                  aria-label={`Серия: ${streak} дней. Нажмите, чтобы открыть дашборд обучения`}
-                >
-                  <FireFilled className={styles.statIconAmber} />
-                  {streak} дн.
-                </Tag>
-              </Tooltip>
+              <Tag
+                color="warning"
+                className={`${styles.statTag} ${styles.interactiveStat}`}
+                onClick={() => handleTabClick('stats')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+                aria-label={`Серия: ${streak} дней`}
+              >
+                <FireFilled className={styles.statIconAmber} />
+                {streak} дн.
+              </Tag>
 
-              <Tooltip title="Открыть дашборд обучения">
-                <Tag
-                  color="cyan"
-                  className={`${styles.statTag} ${styles.interactiveStat}`}
-                  onClick={() => handleTabClick('stats')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
-                  aria-label={`Опыт: ${xp} XP. Нажмите, чтобы открыть дашборд обучения`}
-                >
-                  <ThunderboltFilled className={styles.statIconCyan} />
-                  {xp} XP
-                </Tag>
-              </Tooltip>
+              <Tag
+                color="cyan"
+                className={`${styles.statTag} ${styles.interactiveStat}`}
+                onClick={() => handleTabClick('stats')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+                aria-label={`Опыт: ${xp} XP`}
+              >
+                <ThunderboltFilled className={styles.statIconCyan} />
+                {xp} XP
+              </Tag>
 
-              <Tooltip title="Открыть дашборд обучения">
-                <Tag
-                  color="purple"
-                  className={`${styles.statTag} ${styles.interactiveStat}`}
-                  onClick={() => handleTabClick('stats')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
-                  aria-label={`Уровень: ${level}. Нажмите, чтобы открыть дашборд обучения`}
-                >
-                  Lvl {level}
-                </Tag>
-              </Tooltip>
+              <Tag
+                color="purple"
+                className={`${styles.statTag} ${styles.interactiveStat}`}
+                onClick={() => handleTabClick('stats')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+                aria-label={`Уровень: ${level}`}
+              >
+                Lvl {level}
+              </Tag>
 
               {/* User Auth Profile */}
               {isGuest ? (
@@ -239,49 +233,43 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {/* Mobile Quick Controls (< 768px) */}
           <div className={styles.mobileControls}>
             {/* Quick XP Tag on mobile */}
-            <Tooltip title="Открыть дашборд">
-              <Tag
-                color="cyan"
-                className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
-                onClick={() => handleTabClick('stats')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
-                aria-label={`Опыт: ${xp} XP. Открыть дашборд`}
-              >
-                ⚡ {xp}
-              </Tag>
-            </Tooltip>
+            <Tag
+              color="cyan"
+              className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
+              onClick={() => handleTabClick('stats')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+              aria-label={`Опыт: ${xp} XP`}
+            >
+              ⚡ {xp}
+            </Tag>
 
             {/* Quick Streak Tag on mobile */}
-            <Tooltip title="Открыть дашборд">
-              <Tag
-                color="warning"
-                className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
-                onClick={() => handleTabClick('stats')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
-                aria-label={`Серия: ${streak} дней. Открыть дашборд`}
-              >
-                🔥 {streak}
-              </Tag>
-            </Tooltip>
+            <Tag
+              color="warning"
+              className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
+              onClick={() => handleTabClick('stats')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+              aria-label={`Серия: ${streak} дней`}
+            >
+              🔥 {streak}
+            </Tag>
 
             {/* Quick Level Tag on mobile */}
-            <Tooltip title="Открыть дашборд">
-              <Tag
-                color="purple"
-                className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
-                onClick={() => handleTabClick('stats')}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
-                aria-label={`Уровень: ${level}. Открыть дашборд`}
-              >
-                Ур. {level}
-              </Tag>
-            </Tooltip>
+            <Tag
+              color="purple"
+              className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
+              onClick={() => handleTabClick('stats')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+              aria-label={`Уровень: ${level}`}
+            >
+              Ур. {level}
+            </Tag>
 
             {/* Theme Toggle */}
             <Button
@@ -338,7 +326,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
-                title="Нажмите, чтобы открыть дашборд обучения"
               >
                 Уровень {level} • {xp} XP • {streak} дн.🔥
               </div>

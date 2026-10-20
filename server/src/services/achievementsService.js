@@ -378,7 +378,17 @@ function buildAchievementsList(userMetrics = {}) {
     });
   });
 
-  return achievements;
+  // Sort achievements so that unlocked achievements appear at the very top,
+  // followed by in-progress achievements sorted by completion percent descending
+  return achievements.sort((a, b) => {
+    if (a.unlocked !== b.unlocked) {
+      return a.unlocked ? -1 : 1;
+    }
+    if (!a.unlocked && !b.unlocked) {
+      return (b.percent ?? 0) - (a.percent ?? 0);
+    }
+    return 0;
+  });
 }
 
 module.exports = {
