@@ -19,14 +19,13 @@ const geminiService = require('./geminiService');
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
 const HARVEST_SECTIONS = [
-  'general',
-  'grammar',
-  'business',
-  'tech_it',
-  'travel',
-  'phrasal_idioms',
   'conversational',
-  'ielts_toefl'
+  'ielts_toefl',
+  'phrasal_idioms',
+  'tech_it',
+  'business',
+  'travel',
+  'general'
 ];
 
 const GRAMMAR_TOPICS = [
