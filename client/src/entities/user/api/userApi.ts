@@ -1,6 +1,6 @@
-import { baseApi } from '@/shared/api/baseApi';
+import { baseApi, executeApiThunk } from '@/shared/api/baseApi';
 import { UserStats, HistoryItem, INITIAL_USER_STATS } from '../model/types';
-import { store } from '@/app/store';
+
 
 export const userApiSlice = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -31,7 +31,7 @@ export const userApi = {
   ...userApiSlice,
   async getStats(): Promise<UserStats> {
     try {
-      const res = await store.dispatch(
+      const res = await executeApiThunk(
         userApiSlice.endpoints.getUserStats.initiate(undefined, { forceRefetch: true })
       ).unwrap();
       return res || INITIAL_USER_STATS;
@@ -43,7 +43,7 @@ export const userApi = {
 
   async getHistory(): Promise<HistoryItem[]> {
     try {
-      const res = await store.dispatch(
+      const res = await executeApiThunk(
         userApiSlice.endpoints.getHistory.initiate(undefined, { forceRefetch: true })
       ).unwrap();
       return res || [];
@@ -55,7 +55,7 @@ export const userApi = {
 
   async getMe() {
     try {
-      return await store.dispatch(
+      return await executeApiThunk(
         userApiSlice.endpoints.getMe.initiate(undefined, { forceRefetch: true })
       ).unwrap();
     } catch (err) {

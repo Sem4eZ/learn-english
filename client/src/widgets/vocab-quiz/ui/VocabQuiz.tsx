@@ -11,7 +11,7 @@ import {
   FireFilled,
   SwapOutlined
 } from '@ant-design/icons';
-import { DictionaryItem } from '@/entities/dictionary/model/types';
+import { DictionaryItem } from '@/entities/dictionary';
 import { soundEffects } from '@/shared/lib/audio';
 import { fireCelebration } from '@/shared/lib/confetti';
 import { SRSEngine } from '@/shared/lib/srs';
@@ -197,7 +197,7 @@ export const VocabQuiz: React.FC<VocabQuizProps> = ({
     if (currentQ) {
       soundEffects.speak(currentQ.targetWord.word);
       // Grade 3 (Хорошо) postpones word for 1-3 days; Grade 1 (Снова) schedules for repeat in session
-      SRSEngine.syncReviewWithServer(currentQ.targetWord.id, isCorrect ? 3 : 1);
+      SRSEngine.syncReviewWithServer(currentQ.targetWord.id, isCorrect ? 3 : 1, 'quiz');
     }
 
     // Auto-request next batch of words when remaining questions < 5

@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { SpeedSprint } from '@/widgets/speed-sprint/ui/SpeedSprint';
-import { TrainerLayout } from '@/widgets/trainer-layout/ui/TrainerLayout';
-import { useTrainerWords } from '@/shared/hooks/useTrainerWords';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { SpeedSprint } from '@/widgets/speed-sprint';
+import { TrainerLayout } from '@/widgets/trainer-layout';
+import { useTrainerWords } from '@/features/trainer-session';
+import { AuthUser } from '@/features/auth';
 
 export interface SprintTrainerPageProps {
   currentUser?: AuthUser | null;

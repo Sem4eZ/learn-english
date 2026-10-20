@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout, message } from 'antd';
 import { AntdConfigProvider } from './providers/AntdConfigProvider';
-import { AppHeader } from '@/widgets/header/ui/AppHeader';
+import { AppHeader } from '@/widgets/header';
 import { ArcadeHubPage } from '@/pages/ArcadeHubPage';
 import { DictionaryPage } from '@/pages/DictionaryPage';
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -13,13 +13,13 @@ import { BuilderTrainerPage } from '@/pages/trainers/BuilderTrainerPage';
 import { CardsTrainerPage } from '@/pages/trainers/CardsTrainerPage';
 import { AudioTrainerPage } from '@/pages/trainers/AudioTrainerPage';
 import { GrammarTrainerPage } from '@/pages/trainers/GrammarTrainerPage';
-import { GenerateBatchModal } from '@/features/generate-ai-batch/ui/GenerateBatchModal';
-import { AuthModal, AuthUser } from '@/features/auth/ui/AuthModal';
-import { Section } from '@/entities/section/model/types';
-import { UserStats, INITIAL_USER_STATS } from '@/entities/user/model/types';
-import { sectionApi } from '@/entities/section/api/sectionApi';
-import { userApi } from '@/entities/user/api/userApi';
-import { authSession } from '@/features/auth/api/authApi';
+import { GenerateBatchModal } from '@/features/generate-ai-batch';
+import { AuthModal, AuthUser, authSession } from '@/features/auth';
+import { Section, sectionApi } from '@/entities/section';
+import { UserStats, INITIAL_USER_STATS, userApi } from '@/entities/user';
+
+
+
 import { xpEventBus } from '@/shared/lib/xpEvents';
 import '@/shared/styles/global.scss';
 import { API_BASE_URL } from '@/shared/config';

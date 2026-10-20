@@ -635,6 +635,22 @@ const SCHEMA_DDL = `
   CREATE INDEX IF NOT EXISTS idx_dictionary_section ON dictionary(section_id);
   CREATE INDEX IF NOT EXISTS idx_dictionary_level ON dictionary(level);
   CREATE UNIQUE INDEX IF NOT EXISTS idx_srs_user_word ON srs_reviews(user_id, word_id);
+
+  CREATE TABLE IF NOT EXISTS trainer_activity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    trainer_id TEXT NOT NULL,
+    word_id INTEGER,
+    question_id INTEGER,
+    section_id TEXT,
+    is_correct INTEGER NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_trainer_activity_user ON trainer_activity(user_id);
+  CREATE INDEX IF NOT EXISTS idx_trainer_activity_trainer ON trainer_activity(trainer_id);
+  CREATE INDEX IF NOT EXISTS idx_trainer_activity_section ON trainer_activity(section_id);
 `;
 
 function normalizeArgs(params) {

@@ -3,8 +3,8 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppHeader } from '../ui/AppHeader';
-import { UserStats } from '@/entities/user/model/types';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { UserStats } from '@/entities/user';
+import { AuthUser } from '@/features/auth';
 
 const mockStats: UserStats = {
   xp: 450,
@@ -167,5 +167,24 @@ describe('AppHeader UI Component Tests', () => {
     fireEvent.click(brand);
 
     expect(onTabChange).toHaveBeenCalledWith('arcade');
+  });
+
+  it('16. should navigate to stats dashboard when streak, xp, or level tags are clicked', () => {
+    const onTabChange = vi.fn();
+    renderHeader({ onTabChange });
+
+    const streakTag = screen.getByText(/5 дн\./i);
+    fireEvent.click(streakTag);
+    expect(onTabChange).toHaveBeenCalledWith('stats');
+
+    onTabChange.mockClear();
+    const xpTag = screen.getByText(/450 XP/i);
+    fireEvent.click(xpTag);
+    expect(onTabChange).toHaveBeenCalledWith('stats');
+
+    onTabChange.mockClear();
+    const levelTag = screen.getByText(/Lvl 3/i);
+    fireEvent.click(levelTag);
+    expect(onTabChange).toHaveBeenCalledWith('stats');
   });
 });

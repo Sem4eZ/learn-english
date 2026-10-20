@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { AudioChallenge } from '@/widgets/audio-challenge/ui/AudioChallenge';
-import { TrainerLayout } from '@/widgets/trainer-layout/ui/TrainerLayout';
-import { useTrainerWords } from '@/shared/hooks/useTrainerWords';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { AudioChallenge } from '@/widgets/audio-challenge';
+import { TrainerLayout } from '@/widgets/trainer-layout';
+import { useTrainerWords } from '@/features/trainer-session';
+import { AuthUser } from '@/features/auth';
 
 export interface AudioTrainerPageProps {
   currentUser?: AuthUser | null;

@@ -117,7 +117,7 @@ export const AudioChallenge: React.FC<AudioChallengeProps> = ({
     }
 
     if (currentItem?.id) {
-      SRSEngine.syncReviewWithServer(currentItem.id, isMatch ? 3 : 1);
+      SRSEngine.syncReviewWithServer(currentItem.id, isMatch ? 3 : 1, 'audio');
     }
   };
 

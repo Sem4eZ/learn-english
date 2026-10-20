@@ -3,8 +3,15 @@
  * Calculates optimal intervals for long-term memory retention.
  */
 
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
 import { xpEventBus } from './xpEvents';
+
+export type SrsReviewHandler = (wordId: number | string, grade: SrsGrade, trainerId?: string) => Promise<any>;
+
+let srsReviewHandler: SrsReviewHandler | null = null;
+
+export const setSrsReviewHandler = (handler: SrsReviewHandler) => {
+  srsReviewHandler = handler;
+};
 
 export type SrsGrade = 1 | 2 | 3 | 4;
 
@@ -123,14 +130,20 @@ export class SRSEngine {
     return updated;
   }
 
-  static async syncReviewWithServer(wordId: number | string, grade: SrsGrade): Promise<any> {
+  static async syncReviewWithServer(wordId: number | string, grade: SrsGrade, trainerId: string = 'cards'): Promise<any> {
     try {
-      const res: any = await dictionaryApi.reviewWord(Number(wordId), grade);
+      const res: any = srsReviewHandler ? await srsReviewHandler(wordId, grade, trainerId) : null;
       if (res?.success && res?.data) {
         xpEventBus.emit({
           xpReward: res.data.xpEarned || 10,
           totalXp: res.data.totalXp,
           streak: res.data.streak,
+          source: 'srs_review'
+        });
+      } else {
+        // Fallback event
+        xpEventBus.emit({
+          xpReward: 10,
           source: 'srs_review'
         });
       }

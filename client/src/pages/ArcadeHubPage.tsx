@@ -8,10 +8,10 @@ import {
   LoadingOutlined,
   WarningOutlined
 } from '@ant-design/icons';
-import { Section } from '@/entities/section/model/types';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
-import { sectionApi } from '@/entities/section/api/sectionApi';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
+import { Section } from '@/entities/section';
+import { AuthUser } from '@/features/auth';
+import { sectionApi } from '@/entities/section';
+import { dictionaryApi } from '@/entities/dictionary';
 import styles from './ArcadeHubPage.module.scss';
 
 const { Title, Paragraph } = Typography;
@@ -279,7 +279,7 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
           <div className={styles.dbCountWrapper}>
             {isLoadingCount ? (
               <Tag color="purple" className={styles.dbCountTag} data-testid="db-count-tag">
-                <LoadingOutlined spin style={{ marginRight: 6 }} /> Проверка базы...
+                <Spin size="small" />
               </Tag>
             ) : totalInDb === 0 ? (
               <Tag color="volcano" className={styles.dbCountTag} data-testid="db-count-tag">
@@ -312,16 +312,6 @@ export const ArcadeHubPage: React.FC<ArcadeHubPageProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Loading banner on level/category switch */}
-      {isLoadingCount && (
-        <div className={styles.loadingBanner} data-testid="hub-loading-banner">
-          <Spin size="small" />
-          <span>
-            Синхронизация и проверка доступных слов для уровня <b>{selectedLevel === 'all' ? 'Все уровни' : selectedLevel}</b>...
-          </span>
-        </div>
-      )}
 
       {/* Empty words alert with one-click AI generation */}
       {!isLoadingCount && totalInDb === 0 && (

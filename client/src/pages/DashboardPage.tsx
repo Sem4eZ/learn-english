@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { StatsOverview } from '@/widgets/stats-panel/ui/StatsOverview';
-import { UserStats } from '@/entities/user/model/types';
+import { StatsOverview } from '@/widgets/stats-panel';
+import { UserStats } from '@/entities/user';
 import styles from './DashboardPage.module.scss';
 
 interface DashboardPageProps {

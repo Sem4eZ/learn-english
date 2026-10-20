@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { WordBuilder } from '../ui/WordBuilder';
-import { DictionaryItem } from '@/entities/dictionary/model/types';
+import { DictionaryItem } from '@/entities/dictionary';
 import { soundEffects } from '@/shared/lib/audio';
 
 const mockWords: DictionaryItem[] = [

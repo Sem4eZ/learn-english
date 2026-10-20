@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { VocabQuiz } from '@/widgets/vocab-quiz/ui/VocabQuiz';
-import { TrainerLayout } from '@/widgets/trainer-layout/ui/TrainerLayout';
-import { useTrainerWords } from '@/shared/hooks/useTrainerWords';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { VocabQuiz } from '@/widgets/vocab-quiz';
+import { TrainerLayout } from '@/widgets/trainer-layout';
+import { useTrainerWords } from '@/features/trainer-session';
+import { AuthUser } from '@/features/auth';
 
 export interface QuizTrainerPageProps {
   currentUser?: AuthUser | null;

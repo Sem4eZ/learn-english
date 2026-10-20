@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Button, Spin, Alert, Empty, Tag } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Question } from '@/entities/question/model/types';
-import { Section } from '@/entities/section/model/types';
-import { questionApi } from '@/entities/question/api/questionApi';
-import { QuestionCard } from '@/widgets/question-card/ui/QuestionCard';
-import { SmartPagination } from '@/widgets/infinite-stream/ui/SmartPagination';
-import { GenerateBatchModal } from '@/features/generate-ai-batch/ui/GenerateBatchModal';
+import { Question } from '@/entities/question';
+import { Section } from '@/entities/section';
+import { questionApi } from '@/entities/question';
+import { QuestionCard } from '@/widgets/question-card';
+import { SmartPagination } from '@/widgets/infinite-stream';
+import { GenerateBatchModal } from '@/features/generate-ai-batch';
 import styles from './PracticePage.module.scss';
 
 const { Title, Text } = Typography;

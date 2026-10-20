@@ -493,8 +493,22 @@
 }
 
 // -------------------------------------------------------------
-// Trainer Performance & Badges Row
+// Trainer Performance (6 Trainers)
 // -------------------------------------------------------------
+.trainerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 580px) {
+    grid-template-columns: 1fr;
+  }
+}
+
 .trainerList {
   display: flex;
   flex-direction: column;
@@ -506,6 +520,9 @@
   border-radius: $radius-md;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 
   :global(.theme-light) & {
     background: rgba(0, 0, 0, 0.02);
@@ -517,50 +534,106 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
 }
 
 .trainerName {
   font-weight: 600;
   font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .trainerAccuracyPill {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: $color-success;
 }
 
-// Badges
+// -------------------------------------------------------------
+// Badges Section (178 badges)
+// -------------------------------------------------------------
+.badgesCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.badgesSummaryPill {
+  font-size: 0.85rem;
+  padding: 4px 12px;
+  border-radius: $radius-full;
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  font-weight: 500;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+.badgesTabsWrapper {
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+
+.badgesTabs {
+  :global(.ant-tabs-nav) {
+    margin-bottom: 12px !important;
+  }
+}
+
+.badgesToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
 .badgesGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
 
-  @media (max-width: 500px) {
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 650px) {
     grid-template-columns: 1fr;
   }
 }
 
 .badgeCard {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: $radius-md;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: $transition-smooth;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 
   :global(.theme-light) & {
     background: rgba(0, 0, 0, 0.02);
     border: 1px solid rgba(0, 0, 0, 0.06);
   }
+
+  &:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .badgeUnlocked {
-  border-color: rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.06);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);
 
   :global(.theme-light) & {
     background: rgba(245, 158, 11, 0.08);
@@ -568,32 +641,95 @@
 }
 
 .badgeLocked {
-  opacity: 0.55;
-  filter: grayscale(0.8);
+  opacity: 0.7;
+}
+
+.badgeIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+
+  :global(.theme-light) & {
+    background: rgba(0, 0, 0, 0.04);
+  }
 }
 
 .badgeIcon {
-  font-size: 24px;
+  font-size: 22px;
   color: $color-warning;
 }
 
 .badgeText {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.badgeHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .badgeTitle {
-  font-weight: 600;
-  font-size: 0.88rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.badgeCategoryTag {
+  font-size: 0.7rem !important;
+  line-height: 1.2 !important;
+  padding: 1px 6px !important;
+  margin: 0 !important;
+  border-radius: $radius-full !important;
 }
 
 .badgeDesc {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.35;
+
+  :global(.theme-light) & {
+    color: rgba(0, 0, 0, 0.55);
+  }
+}
+
+.badgeStatusRow {
+  margin-top: 4px;
+}
+
+.badgeProgressBox {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.badgeProgressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.5);
 
   :global(.theme-light) & {
     color: rgba(0, 0, 0, 0.5);
   }
+}
+
+.badgesPaginationWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 // -------------------------------------------------------------

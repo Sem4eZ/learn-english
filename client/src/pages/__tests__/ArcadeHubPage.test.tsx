@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ArcadeHubPage } from '../ArcadeHubPage';
-import { sectionApi } from '@/entities/section/api/sectionApi';
-import { dictionaryApi } from '@/entities/dictionary/api/dictionaryApi';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { sectionApi } from '@/entities/section';
+import { dictionaryApi } from '@/entities/dictionary';
+import { AuthUser } from '@/features/auth';
 
 const mockUser: AuthUser = {
   id: 1,
@@ -292,7 +292,7 @@ describe('ArcadeHubPage UI Component Tests', () => {
     });
   });
 
-  it('16. should show loading indicator while dictionary count is in flight', () => {
+  it('16. should show spinner loader in db count tag without jumping banner while in flight', () => {
     // Return promise that never resolves immediately
     vi.spyOn(dictionaryApi, 'getDictionary').mockReturnValue(new Promise(() => {}));
 
@@ -302,9 +302,11 @@ describe('ArcadeHubPage UI Component Tests', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByTestId('db-count-tag')).toHaveTextContent(/Проверка базы/i);
-    expect(screen.getByTestId('hub-loading-banner')).toBeInTheDocument();
-    expect(screen.getByTestId('hub-loading-banner')).toHaveTextContent(/Синхронизация и проверка доступных слов/i);
+    const countTag = screen.getByTestId('db-count-tag');
+    expect(countTag).toBeInTheDocument();
+    // Verify spinner is rendered inside tag and banner is removed
+    expect(countTag.querySelector('.ant-spin')).not.toBeNull();
+    expect(screen.queryByTestId('hub-loading-banner')).toBeNull();
   });
 
   it('17. should block entrance to trainers when loading is in progress', () => {

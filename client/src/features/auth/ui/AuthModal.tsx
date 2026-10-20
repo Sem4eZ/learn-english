@@ -2,18 +2,12 @@ import React, { useState } from 'react';
 import { Modal, Tabs, Form, Input, Button, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useLoginMutation, useRegisterMutation, authSession } from '../api/authApi';
+import { AuthUser } from '../model/types';
 import styles from './AuthModal.module.scss';
 
 const { Title, Text } = Typography;
 
-export interface AuthUser {
-  id: string;
-  username: string;
-  xp: number;
-  streak: number;
-  level: number;
-  isGuest?: boolean;
-}
+export type { AuthUser };
 
 interface AuthModalProps {
   open: boolean;

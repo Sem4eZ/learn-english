@@ -14,8 +14,8 @@ import {
   RightOutlined
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { UserStats } from '@/entities/user/model/types';
-import { AuthUser } from '@/features/auth/ui/AuthModal';
+import { UserStats } from '@/entities/user';
+import { AuthUser } from '@/features/auth';
 import styles from './AppHeader.module.scss';
 
 const { Header } = Layout;
@@ -159,17 +159,41 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {/* Desktop Stats & User Profile (Hidden on mobile < 768px) */}
           <div className={styles.desktopControls}>
             <Space size="small">
-              <Tag color="warning" className={styles.statTag}>
+              <Tag
+                color="warning"
+                className={`${styles.statTag} ${styles.interactiveStat}`}
+                onClick={() => handleTabClick('stats')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+                aria-label={`Серия: ${streak} дней`}
+              >
                 <FireFilled className={styles.statIconAmber} />
                 {streak} дн.
               </Tag>
 
-              <Tag color="cyan" className={styles.statTag}>
+              <Tag
+                color="cyan"
+                className={`${styles.statTag} ${styles.interactiveStat}`}
+                onClick={() => handleTabClick('stats')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+                aria-label={`Опыт: ${xp} XP`}
+              >
                 <ThunderboltFilled className={styles.statIconCyan} />
                 {xp} XP
               </Tag>
 
-              <Tag color="purple" className={styles.statTag}>
+              <Tag
+                color="purple"
+                className={`${styles.statTag} ${styles.interactiveStat}`}
+                onClick={() => handleTabClick('stats')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+                aria-label={`Уровень: ${level}`}
+              >
                 Lvl {level}
               </Tag>
 
@@ -209,13 +233,42 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {/* Mobile Quick Controls (< 768px) */}
           <div className={styles.mobileControls}>
             {/* Quick XP Tag on mobile */}
-            <Tag color="cyan" className={styles.mobileStatPill}>
+            <Tag
+              color="cyan"
+              className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
+              onClick={() => handleTabClick('stats')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+              aria-label={`Опыт: ${xp} XP`}
+            >
               ⚡ {xp}
             </Tag>
 
             {/* Quick Streak Tag on mobile */}
-            <Tag color="warning" className={styles.mobileStatPill}>
+            <Tag
+              color="warning"
+              className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
+              onClick={() => handleTabClick('stats')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+              aria-label={`Серия: ${streak} дней`}
+            >
               🔥 {streak}
+            </Tag>
+
+            {/* Quick Level Tag on mobile */}
+            <Tag
+              color="purple"
+              className={`${styles.mobileStatPill} ${styles.interactiveStat}`}
+              onClick={() => handleTabClick('stats')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+              aria-label={`Уровень: ${level}`}
+            >
+              Ур. {level}
             </Tag>
 
             {/* Theme Toggle */}
@@ -267,7 +320,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <div className={styles.drawerUsername}>
                 {isGuest ? 'Гостевой режим' : currentUser?.username}
               </div>
-              <div className={styles.drawerUserStats}>
+              <div 
+                className={`${styles.drawerUserStats} ${styles.interactiveDrawerStats}`}
+                onClick={() => handleTabClick('stats')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleTabClick('stats'); } }}
+              >
                 Уровень {level} • {xp} XP • {streak} дн.🔥
               </div>
             </div>
