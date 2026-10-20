@@ -31,7 +31,7 @@ export const dictionaryApiSlice = baseApi.injectEndpoints({
       invalidatesTags: ['Dictionary'],
     }),
 
-    reviewWord: builder.mutation<any, { wordId: number; grade: number }>({
+    reviewWord: builder.mutation<any, { wordId: number; grade: number; trainerId?: string }>({
       query: (body) => ({
         url: '/dictionary/review',
         method: 'POST',
@@ -88,9 +88,9 @@ export const dictionaryApi = {
     throw new Error('Не удалось изменить статус избранного');
   },
 
-  async reviewWord(wordId: number, grade: number): Promise<any> {
+  async reviewWord(wordId: number, grade: number, trainerId?: string): Promise<any> {
     return await store.dispatch(
-      dictionaryApiSlice.endpoints.reviewWord.initiate({ wordId, grade })
+      dictionaryApiSlice.endpoints.reviewWord.initiate({ wordId, grade, trainerId })
     ).unwrap();
   },
 

@@ -34,6 +34,16 @@ async function recordAnswer(req, res) {
     `);
     await insertAnswer.run(userId, questionId, selectedIndex, isCorrect ? 1 : 0);
 
+    // Log to trainer_activity for granular trainer analytics and section attribution
+    try {
+      await db.prepare(`
+        INSERT INTO trainer_activity (user_id, trainer_id, question_id, section_id, is_correct)
+        VALUES (?, 'grammar', ?, ?, ?)
+      `).run(userId, questionId, question.section_id, isCorrect ? 1 : 0);
+    } catch (logErr) {
+      console.warn('[recordAnswer] Note during trainer logging:', logErr.message);
+    }
+
     // Update user stats & streak via centralized streakService
     const streakService = require('../services/streakService');
     const activityResult = await streakService.recordUserActivity(userId, xpReward);
@@ -80,9 +90,16 @@ async function getStats(req, res) {
           streakStatus: 'idle',
           streakDaysLeft: 0,
           weeklyActivity: [],
-          trainerBreakdown: { grammar: 0, cards: 0, sprint: 0, quiz: 0, builder: 0, audio: 0 },
+          trainerBreakdown: [
+            { id: 'grammar', name: 'Грамматический тренажер', icon: 'FormOutlined', attempted: 0, correct: 0, accuracy: 100 },
+            { id: 'quiz', name: 'Тест на выбор (Квиз)', icon: 'AimOutlined', attempted: 0, correct: 0, accuracy: 100 },
+            { id: 'sprint', name: 'Спринт слов', icon: 'ThunderboltOutlined', attempted: 0, correct: 0, accuracy: 100 },
+            { id: 'builder', name: 'Конструктор слов', icon: 'AppstoreOutlined', attempted: 0, correct: 0, accuracy: 100 },
+            { id: 'cards', name: 'Умные карточки (SRS)', icon: 'ReadOutlined', attempted: 0, correct: 0, accuracy: 100 },
+            { id: 'audio', name: 'Аудиовызов', icon: 'SoundOutlined', attempted: 0, correct: 0, accuracy: 100 },
+          ],
           sectionBreakdown: [],
-          badges: []
+          badges: require('../services/achievementsService').buildAchievementsList({})
         }
       });
     }
@@ -233,38 +250,182 @@ async function getStats(req, res) {
       });
     }
 
-    // 7. Trainer performance breakdown
+    // 7. Trainer performance breakdown across all 6 modes
+    const activityRows = (await db.prepare(`
+      SELECT 
+        trainer_id,
+        COUNT(*) as attempted,
+        SUM(is_correct) as correct
+      FROM trainer_activity
+      WHERE user_id = ?
+      GROUP BY trainer_id
+    `).all(userId)) || [];
+
+    const activityMap = {};
+    activityRows.forEach(r => {
+      activityMap[r.trainer_id] = {
+        attempted: Number(r.attempted) || 0,
+        correct: Number(r.correct) || 0
+      };
+    });
+
+    // Ensure grammar accounts for user_answers
+    const grammarActs = activityMap['grammar'] || { attempted: 0, correct: 0 };
+    const effectiveGrammarAttempted = Math.max(grammarTotal, grammarActs.attempted);
+    const effectiveGrammarCorrect = Math.max(grammarCorrect, grammarActs.correct);
+
+    // Sum of logged vocab trainer attempts
+    const loggedVocabAttempted = ['quiz', 'sprint', 'builder', 'cards', 'audio'].reduce(
+      (sum, id) => sum + (activityMap[id]?.attempted || 0), 0
+    );
+
+    // If historical vocabTotal > loggedVocabAttempted, attribute remainder to 'cards' so existing stats stay intact
+    const cardsUnlogged = Math.max(0, vocabTotal - loggedVocabAttempted);
+    const cardsActs = activityMap['cards'] || { attempted: 0, correct: 0 };
+    const effectiveCardsAttempted = cardsActs.attempted + cardsUnlogged;
+    const effectiveCardsCorrect = cardsActs.correct + Math.min(cardsUnlogged, Math.max(0, vocabCorrect - (activityMap['cards']?.correct || 0)));
+
+    const trainerMap = {
+      grammar: { attempted: effectiveGrammarAttempted, correct: effectiveGrammarCorrect },
+      quiz: activityMap['quiz'] || { attempted: 0, correct: 0 },
+      sprint: activityMap['sprint'] || { attempted: 0, correct: 0 },
+      builder: activityMap['builder'] || { attempted: 0, correct: 0 },
+      cards: { attempted: effectiveCardsAttempted, correct: effectiveCardsCorrect },
+      audio: activityMap['audio'] || { attempted: 0, correct: 0 },
+    };
+
     const trainerBreakdown = [
       {
-        id: 'vocab',
-        name: 'Словарные карточки & Квизы',
-        icon: 'ReadOutlined',
-        attempted: vocabTotal,
-        correct: vocabCorrect,
-        accuracy: vocabAccuracy,
+        id: 'grammar',
+        name: 'Грамматический тренажер',
+        icon: 'FormOutlined',
+        attempted: trainerMap.grammar.attempted,
+        correct: trainerMap.grammar.correct,
+        accuracy: trainerMap.grammar.attempted > 0 ? Math.round((trainerMap.grammar.correct / trainerMap.grammar.attempted) * 100) : 100,
       },
       {
-        id: 'grammar',
-        name: 'Грамматические тесты',
-        icon: 'FormOutlined',
-        attempted: grammarTotal,
-        correct: grammarCorrect,
-        accuracy: grammarAccuracy,
+        id: 'quiz',
+        name: 'Тест на выбор (Квиз)',
+        icon: 'AimOutlined',
+        attempted: trainerMap.quiz.attempted,
+        correct: trainerMap.quiz.correct,
+        accuracy: trainerMap.quiz.attempted > 0 ? Math.round((trainerMap.quiz.correct / trainerMap.quiz.attempted) * 100) : 100,
+      },
+      {
+        id: 'sprint',
+        name: 'Спринт слов',
+        icon: 'ThunderboltOutlined',
+        attempted: trainerMap.sprint.attempted,
+        correct: trainerMap.sprint.correct,
+        accuracy: trainerMap.sprint.attempted > 0 ? Math.round((trainerMap.sprint.correct / trainerMap.sprint.attempted) * 100) : 100,
+      },
+      {
+        id: 'builder',
+        name: 'Конструктор слов',
+        icon: 'AppstoreOutlined',
+        attempted: trainerMap.builder.attempted,
+        correct: trainerMap.builder.correct,
+        accuracy: trainerMap.builder.attempted > 0 ? Math.round((trainerMap.builder.correct / trainerMap.builder.attempted) * 100) : 100,
+      },
+      {
+        id: 'cards',
+        name: 'Умные карточки (SRS)',
+        icon: 'ReadOutlined',
+        attempted: trainerMap.cards.attempted,
+        correct: trainerMap.cards.correct,
+        accuracy: trainerMap.cards.attempted > 0 ? Math.round((trainerMap.cards.correct / trainerMap.cards.attempted) * 100) : 100,
+      },
+      {
+        id: 'audio',
+        name: 'Аудиовызов',
+        icon: 'SoundOutlined',
+        attempted: trainerMap.audio.attempted,
+        correct: trainerMap.audio.correct,
+        accuracy: trainerMap.audio.attempted > 0 ? Math.round((trainerMap.audio.correct / trainerMap.audio.attempted) * 100) : 100,
       }
     ];
 
-    // 8. Section breakdown
-    const sectionBreakdown = await db.prepare(`
+    // 8. Section breakdown: combines both grammar questions and trainer vocabulary attempts per topic
+    const grammarSectionRows = (await db.prepare(`
       SELECT 
         s.id,
         s.title,
-        COUNT(ua.id) as attempted,
-        SUM(ua.is_correct) as correct
+        COUNT(ua.id) as grammar_attempted,
+        COALESCE(SUM(ua.is_correct), 0) as grammar_correct
       FROM sections s
       LEFT JOIN questions q ON s.id = q.section_id
       LEFT JOIN user_answers ua ON q.id = ua.question_id AND ua.user_id = ?
       GROUP BY s.id
-    `).all(userId);
+    `).all(userId)) || [];
+
+    // Word reviews per section from srs_reviews joined with dictionary
+    const vocabSectionRows = (await db.prepare(`
+      SELECT 
+        d.section_id,
+        COUNT(sr.id) as vocab_attempted,
+        COALESCE(SUM(CASE WHEN sr.grade >= 3 THEN 1 ELSE 0 END), 0) as vocab_correct
+      FROM dictionary d
+      INNER JOIN srs_reviews sr ON d.id = sr.word_id AND sr.user_id = ?
+      WHERE d.section_id IS NOT NULL AND d.section_id != ''
+      GROUP BY d.section_id
+    `).all(userId)) || [];
+
+    // Also include trainer_activity where section_id is specified
+    const activitySectionRows = (await db.prepare(`
+      SELECT 
+        section_id,
+        COUNT(*) as act_attempted,
+        COALESCE(SUM(is_correct), 0) as act_correct
+      FROM trainer_activity
+      WHERE user_id = ? AND section_id IS NOT NULL AND section_id != ''
+      GROUP BY section_id
+    `).all(userId)) || [];
+
+    const vocabSectionMap = {};
+    vocabSectionRows.forEach(r => {
+      vocabSectionMap[r.section_id] = {
+        vocab_attempted: Number(r.vocab_attempted) || 0,
+        vocab_correct: Number(r.vocab_correct) || 0
+      };
+    });
+
+    activitySectionRows.forEach(r => {
+      const existing = vocabSectionMap[r.section_id] || { vocab_attempted: 0, vocab_correct: 0 };
+      // Use max to gracefully support both srs_reviews and new trainer_activity logs without double-counting
+      vocabSectionMap[r.section_id] = {
+        vocab_attempted: Math.max(existing.vocab_attempted, Number(r.act_attempted) || 0),
+        vocab_correct: Math.max(existing.vocab_correct, Number(r.act_correct) || 0)
+      };
+    });
+
+    const sectionMapForAchievements = {};
+
+    const sectionBreakdown = grammarSectionRows.map(row => {
+      const v = vocabSectionMap[row.id] || { vocab_attempted: 0, vocab_correct: 0 };
+      const gAttempted = Number(row.grammar_attempted) || 0;
+      const gCorrect = Number(row.grammar_correct) || 0;
+      const vAttempted = v.vocab_attempted;
+      const vCorrect = v.vocab_correct;
+
+      const totalAttempted = gAttempted + vAttempted;
+      const totalCorrect = gCorrect + vCorrect;
+      const accuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
+
+      sectionMapForAchievements[row.id] = {
+        attempted: totalAttempted,
+        correct: totalCorrect
+      };
+
+      return {
+        id: row.id,
+        title: row.title,
+        attempted: totalAttempted,
+        correct: totalCorrect,
+        accuracy,
+        grammarAttempted: gAttempted,
+        vocabAttempted: vAttempted
+      };
+    });
 
     // Level & XP calculations
     const xp = user.xp || 0;
@@ -291,16 +452,20 @@ async function getStats(req, res) {
       user.streak = userStreak;
     }
 
-    // Badges / Milestones earned
-    const badges = [
-      { id: 'first_step', title: 'Первый шаг', desc: 'Первая тренировка пройдена', icon: 'RocketOutlined', unlocked: totalInteractions > 0 },
-      { id: 'words_50', title: 'Книжный червь', desc: 'Выучено более 50 слов', icon: 'BookOutlined', unlocked: totalWordsLearned >= 50 },
-      { id: 'words_100', title: 'Словарный запас', desc: 'Выучено более 100 слов', icon: 'AppstoreOutlined', unlocked: totalWordsLearned >= 100 },
-      { id: 'sniper', title: 'Снайпер точности', desc: 'Точность ответов выше 80%', icon: 'AimOutlined', unlocked: overallAccuracy >= 80 && totalInteractions >= 10 },
-      { id: 'streak_3', title: 'Огненная серия', desc: 'Серия занятий от 2 дней', icon: 'FireOutlined', unlocked: userStreak >= 2 },
-      { id: 'level_5', title: 'Знаток языка', desc: 'Достигнут 5-й уровень', icon: 'TrophyOutlined', unlocked: level >= 5 },
-      { id: 'memory_vault', title: 'Крепкая память', desc: 'Более 20 слов в повторении', icon: 'CrownOutlined', unlocked: (masteredWords + reviewWords) >= 20 }
-    ];
+    // Comprehensive 178 Achievements list
+    const { buildAchievementsList } = require('../services/achievementsService');
+    const badges = buildAchievementsList({
+      wordsLearned: totalWordsLearned,
+      streak: userStreak,
+      level,
+      xp,
+      totalAnswers: totalInteractions,
+      overallAccuracy,
+      masteredWords,
+      reviewWords,
+      trainerStats: trainerMap,
+      sectionStats: sectionMapForAchievements
+    });
 
     res.json({
       success: true,

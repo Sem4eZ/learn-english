@@ -260,7 +260,7 @@ async function generateDictionaryWords(req, res) {
 
 async function recordSrsReview(req, res) {
   try {
-    const { wordId, grade } = req.body || {};
+    const { wordId, grade, trainerId } = req.body || {};
 
     if (!wordId) {
       return res.status(400).json({ success: false, error: 'wordId is required' });
@@ -325,6 +325,20 @@ async function recordSrsReview(req, res) {
         due_date = excluded.due_date,
         reviewed_at = excluded.reviewed_at
     `).run(userId, wordId, gradeNum, reps, nextIntervalDays, ef, formattedDueDate);
+
+    // Log individual trainer activity for granular analytics & section aggregation
+    try {
+      const wordRow = await db.prepare('SELECT section_id FROM dictionary WHERE id = ?').get(wordId);
+      const wordSection = wordRow ? wordRow.section_id : null;
+      const isCorrect = gradeNum >= 3 ? 1 : 0;
+      const finalTrainerId = trainerId || 'cards';
+      await db.prepare(`
+        INSERT INTO trainer_activity (user_id, trainer_id, word_id, section_id, is_correct)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(userId, finalTrainerId, wordId, wordSection, isCorrect);
+    } catch (logErr) {
+      console.warn('[recordSrsReview] Note during trainer logging:', logErr.message);
+    }
 
     // Award XP and record activity & streak immediately
     const xpReward = gradeNum === 4 ? 25 : gradeNum === 3 ? 15 : gradeNum === 2 ? 10 : 5;

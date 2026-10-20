@@ -158,11 +158,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         soundEffects.playCorrect();
         setIsCorrect(true);
         setScore(prev => prev + 1);
-        SRSEngine.syncReviewWithServer(currentWord.id, 3);
+        SRSEngine.syncReviewWithServer(currentWord.id, 3, 'builder');
       } else {
         soundEffects.playWrong();
         setIsCorrect(false);
-        SRSEngine.syncReviewWithServer(currentWord.id, 1);
+        SRSEngine.syncReviewWithServer(currentWord.id, 1, 'builder');
       }
     }
   };

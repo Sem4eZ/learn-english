@@ -110,7 +110,7 @@ describe('FlashcardDeck UI Component Tests', () => {
     expect(goodBtn).not.toBeNull();
     fireEvent.click(goodBtn!);
 
-    expect(syncSpy).toHaveBeenCalledWith(1, 3);
+    expect(syncSpy).toHaveBeenCalledWith(1, 3, 'cards');
   });
 
   it('9. should handle shortcut keys 1-4 to rate card when flipped', () => {
@@ -119,7 +119,7 @@ describe('FlashcardDeck UI Component Tests', () => {
     fireEvent.keyDown(window, { code: 'Space' });
 
     fireEvent.keyDown(window, { key: '4' });
-    expect(syncSpy).toHaveBeenCalledWith(1, 4);
+    expect(syncSpy).toHaveBeenCalledWith(1, 4, 'cards');
   });
 
   it('10. should re-insert card at end of round when rated Снова (1)', () => {

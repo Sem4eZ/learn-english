@@ -158,7 +158,7 @@ export const SpeedSprint: React.FC<SpeedSprintProps> = ({
 
     // Sync SRS review in background
     if (currentPair?.item) {
-      SRSEngine.syncReviewWithServer(currentPair.item.id, isCorrect ? 3 : 1);
+      SRSEngine.syncReviewWithServer(currentPair.item.id, isCorrect ? 3 : 1, 'sprint');
     }
 
     // Quick reset feedback and next card

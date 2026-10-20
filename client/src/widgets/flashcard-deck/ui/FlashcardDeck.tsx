@@ -95,7 +95,7 @@ export const FlashcardDeck: React.FC<FlashcardDeckProps> = ({
     const xpReward = option ? option.xpReward : 10;
 
     // Trigger SuperMemo-2 server sync in background (immediately awards XP & emits xpEventBus)
-    SRSEngine.syncReviewWithServer(currentItem.id, grade);
+    SRSEngine.syncReviewWithServer(currentItem.id, grade, 'cards');
 
     // Update real-time XP counters
     setSessionXpEarned(prev => prev + xpReward);

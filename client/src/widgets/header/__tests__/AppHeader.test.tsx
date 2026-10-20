@@ -168,4 +168,23 @@ describe('AppHeader UI Component Tests', () => {
 
     expect(onTabChange).toHaveBeenCalledWith('arcade');
   });
+
+  it('16. should navigate to stats dashboard when streak, xp, or level tags are clicked', () => {
+    const onTabChange = vi.fn();
+    renderHeader({ onTabChange });
+
+    const streakTag = screen.getByText(/5 дн\./i);
+    fireEvent.click(streakTag);
+    expect(onTabChange).toHaveBeenCalledWith('stats');
+
+    onTabChange.mockClear();
+    const xpTag = screen.getByText(/450 XP/i);
+    fireEvent.click(xpTag);
+    expect(onTabChange).toHaveBeenCalledWith('stats');
+
+    onTabChange.mockClear();
+    const levelTag = screen.getByText(/Lvl 3/i);
+    fireEvent.click(levelTag);
+    expect(onTabChange).toHaveBeenCalledWith('stats');
+  });
 });

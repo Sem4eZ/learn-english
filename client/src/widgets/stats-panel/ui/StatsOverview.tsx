@@ -1,5 +1,5 @@
-import React from 'react';
-import { Card, Progress, Typography, Table, Tag, Button, Tooltip } from 'antd';
+import React, { useState, useMemo } from 'react';
+import { Card, Progress, Typography, Table, Tag, Button, Tooltip, Tabs, Segmented, Input, Pagination } from 'antd';
 import {
   TrophyFilled,
   FireFilled,
@@ -18,6 +18,8 @@ import {
   RiseOutlined,
   CheckOutlined,
   LockOutlined,
+  SoundOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { UserStats } from '@/entities/user/model/types';
 import styles from './StatsOverview.module.scss';
@@ -30,6 +32,12 @@ interface StatsOverviewProps {
 }
 
 export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshStats }) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [badgeSearch, setBadgeSearch] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 18;
+
   if (!stats) return null;
 
   const level = stats.level || 1;
@@ -66,6 +74,29 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
   const weeklyActivity = Array.isArray(stats.weeklyActivity) ? stats.weeklyActivity : [];
   const maxWeeklyCount = Math.max(...weeklyActivity.map(d => d.count || 0), 10);
 
+  // Badges stats
+  const unlockedBadgesCount = useMemo(() => badgeItems.filter(b => b.unlocked).length, [badgeItems]);
+
+  // Trainer icon mapper
+  const renderTrainerIcon = (id: string) => {
+    switch (id) {
+      case 'grammar':
+        return <FormOutlined style={{ color: '#6366f1', fontSize: 18 }} />;
+      case 'quiz':
+        return <AimOutlined style={{ color: '#06b6d4', fontSize: 18 }} />;
+      case 'sprint':
+        return <ThunderboltFilled style={{ color: '#f59e0b', fontSize: 18 }} />;
+      case 'builder':
+        return <AppstoreOutlined style={{ color: '#10b981', fontSize: 18 }} />;
+      case 'cards':
+        return <ReadOutlined style={{ color: '#a855f7', fontSize: 18 }} />;
+      case 'audio':
+        return <SoundOutlined style={{ color: '#ec4899', fontSize: 18 }} />;
+      default:
+        return <TrophyOutlined style={{ fontSize: 18 }} />;
+    }
+  };
+
   // Badges icon mapper
   const renderBadgeIcon = (iconName: string) => {
     switch (iconName) {
@@ -79,15 +110,65 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
         return <AimOutlined className={styles.badgeIcon} />;
       case 'FireOutlined':
         return <FireOutlined className={styles.badgeIcon} />;
+      case 'ThunderboltOutlined':
+        return <ThunderboltFilled className={styles.badgeIcon} />;
       case 'TrophyOutlined':
         return <TrophyOutlined className={styles.badgeIcon} />;
       case 'CrownOutlined':
         return <CrownOutlined className={styles.badgeIcon} />;
+      case 'SoundOutlined':
+        return <SoundOutlined className={styles.badgeIcon} />;
+      case 'FormOutlined':
+        return <FormOutlined className={styles.badgeIcon} />;
       default:
         return <TrophyOutlined className={styles.badgeIcon} />;
     }
   };
 
+  // Category Tabs config
+  const categoryTabs = useMemo(() => [
+    { key: 'all', label: `Все (${badgeItems.length})` },
+    { key: 'vocab', label: `Слова (${badgeItems.filter(b => b.category === 'vocab').length})` },
+    { key: 'streak', label: `Серии (${badgeItems.filter(b => b.category === 'streak').length})` },
+    { key: 'levels', label: `Уровни (${badgeItems.filter(b => b.category === 'levels').length})` },
+    { key: 'xp', label: `Опыт (${badgeItems.filter(b => b.category === 'xp').length})` },
+    { key: 'trainers', label: `Тренажеры (${badgeItems.filter(b => b.category === 'trainers').length})` },
+    { key: 'themes', label: `Темы (${badgeItems.filter(b => b.category === 'themes').length})` },
+    { key: 'memory', label: `Память (${badgeItems.filter(b => b.category === 'memory').length})` },
+    { key: 'accuracy', label: `Точность (${badgeItems.filter(b => b.category === 'accuracy').length})` },
+  ], [badgeItems]);
+
+  // Badges filtered by category first
+  const categoryBadges = useMemo(() => {
+    if (selectedCategory === 'all') return badgeItems;
+    return badgeItems.filter(b => b.category === selectedCategory);
+  }, [badgeItems, selectedCategory]);
+
+  const categoryUnlockedCount = useMemo(() => categoryBadges.filter(b => b.unlocked).length, [categoryBadges]);
+  const categoryLockedCount = categoryBadges.length - categoryUnlockedCount;
+
+  // Filtered by status and search
+  const filteredBadges = useMemo(() => {
+    return categoryBadges.filter(b => {
+      if (statusFilter === 'unlocked' && !b.unlocked) return false;
+      if (statusFilter === 'locked' && b.unlocked) return false;
+      if (badgeSearch.trim()) {
+        const query = badgeSearch.toLowerCase().trim();
+        const matchesTitle = b.title.toLowerCase().includes(query);
+        const matchesDesc = b.desc.toLowerCase().includes(query);
+        const matchesCat = b.categoryName?.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesDesc && !matchesCat) return false;
+      }
+      return true;
+    });
+  }, [categoryBadges, statusFilter, badgeSearch]);
+
+  const paginatedBadges = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredBadges.slice(start, start + pageSize);
+  }, [filteredBadges, currentPage, pageSize]);
+
+  // Curriculum breakdown columns (combined grammar + trainers)
   const columns = [
     {
       title: 'Курс / Раздел',
@@ -96,7 +177,25 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
       render: (text: string) => <Text strong>{text}</Text>,
     },
     {
-      title: 'Попыток',
+      title: 'Грамматика',
+      key: 'grammarAttempted',
+      render: (_: any, record: any) => (
+        <Tooltip title="Попыток в грамматических вопросах">
+          <Tag color="purple">{record.grammarAttempted || 0}</Tag>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Тренажеры слов',
+      key: 'vocabAttempted',
+      render: (_: any, record: any) => (
+        <Tooltip title="Попыток в интерактивных тренажерах">
+          <Tag color="cyan">{record.vocabAttempted || 0}</Tag>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Всего попыток',
       dataIndex: 'attempted',
       key: 'attempted',
       render: (val: number) => <Tag color="blue">{val || 0}</Tag>,
@@ -105,20 +204,30 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
       title: 'Правильно',
       dataIndex: 'correct',
       key: 'correct',
-      render: (val: number) => <Tag color="green">{val || 0}</Tag>,
+      render: (val: number, record: any) => (
+        <span style={{ fontWeight: 600 }}>
+          <Tag color="green">{val || 0}</Tag>
+          <Text type="secondary" style={{ fontSize: '0.8rem' }}>
+            из {record.attempted || 0}
+          </Text>
+        </span>
+      ),
     },
     {
-      title: 'Точность',
+      title: 'Точность раздела',
       key: 'acc',
       render: (_: any, record: any) => {
         const acc = record.attempted > 0 ? Math.round((record.correct / record.attempted) * 100) : 0;
         return (
-          <Progress
-            percent={acc}
-            size="small"
-            className={styles.progressMini}
-            strokeColor={acc >= 80 ? '#10b981' : acc >= 50 ? '#f59e0b' : '#ef4444'}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Progress
+              percent={acc}
+              size="small"
+              className={styles.progressMini}
+              strokeColor={acc >= 80 ? '#10b981' : acc >= 50 ? '#f59e0b' : '#ef4444'}
+            />
+            <span style={{ minWidth: 38, fontSize: '0.82rem', fontWeight: 600 }}>{acc}%</span>
+          </div>
         );
       },
     },
@@ -451,87 +560,46 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
         </div>
       </Card>
 
-      {/* 6. Trainer Accuracy Breakdown & Badges */}
-      <div className={styles.twoColGrid}>
-        {/* Trainer Accuracy */}
-        <Card
-          bordered
-          className={styles.sectionCard}
-          title={
-            <div className={styles.cardTitleHeader}>
-              <CheckCircleOutlined />
-              <span>Точность по режимам тренировок</span>
-            </div>
-          }
-        >
-          <div className={styles.trainerList}>
-            {trainerItems.map((t) => (
-              <div key={t.id} className={styles.trainerItem}>
-                <div className={styles.trainerTop}>
-                  <span className={styles.trainerName}>
-                    {t.id === 'vocab' ? <ReadOutlined /> : <FormOutlined />} {t.name}
-                  </span>
-                  <span className={styles.trainerAccuracyPill}>{t.accuracy}%</span>
-                </div>
-                <Progress
-                  percent={t.accuracy}
-                  strokeColor={t.accuracy >= 80 ? '#10b981' : t.accuracy >= 60 ? '#f59e0b' : '#ef4444'}
-                />
-                <span className={styles.heroFooterText}>
-                  {t.correct} верных из {t.attempted} попыток
+      {/* 6. Trainer Accuracy Breakdown across all 6 modes */}
+      <Card
+        bordered
+        className={styles.sectionCard}
+        title={
+          <div className={styles.cardTitleHeader}>
+            <CheckCircleOutlined />
+            <span>Точность по режимам тренировок (все 6 тренажеров)</span>
+          </div>
+        }
+      >
+        <div className={styles.trainerGrid}>
+          {trainerItems.map((t) => (
+            <div key={t.id} className={styles.trainerItem}>
+              <div className={styles.trainerTop}>
+                <span className={styles.trainerName}>
+                  {renderTrainerIcon(t.id)} {t.name}
                 </span>
+                <span className={styles.trainerAccuracyPill}>{t.accuracy}%</span>
               </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Badges / Milestones */}
-        <Card
-          bordered
-          className={styles.sectionCard}
-          title={
-            <div className={styles.cardTitleHeader}>
-              <TrophyOutlined />
-              <span>Достижения и вехи</span>
+              <Progress
+                percent={t.accuracy}
+                strokeColor={t.accuracy >= 80 ? '#10b981' : t.accuracy >= 60 ? '#f59e0b' : '#ef4444'}
+              />
+              <span className={styles.heroFooterText}>
+                {t.correct} верных из {t.attempted} попыток
+              </span>
             </div>
-          }
-        >
-          <div className={styles.badgesGrid}>
-            {badgeItems.map((b) => (
-              <div
-                key={b.id}
-                className={`${styles.badgeCard} ${b.unlocked ? styles.badgeUnlocked : styles.badgeLocked}`}
-              >
-                <div>{renderBadgeIcon(b.icon)}</div>
-                <div className={styles.badgeText}>
-                  <span className={styles.badgeTitle}>{b.title}</span>
-                  <span className={styles.badgeDesc}>{b.desc}</span>
-                </div>
-                <div>
-                  {b.unlocked ? (
-                    <Tag color="success">
-                      <CheckOutlined />
-                    </Tag>
-                  ) : (
-                    <Tag color="default">
-                      <LockOutlined />
-                    </Tag>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
+          ))}
+        </div>
+      </Card>
 
-      {/* 7. Curriculum Breakdown by Section */}
+      {/* 7. Curriculum Breakdown by Section (Grammar + Trainers) */}
       <Card
         bordered
         className={styles.tableCard}
         title={
           <div className={styles.cardTitleHeader}>
             <AppstoreOutlined />
-            <span>Успеваемость по разделам платформы</span>
+            <span>Успеваемость по разделам платформы (Грамматика + Тренажеры)</span>
           </div>
         }
       >
@@ -540,8 +608,121 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ stats, onRefreshSt
           columns={columns}
           rowKey="id"
           pagination={false}
-          scroll={{ x: 600 }}
+          scroll={{ x: 650 }}
         />
+      </Card>
+
+      {/* 8. Achievements and Milestones (150-200 achievements with categories & filters) */}
+      <Card
+        bordered
+        className={styles.sectionCard}
+        title={
+          <div className={styles.badgesCardHeader}>
+            <div className={styles.cardTitleHeader}>
+              <TrophyOutlined />
+              <span>Достижения и вехи ({badgeItems.length})</span>
+            </div>
+            <div className={styles.badgesSummaryPill}>
+              Разблокировано: <strong>{unlockedBadgesCount}</strong> из {badgeItems.length} ({badgeItems.length > 0 ? Math.round((unlockedBadgesCount / badgeItems.length) * 100) : 0}%)
+            </div>
+          </div>
+        }
+      >
+        {/* Category Tabs */}
+        <div className={styles.badgesTabsWrapper}>
+          <Tabs
+            activeKey={selectedCategory}
+            onChange={(key) => {
+              setSelectedCategory(key);
+              setCurrentPage(1);
+            }}
+            items={categoryTabs}
+            className={styles.badgesTabs}
+          />
+        </div>
+
+        {/* Filters and Search toolbar */}
+        <div className={styles.badgesToolbar}>
+          <Segmented
+            value={statusFilter}
+            onChange={(val) => {
+              setStatusFilter(val as string);
+              setCurrentPage(1);
+            }}
+            options={[
+              { label: `Все (${categoryBadges.length})`, value: 'all' },
+              { label: `Открыто (${categoryUnlockedCount})`, value: 'unlocked' },
+              { label: `В процессе (${categoryLockedCount})`, value: 'locked' }
+            ]}
+          />
+          <Input
+            placeholder="Поиск достижения..."
+            prefix={<SearchOutlined />}
+            allowClear
+            value={badgeSearch}
+            onChange={(e) => {
+              setBadgeSearch(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{ maxWidth: 260 }}
+          />
+        </div>
+
+        {/* Badges Grid */}
+        <div className={styles.badgesGrid}>
+          {paginatedBadges.map((b) => (
+            <div
+              key={b.id}
+              className={`${styles.badgeCard} ${b.unlocked ? styles.badgeUnlocked : styles.badgeLocked}`}
+            >
+              <div className={styles.badgeIconWrapper}>
+                {renderBadgeIcon(b.icon)}
+              </div>
+              <div className={styles.badgeText}>
+                <div className={styles.badgeHeaderRow}>
+                  <span className={styles.badgeTitle}>{b.title}</span>
+                  {b.categoryName && (
+                    <Tag className={styles.badgeCategoryTag}>{b.categoryName}</Tag>
+                  )}
+                </div>
+                <span className={styles.badgeDesc}>{b.desc}</span>
+                {b.unlocked ? (
+                  <div className={styles.badgeStatusRow}>
+                    <Tag color="success" icon={<CheckOutlined />}>
+                      Разблокировано
+                    </Tag>
+                  </div>
+                ) : (
+                  <div className={styles.badgeProgressBox}>
+                    <div className={styles.badgeProgressLabel}>
+                      <span>Прогресс: {b.current ?? 0} / {b.target ?? 1}</span>
+                      <span>{b.percent ?? 0}%</span>
+                    </div>
+                    <Progress
+                      percent={b.percent ?? 0}
+                      size="small"
+                      showInfo={false}
+                      strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {filteredBadges.length > pageSize && (
+          <div className={styles.badgesPaginationWrapper}>
+            <Pagination
+              current={currentPage}
+              pageSize={pageSize}
+              total={filteredBadges.length}
+              onChange={(page) => setCurrentPage(page)}
+              showSizeChanger={false}
+            />
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -22,6 +22,9 @@ export interface UserStats {
     title: string;
     attempted: number;
     correct: number;
+    accuracy?: number;
+    grammarAttempted?: number;
+    vocabAttempted?: number;
   }[];
   rankTitle?: string;
   // Rich dashboard analytics
@@ -52,9 +55,14 @@ export interface UserStats {
   }[];
   badges?: {
     id: string;
+    category?: string;
+    categoryName?: string;
     title: string;
     desc: string;
     icon: string;
+    current?: number;
+    target?: number;
+    percent?: number;
     unlocked: boolean;
   }[];
 }

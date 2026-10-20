@@ -123,9 +123,9 @@ export class SRSEngine {
     return updated;
   }
 
-  static async syncReviewWithServer(wordId: number | string, grade: SrsGrade): Promise<any> {
+  static async syncReviewWithServer(wordId: number | string, grade: SrsGrade, trainerId: string = 'cards'): Promise<any> {
     try {
-      const res: any = await dictionaryApi.reviewWord(Number(wordId), grade);
+      const res: any = await dictionaryApi.reviewWord(Number(wordId), grade, trainerId);
       if (res?.success && res?.data) {
         xpEventBus.emit({
           xpReward: res.data.xpEarned || 10,
