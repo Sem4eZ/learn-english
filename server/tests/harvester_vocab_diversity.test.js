@@ -32,7 +32,8 @@ describe('Harvester Models, Resilient JSON Parsing & Vocab Diversity Test Suite'
     assert.ok(!models.includes('gemini-2.0-flash-lite'), 'gemini-2.0-flash-lite returned 404 and must NOT be in models');
 
     // Verified 2026 models MUST be present
-    assert.ok(models.includes('gemini-flash-lite-latest'), 'gemini-flash-lite-latest must be the primary fast model');
+    assert.ok(models.includes('gemini-3.1-flash-lite'), 'gemini-3.1-flash-lite must be present with fresh 500 RPD quota');
+    assert.ok(models.includes('gemini-flash-lite-latest'), 'gemini-flash-lite-latest must be present');
     assert.ok(models.includes('gemini-3.5-flash-lite'), 'gemini-3.5-flash-lite must be present as recommended by Google');
   });
 
@@ -167,6 +168,39 @@ forming a pattern"
       await harvester.triggerHarvest();
       assert.strictEqual(harvested.length, 2);
       assert.strictEqual(harvested[1].section, 'conversational'); // level rotates first
+    } finally {
+      geminiService.generateVocabulary = origGenVocab;
+    }
+  });
+  // --------------------------------------------------------------------------
+  // 6. Daily Quota Budget Guard
+  // --------------------------------------------------------------------------
+  it('6. Daily Quota Budget: Enforces maximum daily harvest requests and protects 500 RPD free-tier quota', async () => {
+    const origGenVocab = geminiService.generateVocabulary;
+    geminiService.generateVocabulary = async () => [{ id: 1, word: 'budget' }];
+
+    try {
+      const budgetHarvester = new BackgroundHarvester({
+        maxDailyRequests: 3,
+        intervalMs: 1000
+      });
+
+      assert.strictEqual(budgetHarvester.maxDailyRequests, 3);
+      assert.strictEqual(budgetHarvester.dailyRequestsCount, 0);
+      assert.strictEqual(budgetHarvester._checkDailyBudget(), true);
+
+      // Execute 3 harvests
+      await budgetHarvester.triggerHarvest();
+      await budgetHarvester.triggerHarvest();
+      await budgetHarvester.triggerHarvest();
+
+      assert.strictEqual(budgetHarvester.dailyRequestsCount, 3);
+      assert.strictEqual(budgetHarvester._checkDailyBudget(), false);
+
+      const stats = budgetHarvester.getStats();
+      assert.strictEqual(stats.dailyRequestsCount, 3);
+      assert.strictEqual(stats.maxDailyRequests, 3);
+      assert.strictEqual(stats.dailyQuotaRemaining, 0);
     } finally {
       geminiService.generateVocabulary = origGenVocab;
     }

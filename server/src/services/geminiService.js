@@ -14,15 +14,19 @@ const db = require('../db/schema');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 const DEFAULT_MODELS = [
-  'gemini-flash-lite-latest',
+  'gemini-3.1-flash-lite',
   'gemini-3.5-flash-lite',
-  'gemini-flash-latest',
-  'gemini-2.5-flash'
+  'gemini-flash-lite-latest'
 ];
 
-const CANDIDATE_MODELS = process.env.GEMINI_MODELS
-  ? process.env.GEMINI_MODELS.split(',').map(m => m.trim()).filter(Boolean)
-  : DEFAULT_MODELS;
+function getCandidateModels() {
+  if (process.env.GEMINI_MODELS) {
+    return process.env.GEMINI_MODELS.split(',').map(m => m.trim()).filter(Boolean);
+  }
+  return DEFAULT_MODELS;
+}
+
+const CANDIDATE_MODELS = DEFAULT_MODELS;
 
 /**
  * Resilient JSON Array Parser & Recovery Engine
@@ -254,7 +258,7 @@ Pedagogical Quality Guidelines:
     let lastError = null;
 
     // Try candidate models in order: lite -> flash -> fallbacks
-    for (const model of CANDIDATE_MODELS) {
+    for (const model of getCandidateModels()) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
       console.log(`[Model Dispatch] Requesting generation from ${model}...`);
 
@@ -464,7 +468,7 @@ ${existingWordsList ? `2. The following words are ALREADY in our database — DO
 
     let lastError = null;
 
-    for (const model of CANDIDATE_MODELS) {
+    for (const model of getCandidateModels()) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
       console.log(`[Vocab Dispatch] Requesting vocabulary generation from ${model} (level: ${level}, topic: ${sectionId})...`);
 
@@ -603,7 +607,7 @@ Requirements:
 
     let lastError = null;
 
-    for (const model of CANDIDATE_MODELS) {
+    for (const model of getCandidateModels()) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
       console.log(`[Word Lookup Dispatch] Looking up "${cleanTerm}" with ${model}...`);
 
@@ -682,4 +686,5 @@ const serviceInstance = new GeminiService();
 serviceInstance.cleanAndParseJsonArray = cleanAndParseJsonArray;
 serviceInstance.VOCABULARY_MICRO_THEMES = VOCABULARY_MICRO_THEMES;
 serviceInstance.DEFAULT_MODELS = DEFAULT_MODELS;
+serviceInstance.getCandidateModels = getCandidateModels;
 module.exports = serviceInstance;

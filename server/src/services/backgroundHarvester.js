@@ -41,7 +41,11 @@ const GRAMMAR_TOPICS = [
 
 class BackgroundHarvester {
   constructor(options = {}) {
-    this.intervalMs = options.intervalMs || parseInt(process.env.BACKGROUND_HARVESTER_INTERVAL_MS, 10) || 60000;
+    // 300,000ms = 5 minutes cadence (~288 requests/day), staying strictly within 500 RPD free-tier limit
+    this.intervalMs = options.intervalMs || parseInt(process.env.BACKGROUND_HARVESTER_INTERVAL_MS, 10) || 300000;
+    this.maxDailyRequests = options.maxDailyRequests || parseInt(process.env.BACKGROUND_HARVESTER_MAX_DAILY_REQUESTS, 10) || 300;
+    this.dailyRequestsDate = new Date().toISOString().slice(0, 10);
+    this.dailyRequestsCount = 0;
     this.vocabBatchSize = options.vocabBatchSize || 50;
     this.grammarBatchSize = options.grammarBatchSize || 10;
     this.vocabRatio = options.vocabRatio || 3; // 3 vocab runs per 1 grammar run
@@ -106,11 +110,29 @@ class BackgroundHarvester {
     }
   }
 
+  _checkDailyBudget() {
+    const todayUtc = new Date().toISOString().slice(0, 10);
+    if (this.dailyRequestsDate !== todayUtc) {
+      this.dailyRequestsDate = todayUtc;
+      this.dailyRequestsCount = 0;
+    }
+    return this.dailyRequestsCount < this.maxDailyRequests;
+  }
+
   async _tick() {
     if (!this.isRunning) return;
     if (this.isHarvesting) {
       console.warn('[BackgroundHarvester] Harvest already in-flight; skipping tick.');
       this._scheduleNext(this.intervalMs);
+      return;
+    }
+
+    if (!this._checkDailyBudget()) {
+      const now = new Date();
+      const nextMidnightUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 5));
+      const delayUntilMidnight = Math.max(60000, nextMidnightUtc.getTime() - now.getTime());
+      console.log(`[BackgroundHarvester] 🛑 Daily harvest quota reached (${this.dailyRequestsCount}/${this.maxDailyRequests} req). Pausing runs until 00:00 UTC (~${Math.round(delayUntilMidnight / 60000)} min) to preserve Gemini free-tier quota for active users.`);
+      this._scheduleNext(delayUntilMidnight);
       return;
     }
 
@@ -121,10 +143,17 @@ class BackgroundHarvester {
       this._scheduleNext(this.intervalMs);
     } catch (err) {
       this.consecutiveErrors++;
-      // Exponential backoff on error (e.g. rate limit 429) up to 5 minutes
-      const backoffMultiplier = Math.min(Math.pow(2, Math.min(this.consecutiveErrors, 3)), 5);
-      const backoffDelay = this.intervalMs * backoffMultiplier;
-      console.error(`[BackgroundHarvester] Tick error (${this.consecutiveErrors} consecutive). Backing off for ${backoffDelay}ms:`, err.message);
+      const is429 = /429|RESOURCE_EXHAUSTED|Quota exceeded/i.test(err.message || '');
+      let backoffDelay;
+      if (is429) {
+        const minutes = Math.min(60, 15 * Math.pow(2, Math.min(this.consecutiveErrors - 1, 2)));
+        backoffDelay = minutes * 60 * 1000;
+        console.warn(`[BackgroundHarvester] ⚠️ Gemini rate limit (HTTP 429) encountered. Backing off for ${minutes} minutes to allow quota replenishment.`);
+      } else {
+        const backoffMultiplier = Math.min(Math.pow(2, Math.min(this.consecutiveErrors, 3)), 5);
+        backoffDelay = this.intervalMs * backoffMultiplier;
+        console.error(`[BackgroundHarvester] Tick error (${this.consecutiveErrors} consecutive). Backing off for ${backoffDelay}ms:`, err.message);
+      }
       this._scheduleNext(backoffDelay);
     }
   }
@@ -139,6 +168,7 @@ class BackgroundHarvester {
     }
 
     this.isHarvesting = true;
+    this.dailyRequestsCount++;
     const isVocab = forcedType ? forcedType === 'vocabulary' : (this.currentCycleStep <= this.vocabRatio);
     const runType = isVocab ? 'vocabulary' : 'grammar';
 
@@ -212,6 +242,9 @@ class BackgroundHarvester {
       isRunning: this.isRunning,
       isHarvesting: this.isHarvesting,
       intervalMs: this.intervalMs,
+      maxDailyRequests: this.maxDailyRequests,
+      dailyRequestsCount: this.dailyRequestsCount,
+      dailyQuotaRemaining: Math.max(0, this.maxDailyRequests - this.dailyRequestsCount),
       ratio: `${this.vocabRatio}:1`,
       currentCycleStep: this.currentCycleStep,
       totalCycleSteps: this.vocabRatio + 1,
