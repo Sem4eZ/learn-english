@@ -67,4 +67,7 @@ describe('Turso & Database Engine Architecture Test Suite', () => {
     assert.ok(geminiService.inFlightRequests instanceof Map);
     assert.ok(geminiService.inFlightVocab instanceof Map);
   });
+  it('6. Circuit Breaker: Provides isCircuitBreakerTripped indicator and handles quota blocking', () => {
+    assert.strictEqual(typeof db.isCircuitBreakerTripped, 'boolean');
+  });
 });

@@ -116,7 +116,9 @@ async function getDictionary(req, res) {
     const validSections = ['all', '', 'general', 'grammar', 'business', 'conversational', 'ielts_toefl', 'phrasal_idioms', 'tech_it', 'travel'];
     const isSectionValid = !sectionId || validSections.includes(sectionId);
 
-    if (!isFilteredSearch && total < 30 && isLevelValid && isSectionValid) {
+    const isAutoEnrichmentEnabled = process.env.AUTO_ENRICHMENT_ENABLED === 'true';
+
+    if (isAutoEnrichmentEnabled && !isFilteredSearch && total < 30 && isLevelValid && isSectionValid) {
       const targetLevel = (level && level !== 'all') ? level : 'A1';
       const targetSection = (sectionId && sectionId !== 'all') ? sectionId : 'general';
       const countToGenerate = 35;

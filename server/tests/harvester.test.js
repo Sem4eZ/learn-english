@@ -218,7 +218,7 @@ describe('Background Harvester & Autonomous Replenishment Test Suite', () => {
   // 6. Lifecycle: Start & Stop Idempotence
   // --------------------------------------------------------------------------
   it('7. Lifecycle: start() and stop() manage state and timers cleanly', () => {
-    const testHarvester = new BackgroundHarvester({ intervalMs: 100000 });
+    const testHarvester = new BackgroundHarvester({ intervalMs: 100000, enabled: true });
 
     testHarvester.start();
     assert.strictEqual(testHarvester.isRunning, true);
@@ -251,5 +251,27 @@ describe('Background Harvester & Autonomous Replenishment Test Suite', () => {
     assert.ok('totalGrammarQuestionsAdded' in body.data);
     assert.ok('nextType' in body.data);
     assert.ok('nextTarget' in body.data);
+  });
+  // --------------------------------------------------------------------------
+  // 8. Resting Pause & Quota Protection
+  // --------------------------------------------------------------------------
+  it('9. Harvester Resting Pause: Correctly detects paused state and prevents background execution', () => {
+    const pausedHarvester = new BackgroundHarvester({ enabled: false });
+    const stats = pausedHarvester.getStats();
+
+    assert.strictEqual(stats.enabled, false);
+    assert.strictEqual(stats.isPaused, true);
+    assert.strictEqual(stats.isRunning, false);
+    assert.ok(stats.statusMessage.includes('Paused'));
+
+    // Calling start() without force when disabled in production mode
+    pausedHarvester.start(false);
+    assert.strictEqual(pausedHarvester.isRunning, false);
+    assert.strictEqual(pausedHarvester.nextScheduledRun, null);
+
+    // Calling start(true) forces start
+    pausedHarvester.start(true);
+    assert.strictEqual(pausedHarvester.isRunning, true);
+    pausedHarvester.stop();
   });
 });

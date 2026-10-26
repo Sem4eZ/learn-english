@@ -20,7 +20,11 @@ const isPlaceholder = TURSO_DATABASE_URL.includes('твоеимя') ||
                       TURSO_DATABASE_URL.includes('yourname') || 
                       TURSO_DATABASE_URL.includes('your-db');
 
-const shouldAttemptTurso = Boolean(TURSO_DATABASE_URL) && !isPlaceholder;
+const isForceLocal = process.env.FORCE_LOCAL_DB === 'true' || 
+                     process.env.USE_TURSO === 'false' || 
+                     process.env.TURSO_ENABLED === 'false';
+
+const shouldAttemptTurso = Boolean(TURSO_DATABASE_URL) && !isPlaceholder && !isForceLocal;
 
 // Standard curriculum sections
 const seedSections = [
@@ -742,6 +746,34 @@ if (checkQuestions.get().count === 0) {
 // Unified Database Wrapper
 // ----------------------------------------------------------------------------
 let activeTursoClient = null;
+let circuitBreakerTripped = false;
+
+function isTursoBlockedError(err) {
+  if (!err) return false;
+  const msg = (err.message || String(err)).toLowerCase();
+  return (
+    msg.includes('blocked') ||
+    msg.includes('forbidden') ||
+    msg.includes('upgrade your plan') ||
+    msg.includes('quota') ||
+    msg.includes('insufficient') ||
+    msg.includes('limit exceeded')
+  );
+}
+
+function handleTursoError(err, context = 'query') {
+  if (isTursoBlockedError(err)) {
+    if (useTurso) {
+      circuitBreakerTripped = true;
+      useTurso = false;
+      activeTursoClient = null;
+      console.error(`[Database] 🚨 Turso Cloud Quota Exceeded / Blocked (${context}): ${err.message}`);
+      console.error(`[Database] 🔀 Circuit Breaker TRIPPED: Disabling Turso Cloud. All queries will run directly against Local SQLite without latency.`);
+    }
+  } else {
+    console.warn(`[Database] Turso query error (${context}), falling back to local DB: ${err.message}`);
+  }
+}
 let useTurso = false;
 
 if (isPlaceholder) {
@@ -814,7 +846,13 @@ if (shouldAttemptTurso) {
         useTurso = true;
         console.log('[Database] ✅ Turso Cloud Database connected and verified.');
       } catch (err) {
-        console.warn(`[Database] ⚠️ Turso Cloud connection failed (${err.message}). Seamlessly falling back to local SQLite.`);
+        if (isTursoBlockedError(err)) {
+          circuitBreakerTripped = true;
+          console.error(`[Database] 🚨 Turso Cloud Quota Exceeded / Blocked at startup: ${err.message}`);
+          console.error(`[Database] 🔀 Circuit Breaker TRIPPED: Disabling Turso Cloud. Using local SQLite.`);
+        } else {
+          console.warn(`[Database] ⚠️ Turso Cloud connection failed (${err.message}). Seamlessly falling back to local SQLite.`);
+        }
         useTurso = false;
         activeTursoClient = null;
       }
@@ -826,6 +864,9 @@ if (shouldAttemptTurso) {
 }
 
 const db = {
+  get isCircuitBreakerTripped() {
+    return circuitBreakerTripped;
+  },
   get isTurso() {
     return useTurso;
   },
@@ -836,30 +877,39 @@ const db = {
       return {
         async get(...params) {
           await tursoInitPromise;
+          if (!useTurso || !activeTursoClient) {
+            return localDb.prepare(sql).get(...normalizeArgs(params));
+          }
           const args = normalizeArgs(params);
           try {
             const res = await activeTursoClient.execute({ sql, args });
             return res.rows[0] !== undefined ? res.rows[0] : undefined;
           } catch (err) {
-            console.warn('[Database] Turso query error, falling back to local DB:', err.message);
+            handleTursoError(err, 'query');
             return localDb.prepare(sql).get(...args);
           }
         },
 
         async all(...params) {
           await tursoInitPromise;
+          if (!useTurso || !activeTursoClient) {
+            return localDb.prepare(sql).all(...normalizeArgs(params));
+          }
           const args = normalizeArgs(params);
           try {
             const res = await activeTursoClient.execute({ sql, args });
             return Array.from(res.rows);
           } catch (err) {
-            console.warn('[Database] Turso query error, falling back to local DB:', err.message);
+            handleTursoError(err, 'query');
             return localDb.prepare(sql).all(...args);
           }
         },
 
         async run(...params) {
           await tursoInitPromise;
+          if (!useTurso || !activeTursoClient) {
+            return localDb.prepare(sql).run(...normalizeArgs(params));
+          }
           const args = normalizeArgs(params);
           try {
             const res = await activeTursoClient.execute({ sql, args });
@@ -868,7 +918,7 @@ const db = {
               changes: res.rowsAffected
             };
           } catch (err) {
-            console.warn('[Database] Turso query error, falling back to local DB:', err.message);
+            handleTursoError(err, 'query');
             return localDb.prepare(sql).run(...args);
           }
         }
@@ -891,7 +941,7 @@ const db = {
         }
         return;
       } catch (err) {
-        console.warn('[Database] Turso exec error, falling back to local DB:', err.message);
+        handleTursoError(err, 'exec');
       }
     }
     return localDb.exec(sql);

@@ -41,6 +41,11 @@ const GRAMMAR_TOPICS = [
 
 class BackgroundHarvester {
   constructor(options = {}) {
+    // Enabled flag (default: paused unless explicitly enabled via BACKGROUND_HARVESTER_ENABLED=true)
+    this.enabled = options.enabled !== undefined
+      ? Boolean(options.enabled)
+      : (process.env.BACKGROUND_HARVESTER_ENABLED === 'true');
+
     // 300,000ms = 5 minutes cadence (~288 requests/day), staying strictly within 500 RPD free-tier limit
     this.intervalMs = options.intervalMs || parseInt(process.env.BACKGROUND_HARVESTER_INTERVAL_MS, 10) || 300000;
     this.maxDailyRequests = options.maxDailyRequests || parseInt(process.env.BACKGROUND_HARVESTER_MAX_DAILY_REQUESTS, 10) || 300;
@@ -77,8 +82,15 @@ class BackgroundHarvester {
     this.nextScheduledRun = null;
   }
 
-  start() {
+  start(force = false) {
     if (this.isRunning) return;
+    if (!this.enabled && !force) {
+      console.log('[BackgroundHarvester] ⏸️ Replenishment is paused (~16,000 words in library). Resting pause active.');
+      return;
+    }
+    if (force) {
+      this.enabled = true;
+    }
     this.isRunning = true;
     console.log(`[BackgroundHarvester] Started autonomous 24/7 replenishment service (interval: ${this.intervalMs}ms, ratio: ${this.vocabRatio}:1)`);
     this._scheduleNext(1000); // Initial kickoff after 1 second
@@ -239,6 +251,9 @@ class BackgroundHarvester {
     const nextType = this.currentCycleStep <= this.vocabRatio ? 'vocabulary' : 'grammar';
 
     return {
+      enabled: this.enabled,
+      isPaused: !this.isRunning,
+      statusMessage: this.isRunning ? 'Active' : (this.enabled ? 'Stopped' : 'Paused (~16k words achieved, resting pause)'),
       isRunning: this.isRunning,
       isHarvesting: this.isHarvesting,
       intervalMs: this.intervalMs,
