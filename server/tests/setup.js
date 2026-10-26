@@ -1,34 +1,19 @@
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 /**
  * Global Test Setup
- * Automatically ensures the Express application is running before tests execute.
+ * Instantly binds Express on port 3001 for test suites without async race conditions.
  */
 
-const http = require('http');
 const app = require('../src/index');
-
 const PORT = 3001;
 
-function checkPortOpen(port) {
-  return new Promise((resolve) => {
-    const req = http.get(`http://localhost:${port}/api/health`, () => resolve(true));
-    req.on('error', () => resolve(false));
-    req.setTimeout(500, () => {
-      req.destroy();
-      resolve(false);
-    });
+try {
+  const server = app.listen(PORT, () => {
+    server.unref();
   });
-}
-
-(async () => {
-  const isRunning = await checkPortOpen(PORT);
-  if (!isRunning) {
-    try {
-      await new Promise((resolve) => {
-        const server = app.listen(PORT, () => {
-          server.unref();
-          resolve();
-        });
-      });
-    } catch (_) {}
-  }
-})();
+  server.on('error', (err) => {
+    if (err.code !== 'EADDRINUSE') {
+      console.warn('[TestSetup] Server bind warning:', err.message);
+    }
+  });
+} catch (_) {}

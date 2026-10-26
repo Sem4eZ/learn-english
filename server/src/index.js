@@ -95,10 +95,11 @@ if (require.main === module) {
     console.log(`  🚀 Fluentiq API Server active on http://localhost:${PORT}`);
     console.log(`  💾 Database: ${db.isTurso ? '🌐 Turso Cloud libSQL (Persistent)' : '📁 Local SQLite WAL (node:sqlite)'}`);
     console.log(`  🧠 AI Engine: Google Gemini Flash-Lite & Fallback Pipeline`);
-    console.log(`  🌾 Background Harvester: 24/7 autonomous replenishment`);
+    const isHarvesterEnabled = process.env.BACKGROUND_HARVESTER_ENABLED === 'true';
+    console.log(`  🌾 Background Harvester: ${isHarvesterEnabled ? '24/7 autonomous replenishment' : '⏸️ Paused (~16,000 words in library)'}`);
     console.log(`======================================================\n`);
 
-    if (process.env.BACKGROUND_HARVESTER_ENABLED !== 'false' && process.env.NODE_ENV !== 'test') {
+    if (process.env.BACKGROUND_HARVESTER_ENABLED === 'true' && process.env.NODE_ENV !== 'test') {
       backgroundHarvester.start();
     }
   });
